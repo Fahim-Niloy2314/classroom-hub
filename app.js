@@ -675,7 +675,7 @@ function loadCustomContacts() {
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONTACT) || '{}');
   const email = saved.email || appData?.student?.email || 'fahim.cuet.me20@gmail.com';
   const secEmail = saved.secondary_email || appData?.student?.secondary_email || 'fahimniloy2314@gmail.com';
-  const phone = saved.phone || appData?.student?.phone || '+880 1700-000000';
+  const phone = saved.phone || appData?.student?.phone || '+880 1850-162261';
   const netlify = saved.netlify || 'https://fahim-classroom-archive.netlify.app';
   const github = saved.github || appData?.student?.github_link || 'https://github.com/Fahim-Niloy2314/classroom-hub';
 
@@ -700,7 +700,7 @@ function openEditContactModal() {
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONTACT) || '{}');
   document.getElementById('editEmailInput').value = saved.email || 'fahim.cuet.me20@gmail.com';
   document.getElementById('editEmailSecondaryInput').value = saved.secondary_email || 'fahimniloy2314@gmail.com';
-  document.getElementById('editPhoneInput').value = saved.phone || '+880 1700-000000';
+  document.getElementById('editPhoneInput').value = saved.phone || '+880 1850-162261';
   document.getElementById('editNetlifyInput').value = saved.netlify || 'https://fahim-classroom-archive.netlify.app';
   document.getElementById('editGithubInput').value = saved.github || 'https://github.com/Fahim-Niloy2314/classroom-hub';
   document.getElementById('editContactDialog').showModal();
