@@ -15,7 +15,8 @@ if sys.platform == "win32":
         pass
 
 PORT = 8080
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+CLASSROOM_DIR = r"G:\My Drive\Classroom"
+BASE_DIR = CLASSROOM_DIR if os.path.exists(CLASSROOM_DIR) else os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 APP_DIR = os.path.dirname(__file__)
 
 class ClassroomHubHandler(SimpleHTTPRequestHandler):
