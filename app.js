@@ -66,7 +66,7 @@ const I18N = {
     hero_welcome: 'Welcome! I am',
     hero_desc: "Chittagong University of Engineering and Technology (CUET), Department of Mechanical Engineering ('20 Batch, Roll: 2003063). Complete digital academic repository from Level 1 Term 1 to Level 4 Term 2, organized exactly like our course folders with lecture notes, lab sheets, question banks, and the undergraduate bulletin.",
     btn_explore_courses: 'Browse Course Folders',
-    btn_portfolio: 'My Netlify Portfolio',
+    btn_portfolio: 'My Personal Website',
     btn_github: 'GitHub Project & Live Page',
     btn_drive: 'Google Drive',
     label_email: 'Email:',
@@ -177,7 +177,7 @@ const I18N = {
     hero_welcome: 'স্বাগতম! আমি',
     hero_desc: "চট্টগ্রাম প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় (CUET), মেকানিক্যাল ইঞ্জিনিয়ারিং ডিপার্টমেন্ট ('২০ সিরিজ, রোল: ২০০৩০৬৩)। লেভেল ১ টার্ম ১ থেকে লেভেল ৪ টার্ম ২ পর্যন্ত আমাদের সব কোর্স ফোল্ডার অনুযায়ী সাজানো ক্লাস নোটস, ল্যাব শিট, প্রশ্নব্যাংক ও অফিশিয়াল বুলেটিন।",
     btn_explore_courses: 'কোর্স ফোল্ডার ব্রাউজ করুন',
-    btn_portfolio: 'আমার নেটলিফাই পোর্টফোলিও',
+    btn_portfolio: 'আমার পার্সোনাল ওয়েবসাইট',
     btn_github: 'গিটহাব প্রজেক্ট ও লাইভ ওয়েবসাইট',
     btn_drive: 'গুগল ড্রাইভ',
     label_email: 'ইমেইল:',
@@ -511,14 +511,21 @@ function switchAuthTab(tab) {
   });
 }
 
-/* Dedicated Google Sign-In Portal & Account Selection */
+/* Dedicated Google Sign-In Portal & Account Verification */
 function openGoogleSignInPortal() {
   const gDialog = document.getElementById('googleAccountDialog');
   if (gDialog) {
-    const form = document.getElementById('customGoogleForm');
-    if (form) form.classList.add('hidden');
+    const emailInput = document.getElementById('googleAuthEmail');
+    const nameInput = document.getElementById('googleAuthName');
+    const pinSection = document.getElementById('googleAdminPinSection');
+    const pinInput = document.getElementById('googleAdminPin');
+    if (emailInput) emailInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (pinInput) pinInput.value = '';
+    if (pinSection) pinSection.classList.add('hidden');
     gDialog.showModal();
     lucide.createIcons();
+    if (emailInput) setTimeout(() => emailInput.focus(), 100);
   }
 }
 
@@ -527,46 +534,80 @@ function closeGoogleSignInPortal() {
   if (gDialog) gDialog.close();
 }
 
-function toggleCustomGoogleInput() {
-  const form = document.getElementById('customGoogleForm');
-  if (form) {
-    form.classList.toggle('hidden');
-    if (!form.classList.contains('hidden')) {
-      const nameInput = document.getElementById('customGoogleName');
-      if (nameInput) nameInput.focus();
+function handleGoogleEmailChange(val) {
+  const cleanEmail = (val || '').toLowerCase().trim();
+  const pinSection = document.getElementById('googleAdminPinSection');
+  const isAdm = ADMIN_EMAILS.includes(cleanEmail);
+  if (pinSection) {
+    if (isAdm) {
+      pinSection.classList.remove('hidden');
+      const pinInput = document.getElementById('googleAdminPin');
+      if (pinInput && !pinInput.value) pinInput.focus();
+    } else {
+      pinSection.classList.add('hidden');
     }
+    lucide.createIcons();
   }
 }
 
-function signInWithSelectedGoogleAccount(email, displayName) {
-  const isAdm = ADMIN_EMAILS.includes(email.toLowerCase().trim());
-  currentUser = {
-    name: displayName || (isAdm ? 'Fahim Niloy (Owner)' : email.split('@')[0]),
-    email: email.toLowerCase().trim(),
-    method: 'google'
-  };
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-  updateAuthUI();
-  closeGoogleSignInPortal();
-  closeAuthModal();
+const VALID_ADMIN_PINS = ['2003063', 'cuetme20', 'me20', '01850162261', '+8801850162261', '1850162261', 'admin', 'fahimniloy'];
 
+function handleGoogleAuthSubmit(e) {
+  e.preventDefault();
+  const emailInput = document.getElementById('googleAuthEmail');
+  const nameInput = document.getElementById('googleAuthName');
+  const pinInput = document.getElementById('googleAdminPin');
+
+  const email = (emailInput?.value || '').toLowerCase().trim();
+  let name = (nameInput?.value || '').trim();
+  const isAdm = ADMIN_EMAILS.includes(email);
+
+  if (!email) {
+    showToast(currentLang === 'en' ? 'Please enter a valid Google email address' : 'সঠিক গুগল ইমেইল দিন');
+    return;
+  }
+
+  // Strict Admin Verification
   if (isAdm) {
+    const enteredPin = (pinInput?.value || '').trim().toLowerCase();
+    if (!enteredPin || !VALID_ADMIN_PINS.includes(enteredPin)) {
+      showToast(currentLang === 'en' 
+        ? 'Admin Verification Failed: Incorrect PIN/Password for Fahim Niloy.' 
+        : 'অ্যাডমিন যাচাইকরণ ব্যর্থ: ফাহিম নিলয়ের অ্যাকাউন্টের সঠিক পিন/পাসওয়ার্ড দিন।');
+      if (pinInput) pinInput.focus();
+      return;
+    }
+    name = name || 'Fahim Niloy (Owner)';
+    currentUser = {
+      name: name,
+      email: email,
+      method: 'google',
+      role: 'admin'
+    };
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+    updateAuthUI();
+    closeGoogleSignInPortal();
+    closeAuthModal();
     showToast(currentLang === 'en' 
       ? 'Welcome Owner & Admin (Fahim Niloy)! Full permissions granted.' 
       : 'স্বাগতম অ্যাডমিন ও প্রতিষ্ঠাতা ফাহিম নিলয়! পূর্ণ প্রশাসনিক সুবিধা সক্রিয় হয়েছে।');
   } else {
+    // Regular Student / User
+    name = name || email.split('@')[0];
+    currentUser = {
+      name: name,
+      email: email,
+      method: 'google',
+      role: 'student'
+    };
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+    updateAuthUI();
+    closeGoogleSignInPortal();
+    closeAuthModal();
     showToast(currentLang === 'en' 
       ? `Signed in as ${currentUser.name} (Student)` 
       : `${currentUser.name} হিসেবে শিক্ষার্থী অ্যাকাউন্টে সফলভাবে সাইন ইন হয়েছে`);
   }
-}
-
-function handleCustomGoogleSignIn(e) {
-  e.preventDefault();
-  const name = document.getElementById('customGoogleName').value.trim();
-  const email = document.getElementById('customGoogleEmail').value.trim();
-  if (!email || !name) return;
-  signInWithSelectedGoogleAccount(email, name);
 }
 
 function handleGoogleSignIn() {
@@ -756,10 +797,15 @@ function renderHome() {
 
 function loadCustomContacts() {
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONTACT) || '{}');
+  // Auto-migrate any old dummy netlify URL in localStorage
+  if (saved.netlify && saved.netlify.includes('fahim-classroom-archive')) {
+    saved.netlify = 'https://mohammad-fahim-ahmed.netlify.app/';
+    localStorage.setItem(STORAGE_KEYS.CONTACT, JSON.stringify(saved));
+  }
   const email = saved.email || appData?.student?.email || 'fahim.cuet.me20@gmail.com';
   const secEmail = saved.secondary_email || appData?.student?.secondary_email || 'fahimniloy2314@gmail.com';
   const phone = saved.phone || appData?.student?.phone || '+880 1850-162261';
-  const netlify = saved.netlify || 'https://fahim-classroom-archive.netlify.app';
+  const netlify = saved.netlify || 'https://mohammad-fahim-ahmed.netlify.app/';
   const github = saved.github || appData?.student?.github_link || 'https://github.com/Fahim-Niloy2314/classroom-hub';
 
   const emailEl = document.getElementById('homeEmailLink');
@@ -791,7 +837,7 @@ function openEditContactModal() {
   document.getElementById('editEmailInput').value = saved.email || 'fahim.cuet.me20@gmail.com';
   document.getElementById('editEmailSecondaryInput').value = saved.secondary_email || 'fahimniloy2314@gmail.com';
   document.getElementById('editPhoneInput').value = saved.phone || '+880 1850-162261';
-  document.getElementById('editNetlifyInput').value = saved.netlify || 'https://fahim-classroom-archive.netlify.app';
+  document.getElementById('editNetlifyInput').value = (saved.netlify && !saved.netlify.includes('fahim-classroom-archive')) ? saved.netlify : 'https://mohammad-fahim-ahmed.netlify.app/';
   document.getElementById('editGithubInput').value = saved.github || 'https://github.com/Fahim-Niloy2314/classroom-hub';
   document.getElementById('editContactDialog').showModal();
   lucide.createIcons();
@@ -856,12 +902,8 @@ function switchBulletinTab(tab) {
 
   if (tab === 'viewer') {
     const frame = document.getElementById('bulletinPdfFrame');
-    if (frame && frame.src === 'about:blank') {
-      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const fileUrl = isLocal 
-        ? '/api/file?path=Bulletin%20_%20UG%20_%20ME.pdf'
-        : 'https://docs.google.com/viewer?url=https://raw.githubusercontent.com/Fahim-Niloy2314/classroom-hub/main/Bulletin%20_%20UG%20_%20ME.pdf&embedded=true';
-      frame.src = fileUrl;
+    if (frame && (frame.src === 'about:blank' || !frame.src || frame.src.endsWith('about:blank'))) {
+      frame.src = 'Bulletin_UG_ME.pdf';
     }
   }
 }
@@ -1413,6 +1455,13 @@ function rejectSubmission(idx) {
    12. BOOKMARKS & SYLLABUS PROGRESS TRACKER
    ========================================================================= */
 function toggleBookmark(fileId) {
+  if (!currentUser) {
+    showToast(currentLang === 'en' 
+      ? 'Please sign in to save bookmarks to your account.' 
+      : 'রিসোর্স বুকমার্ক করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
+    openGoogleSignInPortal();
+    return;
+  }
   if (bookmarks.includes(fileId)) {
     bookmarks = bookmarks.filter(id => id !== fileId);
     showToast(currentLang === 'en' ? 'Removed from bookmarks' : 'বুকমার্ক থেকে সরানো হয়েছে');
@@ -1497,6 +1546,14 @@ function toggleCourseBranch(courseName) {
 }
 
 function toggleMilestone(courseName, milestoneKey, isDone) {
+  if (!currentUser) {
+    showToast(currentLang === 'en' 
+      ? 'Please sign in to save your progression and track your study milestones.' 
+      : 'স্টাডি মাইলস্টোন ও প্রোগ্রেস সেভ করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
+    openGoogleSignInPortal();
+    renderTracker();
+    return;
+  }
   if (!courseProgress[courseName] || typeof courseProgress[courseName] !== 'object') {
     courseProgress[courseName] = {};
   }
@@ -1510,6 +1567,13 @@ function toggleMilestone(courseName, milestoneKey, isDone) {
 }
 
 function markCourseAllDone(courseName) {
+  if (!currentUser) {
+    showToast(currentLang === 'en' 
+      ? 'Please sign in to update course progression.' 
+      : 'কোর্সের প্রোগ্রেস পরিবর্তন করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
+    openGoogleSignInPortal();
+    return;
+  }
   if (!courseProgress[courseName] || typeof courseProgress[courseName] !== 'object') {
     courseProgress[courseName] = {};
   }
@@ -1522,6 +1586,13 @@ function markCourseAllDone(courseName) {
 }
 
 function resetCourseProgress(courseName) {
+  if (!currentUser) {
+    showToast(currentLang === 'en' 
+      ? 'Please sign in to manage course progression.' 
+      : 'কোর্সের প্রোগ্রেস রিসেট করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
+    openGoogleSignInPortal();
+    return;
+  }
   delete courseProgress[courseName];
   localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(courseProgress));
   renderTracker();
