@@ -149,9 +149,17 @@ const I18N = {
     courses_in: 'Courses in',
     files_in: 'Files in',
     no_files_found: 'No resources found in this folder.',
-    pending_empty: 'No pending submissions right now. All clear!',
     btn_approve: 'Approve & Publish',
-    btn_reject: 'Reject'
+    btn_reject: 'Reject',
+    google_portal_title: 'Sign in with Google',
+    google_portal_sub: 'Choose an account to continue to CUET ME ClassroomHub',
+    google_choose_account: 'Choose an account',
+    google_use_another: 'Use another Google account',
+    google_use_another_sub: 'Sign in with student Gmail or CUET institutional email',
+    google_enter_name: 'Your Name',
+    google_enter_email: 'Google Email Address',
+    google_btn_continue: 'Continue with this Account',
+    google_security_note: '🔒 Authenticated Google portal for CUET ME ClassroomHub. Admin rights are granted exclusively to designated admin accounts.'
   },
   bn: {
     nav_sub: 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং আর্কাইভ',
@@ -252,9 +260,17 @@ const I18N = {
     courses_in: 'এর কোর্সসমূহ',
     files_in: 'এর ফাইলসমূহ',
     no_files_found: 'এই ফোল্ডারে কোনো ফাইল পাওয়া যায়নি।',
-    pending_empty: 'কোনো পেন্ডিং রিসোর্স নেই। সব রিভিউ সম্পন্ন!',
     btn_approve: 'অনুমোদন ও প্রকাশ করুন',
-    btn_reject: 'বাতিল করুন'
+    btn_reject: 'বাতিল করুন',
+    google_portal_title: 'গুগল দিয়ে সাইন ইন করুন',
+    google_portal_sub: 'চুয়েট মেকানিক্যাল ক্লাসরুম হাবে যেতে একটি অ্যাকাউন্ট নির্বাচন করুন',
+    google_choose_account: 'একটি অ্যাকাউন্ট নির্বাচন করুন',
+    google_use_another: 'অন্য কোনো গুগল অ্যাকাউন্ট ব্যবহার করুন',
+    google_use_another_sub: 'যেকোনো জিমেইল বা চুয়েট প্রাতিষ্ঠানিক ইমেইল দিয়ে লগইন করুন',
+    google_enter_name: 'আপনার নাম',
+    google_enter_email: 'গুগল ইমেইল ঠিকানা',
+    google_btn_continue: 'এই অ্যাকাউন্ট দিয়ে প্রবেশ করুন',
+    google_security_note: '🔒 ক্লাসরুম হাবের জন্য গুগল সাইন-ইন পোর্টাল। শুধুমাত্র অনুমোদিত অ্যাডমিন ইমেইল পেলেই অ্যাডমিন সুবিধা কার্যকর হবে।'
   }
 };
 
@@ -366,6 +382,7 @@ function switchTab(tab) {
     if (el) el.classList.toggle('hidden', v !== tab);
   });
 
+  // Desktop tab active states
   views.forEach(v => {
     const btn = document.getElementById(`nav-tab-${v}`);
     if (btn) {
@@ -373,6 +390,18 @@ function switchTab(tab) {
         btn.className = 'nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-white bg-indigo-600 shadow-sm';
       } else {
         btn.className = 'nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50';
+      }
+    }
+  });
+
+  // Mobile bottom navigation active states
+  views.forEach(v => {
+    const mBtn = document.getElementById(`mobileNav-${v}`);
+    if (mBtn) {
+      if (v === tab) {
+        mBtn.className = 'flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-indigo-400 font-bold bg-indigo-500/15 shadow-sm';
+      } else {
+        mBtn.className = 'flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white';
       }
     }
   });
@@ -398,19 +427,27 @@ function updateAuthUI() {
   const container = document.getElementById('authHeaderContainer');
   const adminTab = document.getElementById('nav-tab-admin');
   const mobileAdminBtn = document.getElementById('mobileNavAdminBtn');
+  const mobileNavAdmin = document.getElementById('mobileNav-admin');
+  const editContactBtn = document.getElementById('editContactBtn');
   const dict = I18N[currentLang];
 
   if (!container) return;
 
-  if (currentUser) {
-    const isUserAdmin = isAdmin(currentUser);
-    
-    // Show/hide admin tabs
-    if (adminTab) adminTab.classList.toggle('hidden', !isUserAdmin);
-    if (mobileAdminBtn) mobileAdminBtn.classList.toggle('hidden', !isUserAdmin);
+  const isUserAdmin = currentUser && isAdmin(currentUser);
 
+  // Strictly guard contact editing button - only visible if Admin
+  if (editContactBtn) {
+    editContactBtn.classList.toggle('hidden', !isUserAdmin);
+  }
+
+  // Show/hide admin tabs
+  if (adminTab) adminTab.classList.toggle('hidden', !isUserAdmin);
+  if (mobileAdminBtn) mobileAdminBtn.classList.toggle('hidden', !isUserAdmin);
+  if (mobileNavAdmin) mobileNavAdmin.classList.toggle('hidden', !isUserAdmin);
+
+  if (currentUser) {
     container.innerHTML = `
-      <div class="flex items-center gap-2 bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-1 text-xs">
+      <div class="flex items-center gap-2 bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-1 text-xs shadow-sm">
         <div class="w-6 h-6 rounded-full ${isUserAdmin ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-indigo-600 text-white'} flex items-center justify-center font-bold text-[10px]">
           ${isUserAdmin ? '👑' : (currentUser.name || 'U').charAt(0).toUpperCase()}
         </div>
@@ -427,9 +464,6 @@ function updateAuthUI() {
       </div>
     `;
   } else {
-    if (adminTab) adminTab.classList.add('hidden');
-    if (mobileAdminBtn) mobileAdminBtn.classList.add('hidden');
-
     container.innerHTML = `
       <button onclick="openAuthModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 text-xs font-semibold transition-all shadow-sm">
         <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
@@ -477,17 +511,66 @@ function switchAuthTab(tab) {
   });
 }
 
-function handleGoogleSignIn() {
-  // Demo Google Sign In: prompt or defaults to owner
+/* Dedicated Google Sign-In Portal & Account Selection */
+function openGoogleSignInPortal() {
+  const gDialog = document.getElementById('googleAccountDialog');
+  if (gDialog) {
+    const form = document.getElementById('customGoogleForm');
+    if (form) form.classList.add('hidden');
+    gDialog.showModal();
+    lucide.createIcons();
+  }
+}
+
+function closeGoogleSignInPortal() {
+  const gDialog = document.getElementById('googleAccountDialog');
+  if (gDialog) gDialog.close();
+}
+
+function toggleCustomGoogleInput() {
+  const form = document.getElementById('customGoogleForm');
+  if (form) {
+    form.classList.toggle('hidden');
+    if (!form.classList.contains('hidden')) {
+      const nameInput = document.getElementById('customGoogleName');
+      if (nameInput) nameInput.focus();
+    }
+  }
+}
+
+function signInWithSelectedGoogleAccount(email, displayName) {
+  const isAdm = ADMIN_EMAILS.includes(email.toLowerCase().trim());
   currentUser = {
-    name: 'Fahim Niloy (Owner)',
-    email: 'fahim.cuet.me20@gmail.com',
+    name: displayName || (isAdm ? 'Fahim Niloy (Owner)' : email.split('@')[0]),
+    email: email.toLowerCase().trim(),
     method: 'google'
   };
   localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
   updateAuthUI();
+  closeGoogleSignInPortal();
   closeAuthModal();
-  showToast(currentLang === 'en' ? 'Signed in as Admin / Owner' : 'অ্যাডমিন হিসেবে লগইন সফল হয়েছে!');
+
+  if (isAdm) {
+    showToast(currentLang === 'en' 
+      ? 'Welcome Owner & Admin (Fahim Niloy)! Full permissions granted.' 
+      : 'স্বাগতম অ্যাডমিন ও প্রতিষ্ঠাতা ফাহিম নিলয়! পূর্ণ প্রশাসনিক সুবিধা সক্রিয় হয়েছে।');
+  } else {
+    showToast(currentLang === 'en' 
+      ? `Signed in as ${currentUser.name} (Student)` 
+      : `${currentUser.name} হিসেবে শিক্ষার্থী অ্যাকাউন্টে সফলভাবে সাইন ইন হয়েছে`);
+  }
+}
+
+function handleCustomGoogleSignIn(e) {
+  e.preventDefault();
+  const name = document.getElementById('customGoogleName').value.trim();
+  const email = document.getElementById('customGoogleEmail').value.trim();
+  if (!email || !name) return;
+  signInWithSelectedGoogleAccount(email, name);
+}
+
+function handleGoogleSignIn() {
+  openGoogleSignInPortal();
 }
 
 function handleEmailLogin(e) {
@@ -697,6 +780,13 @@ function loadCustomContacts() {
 }
 
 function openEditContactModal() {
+  if (!currentUser || !isAdmin(currentUser)) {
+    showToast(currentLang === 'en' 
+      ? 'Restricted: Only Admin (Fahim Niloy) can edit contact details. Please sign in as Admin.' 
+      : 'অনুমতি নেই: শুধুমাত্র অ্যাডমিন (ফাহিম নিলয়) যোগাযোগের তথ্য পরিবর্তন করতে পারবেন।');
+    openAuthModal();
+    return;
+  }
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONTACT) || '{}');
   document.getElementById('editEmailInput').value = saved.email || 'fahim.cuet.me20@gmail.com';
   document.getElementById('editEmailSecondaryInput').value = saved.secondary_email || 'fahimniloy2314@gmail.com';
@@ -706,10 +796,19 @@ function openEditContactModal() {
   document.getElementById('editContactDialog').showModal();
   lucide.createIcons();
 }
+
 function closeEditContactModal() {
   document.getElementById('editContactDialog').close();
 }
+
 function saveContactSettings() {
+  if (!currentUser || !isAdmin(currentUser)) {
+    showToast(currentLang === 'en' 
+      ? 'Unauthorized: Admin privileges required to update contact information.' 
+      : 'অননুমোদিত: যোগাযোগের তথ্য সংরক্ষণের জন্য অ্যাডমিন অনুমতি প্রয়োজন।');
+    closeEditContactModal();
+    return;
+  }
   const updated = {
     email: document.getElementById('editEmailInput').value.trim(),
     secondary_email: document.getElementById('editEmailSecondaryInput').value.trim(),
@@ -721,6 +820,50 @@ function saveContactSettings() {
   loadCustomContacts();
   closeEditContactModal();
   showToast(currentLang === 'en' ? 'Contacts updated successfully' : 'যোগাযোগের তথ্য সংরক্ষিত হয়েছে');
+}
+
+/* Bulletin Modal & Quick Guide Logic */
+function openBulletinModal() {
+  const dialog = document.getElementById('bulletinDialog');
+  if (!dialog) return;
+  switchBulletinTab('summary');
+  dialog.showModal();
+  lucide.createIcons();
+}
+
+function closeBulletinModal() {
+  const dialog = document.getElementById('bulletinDialog');
+  if (dialog) dialog.close();
+  const frame = document.getElementById('bulletinPdfFrame');
+  if (frame) frame.src = 'about:blank';
+}
+
+function switchBulletinTab(tab) {
+  const tabs = ['summary', 'viewer'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`bulletinTabBtn-${t}`);
+    const panel = document.getElementById(`bulletinPanel-${t}`);
+    if (btn && panel) {
+      if (t === tab) {
+        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white transition-all shadow-sm';
+        panel.classList.remove('hidden');
+      } else {
+        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all';
+        panel.classList.add('hidden');
+      }
+    }
+  });
+
+  if (tab === 'viewer') {
+    const frame = document.getElementById('bulletinPdfFrame');
+    if (frame && frame.src === 'about:blank') {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const fileUrl = isLocal 
+        ? '/api/file?path=Bulletin%20_%20UG%20_%20ME.pdf'
+        : 'https://docs.google.com/viewer?url=https://raw.githubusercontent.com/Fahim-Niloy2314/classroom-hub/main/Bulletin%20_%20UG%20_%20ME.pdf&embedded=true';
+      frame.src = fileUrl;
+    }
+  }
 }
 
 /* =========================================================================
@@ -918,7 +1061,7 @@ function renderExplorer() {
       </div>
     `).join('') + `
       <!-- UG Bulletin Folder Card -->
-      <div onclick="previewFileByName('Bulletin _ UG _ ME.pdf')" class="p-5 rounded-2xl glass-card cursor-pointer group flex items-start gap-4 hover:border-purple-500/50 transition-all">
+      <div onclick="openBulletinModal()" class="p-5 rounded-2xl glass-card cursor-pointer group flex items-start gap-4 hover:border-purple-500/50 transition-all">
         <div class="p-3 rounded-2xl bg-purple-500/10 text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition-all">
           <i data-lucide="book" class="w-8 h-8"></i>
         </div>
@@ -1242,6 +1385,10 @@ function renderAdminQueue() {
 }
 
 function approveSubmission(idx) {
+  if (!currentUser || !isAdmin(currentUser)) {
+    showToast(currentLang === 'en' ? 'Only Admin (Fahim Niloy) can approve resources' : 'শুধুমাত্র অ্যাডমিন (ফাহিম নিলয়) রিসোর্স অনুমোদন করতে পারেন');
+    return;
+  }
   const item = pendingResources.splice(idx, 1)[0];
   communityResources.push(item);
   localStorage.setItem(STORAGE_KEYS.PENDING_RESOURCES, JSON.stringify(pendingResources));
@@ -1252,6 +1399,10 @@ function approveSubmission(idx) {
 }
 
 function rejectSubmission(idx) {
+  if (!currentUser || !isAdmin(currentUser)) {
+    showToast(currentLang === 'en' ? 'Only Admin (Fahim Niloy) can reject resources' : 'শুধুমাত্র অ্যাডমিন (ফাহিম নিলয়) রিসোর্স বাতিল করতে পারেন');
+    return;
+  }
   pendingResources.splice(idx, 1);
   localStorage.setItem(STORAGE_KEYS.PENDING_RESOURCES, JSON.stringify(pendingResources));
   renderAdminQueue();
@@ -1301,103 +1452,526 @@ function renderTracker() {
     }
   }
 
-  const trackerContainer = document.getElementById('trackerTermsList');
-  if (!trackerContainer) return;
-
-  let totalCourses = 0;
-  let completedCourses = 0;
-
-  trackerContainer.innerHTML = appData.terms.map(term => {
-    const coursesHtml = term.courses.map(course => {
-      totalCourses++;
-      const isDone = !!courseProgress[course.name];
-      if (isDone) completedCourses++;
-
-      return `
-        <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800/80 border border-slate-700/40 cursor-pointer text-xs transition-colors">
-          <div class="flex items-center gap-2.5">
-            <input type="checkbox" onchange="toggleCourseProgress('${course.name}', this.checked)" ${isDone ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-500 bg-slate-900 border-slate-600 focus:ring-emerald-500">
-            <span class="${isDone ? 'line-through text-slate-500' : 'text-slate-200'} font-medium">
-              ${course.name}
-            </span>
-          </div>
-          <span class="text-slate-400 font-mono">${course.file_count}</span>
-        </label>
-      `;
-    }).join('');
-
-    return `
-      <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-        <div class="flex items-center justify-between">
-          <h4 class="text-sm font-bold text-white flex items-center gap-2">
-            <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-xs">${term.code}</span>
-            <span>${term.title}</span>
-          </h4>
-          <span class="text-xs text-slate-400">${term.course_count} Courses</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          ${coursesHtml}
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  const pct = totalCourses > 0 ? Math.round((completedCourses / totalCourses) * 100) : 0;
-  document.getElementById('trackerProgressPercent').textContent = `${pct}%`;
-  document.getElementById('trackerProgressBar').style.width = `${pct}%`;
-
-  lucide.createIcons();
+  // Progress tracker logic is fully handled by renderTracker()
 }
 
-function toggleCourseProgress(courseName, isDone) {
-  if (isDone) courseProgress[courseName] = true;
-  else delete courseProgress[courseName];
+/* =========================================================================
+   12. HIERARCHICAL BRANCHING SYLLABUS PROGRESS TRACKER
+   Semesters -> Courses -> 5 Actionable Milestones
+   ========================================================================= */
+let currentTrackerLevel = 'ALL';
+let openSemesterBranches = { 'L4-T2': true, 'L4-T1': true };
+let openCourseBranches = {};
+
+const MILESTONES_DEF = [
+  { id: 'lectures', en: 'Class Lectures & Slides', bn: 'লেকচার ও স্লাইডস', icon: 'book-open' },
+  { id: 'ct', en: 'Class Tests (CT 1-4) Prep', bn: 'সিটি প্রস্তুতি ও প্র্যাকটিস', icon: 'file-text' },
+  { id: 'sessional', en: 'Lab Reports & Viva Voce', bn: 'ল্যাব রিপোর্ট ও ভাইভা', icon: 'flask-conical' },
+  { id: 'questions', en: 'Past 5-Year Question Bank', bn: 'বিগত ৫ বছরের প্রশ্ন সমাধান', icon: 'help-circle' },
+  { id: 'final', en: 'Term-Final Formulas Revision', bn: 'ফাইনাল রিভিশন ও ফর্মুলা', icon: 'check-circle' }
+];
+
+function filterTrackerLevel(level) {
+  currentTrackerLevel = level;
+  ['ALL', 'L1', 'L2', 'L3', 'L4'].forEach(l => {
+    const btn = document.getElementById(`trackerFilterBtn-${l}`);
+    if (btn) {
+      if (l === level) {
+        btn.className = 'px-3 py-1 rounded-xl text-xs font-semibold bg-emerald-600 text-white transition-all shadow-sm';
+      } else {
+        btn.className = 'px-3 py-1 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all';
+      }
+    }
+  });
+  renderTracker();
+}
+
+function toggleSemesterBranch(termCode) {
+  openSemesterBranches[termCode] = !openSemesterBranches[termCode];
+  renderTracker();
+}
+
+function toggleCourseBranch(courseName) {
+  openCourseBranches[courseName] = !openCourseBranches[courseName];
+  renderTracker();
+}
+
+function toggleMilestone(courseName, milestoneKey, isDone) {
+  if (!courseProgress[courseName] || typeof courseProgress[courseName] !== 'object') {
+    courseProgress[courseName] = {};
+  }
+  if (isDone) {
+    courseProgress[courseName][milestoneKey] = true;
+  } else {
+    delete courseProgress[courseName][milestoneKey];
+  }
   localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(courseProgress));
   renderTracker();
 }
 
+function markCourseAllDone(courseName) {
+  if (!courseProgress[courseName] || typeof courseProgress[courseName] !== 'object') {
+    courseProgress[courseName] = {};
+  }
+  MILESTONES_DEF.forEach(m => {
+    courseProgress[courseName][m.id] = true;
+  });
+  localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(courseProgress));
+  renderTracker();
+  showToast(currentLang === 'en' ? `Course ${courseName} marked 100% complete!` : `${courseName} সম্পূর্ণ সম্পন্ন হয়েছে!`);
+}
+
+function resetCourseProgress(courseName) {
+  delete courseProgress[courseName];
+  localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(courseProgress));
+  renderTracker();
+  showToast(currentLang === 'en' ? `Reset progress for ${courseName}` : `${courseName} এর প্রোগ্রেস রিসেট করা হয়েছে`);
+}
+
+function renderTracker() {
+  if (!appData) return;
+  const container = document.getElementById('trackerTermsList');
+  if (!container) return;
+
+  // Render Bookmarks
+  const bmList = document.getElementById('bookmarkedList');
+  const bmCount = document.getElementById('bookmarkedCount');
+  if (bmCount) bmCount.textContent = bookmarks.length;
+
+  if (bmList) {
+    if (bookmarks.length === 0) {
+      bmList.innerHTML = `<p class="text-slate-500 italic py-1">${I18N[currentLang].bookmarks_empty}</p>`;
+    } else {
+      const allFiles = getAllFlatFiles();
+      bmList.innerHTML = bookmarks.map(id => {
+        const f = allFiles.find(item => item.id === id);
+        if (!f) return '';
+        return `
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700/80 text-slate-200">
+            <i data-lucide="file-text" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span class="max-w-[200px] truncate font-medium text-xs">${f.name}</span>
+            <button onclick="previewFile('${encodeURIComponent(f.path)}', '${encodeURIComponent(f.name)}')" class="text-indigo-400 hover:text-indigo-300 p-0.5 ml-1">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="toggleBookmark('${f.id}')" title="Remove" class="text-slate-400 hover:text-red-400 p-0.5">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+      }).filter(Boolean).join('');
+    }
+  }
+
+  // Calculate overall stats across all terms and courses
+  let totalCourses = 0;
+  let masteredCourses = 0;
+  let totalMilestones = 0;
+  let completedMilestones = 0;
+
+  appData.terms.forEach(term => {
+    term.courses.forEach(course => {
+      totalCourses++;
+      const cData = courseProgress[course.name];
+      let cDone = 0;
+      MILESTONES_DEF.forEach(m => {
+        totalMilestones++;
+        if (cData && typeof cData === 'object' && cData[m.id]) {
+          cDone++;
+          completedMilestones++;
+        }
+      });
+      if (cDone === MILESTONES_DEF.length) {
+        masteredCourses++;
+      }
+    });
+  });
+
+  const overallPct = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+  const pctEl = document.getElementById('trackerProgressPercent');
+  const barEl = document.getElementById('trackerProgressBar');
+  const cmCountEl = document.getElementById('trackerCompletedCount');
+  const tmCountEl = document.getElementById('trackerTotalMilestones');
+  const cmCoursesEl = document.getElementById('trackerCompletedCourses');
+
+  if (pctEl) pctEl.textContent = `${overallPct}%`;
+  if (barEl) barEl.style.width = `${overallPct}%`;
+  if (cmCountEl) cmCountEl.textContent = completedMilestones;
+  if (tmCountEl) tmCountEl.textContent = totalMilestones;
+  if (cmCoursesEl) cmCoursesEl.textContent = masteredCourses;
+
+  // Filter terms by Level
+  const filteredTerms = appData.terms.filter(term => {
+    if (currentTrackerLevel === 'ALL') return true;
+    return term.code.startsWith(currentTrackerLevel);
+  });
+
+  // Render Semester Branches
+  container.innerHTML = filteredTerms.map(term => {
+    const isTermOpen = !!openSemesterBranches[term.code];
+    
+    // Semester stats
+    let termMilestones = 0;
+    let termCompleted = 0;
+    let termCoursesDone = 0;
+
+    term.courses.forEach(c => {
+      const cd = courseProgress[c.name];
+      let cdCount = 0;
+      MILESTONES_DEF.forEach(m => {
+        termMilestones++;
+        if (cd && typeof cd === 'object' && cd[m.id]) {
+          termCompleted++;
+          cdCount++;
+        }
+      });
+      if (cdCount === MILESTONES_DEF.length) termCoursesDone++;
+    });
+
+    const termPct = termMilestones > 0 ? Math.round((termCompleted / termMilestones) * 100) : 0;
+
+    const coursesHtml = term.courses.map(course => {
+      const isCourseOpen = !!openCourseBranches[course.name];
+      const cData = courseProgress[course.name];
+      const doneKeys = (cData && typeof cData === 'object') ? Object.keys(cData).filter(k => cData[k]) : [];
+      const coursePct = Math.round((doneKeys.length / MILESTONES_DEF.length) * 100);
+      const isMastered = doneKeys.length === MILESTONES_DEF.length;
+
+      const milestonesHtml = MILESTONES_DEF.map(m => {
+        const checked = (cData && typeof cData === 'object' && !!cData[m.id]);
+        return `
+          <label class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 hover:bg-slate-900 border border-slate-700/50 cursor-pointer text-xs transition-colors group/item">
+            <div class="flex items-center gap-2.5">
+              <input type="checkbox" 
+                onchange="toggleMilestone('${course.name}', '${m.id}', this.checked)" 
+                ${checked ? 'checked' : ''} 
+                class="w-4 h-4 rounded text-emerald-500 bg-slate-950 border-slate-600 focus:ring-emerald-500 cursor-pointer">
+              <span class="${checked ? 'line-through text-slate-500' : 'text-slate-200'} font-medium">
+                ${currentLang === 'en' ? m.en : m.bn}
+              </span>
+            </div>
+            <i data-lucide="${m.icon}" class="w-3.5 h-3.5 text-slate-500 group-hover/item:text-indigo-400 transition-colors"></i>
+          </label>
+        `;
+      }).join('');
+
+      return `
+        <div class="rounded-xl border ${isMastered ? 'border-emerald-500/40 bg-emerald-950/15' : 'border-slate-800 bg-slate-900/70'} overflow-hidden transition-all">
+          
+          <!-- Course Header Bar -->
+          <div class="p-3 sm:p-3.5 flex items-center justify-between gap-3 cursor-pointer select-none hover:bg-slate-800/40 transition-colors" onclick="toggleCourseBranch('${course.name}')">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <button type="button" class="text-slate-400 p-0.5 hover:text-white transition-transform">
+                <i data-lucide="${isCourseOpen ? 'chevron-down' : 'chevron-right'}" class="w-4 h-4"></i>
+              </button>
+              <div class="truncate">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-xs text-white truncate">${course.name}</span>
+                  ${isMastered ? '<span class="px-1.5 py-0.2 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-bold">✓ Mastered</span>' : ''}
+                </div>
+                <div class="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                  <span>${doneKeys.length}/5 milestones</span>
+                  <span>•</span>
+                  <span>${course.file_count} files</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mini Progress Ring / Bar -->
+            <div class="flex items-center gap-2.5 flex-shrink-0">
+              <div class="w-16 sm:w-20 bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div class="${isMastered ? 'bg-emerald-400' : 'bg-gradient-to-r from-indigo-500 to-cyan-400'} h-full transition-all duration-300" style="width: ${coursePct}%"></div>
+              </div>
+              <span class="text-[11px] font-mono font-bold ${isMastered ? 'text-emerald-400' : 'text-slate-300'} w-7 text-right">${coursePct}%</span>
+            </div>
+          </div>
+
+          <!-- Expanded Milestones Checklist Branch -->
+          <div class="${isCourseOpen ? 'block' : 'hidden'} p-3 pt-1 border-t border-slate-800/80 bg-slate-950/40 space-y-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              ${milestonesHtml}
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-1 text-[11px]">
+              <button onclick="markCourseAllDone('${course.name}')" class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 font-medium transition-colors">
+                Mark 100%
+              </button>
+              <button onclick="resetCourseProgress('${course.name}')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-red-300 font-medium transition-colors">
+                Reset
+              </button>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="rounded-2xl border border-slate-800/90 bg-slate-900/50 overflow-hidden shadow-lg">
+        
+        <!-- Semester Branch Header -->
+        <div class="p-4 flex items-center justify-between gap-3 cursor-pointer select-none bg-slate-900/90 hover:bg-slate-800/80 transition-colors" onclick="toggleSemesterBranch('${term.code}')">
+          <div class="flex items-center gap-3">
+            <button type="button" class="p-1 rounded-lg bg-slate-800 text-slate-300">
+              <i data-lucide="${isTermOpen ? 'folder-open' : 'folder'}" class="w-4 h-4 text-indigo-400"></i>
+            </button>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-xs font-bold">${term.code}</span>
+                <h4 class="text-sm font-bold text-white">${term.title}</h4>
+              </div>
+              <div class="text-xs text-slate-400 mt-0.5">
+                ${termCoursesDone}/${term.course_count} courses mastered (${termCompleted}/${termMilestones} milestones)
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="hidden sm:flex flex-col items-end">
+              <div class="text-xs font-mono font-bold text-emerald-400">${termPct}% Completed</div>
+              <div class="w-24 bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
+                <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full" style="width: ${termPct}%"></div>
+              </div>
+            </div>
+            <i data-lucide="${isTermOpen ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-slate-400"></i>
+          </div>
+        </div>
+
+        <!-- Semester Courses List (Branch) -->
+        <div class="${isTermOpen ? 'block' : 'hidden'} p-4 space-y-2.5 border-t border-slate-800">
+          ${coursesHtml}
+        </div>
+
+      </div>
+    `;
+  }).join('');
+
+  lucide.createIcons();
+}
+
 /* =========================================================================
-   13. AI STUDY ASSISTANT (Gemini Knowledge Hub)
+   13. COMPREHENSIVE BILINGUAL CUET ME AI STUDY COMPANION
    ========================================================================= */
 const ME_KNOWLEDGE_BASE = {
-  'lathe': `### 🔧 Workshop ME 154: Lathe Machine Viva & Quiz Guide
-1. **Definition:** A machine tool which rotates the workpiece about an axis of rotation to perform various operations such as cutting, sanding, knurling, drilling, and facing.
-2. **Major Components:**
-   - **Headstock:** Houses the spindle and speed change gears.
-   - **Tailstock:** Supports the free end of long workpieces and holds cutting tools like drill bits.
-   - **Carriage:** Transports the cutting tool along the bedways. Includes saddle, cross-slide, compound rest, and tool post.
-   - **Bed:** Heavy rigid base made of Grey Cast Iron for vibration damping.
-3. **Core Operations:** Facing, Straight Turning, Taper Turning, Threading, Knurling, Parting Off.`,
+  thermodynamics: {
+    title: '🔥 ME 211 / ME 411: Thermodynamics Principles & Laws',
+    en: `### 1. First & Second Laws of Thermodynamics
+- **First Law (Energy Conservation):** For a closed system: \\( \\delta Q = dU + \\delta W \\). Energy cannot be created or destroyed, only transformed.
+- **Kelvin-Planck Statement (2nd Law):** It is impossible for any cyclic device to absorb heat from a single thermal reservoir and convert 100% of it into work.
+- **Clausius Statement (2nd Law):** It is impossible to construct a refrigerator that transfers heat from a colder body to a hotter body without external work.
 
-  'thermodynamics': `### 🔥 ME 211 Thermodynamics: Second Law & Carnot Efficiency
-1. **Kelvin-Planck Statement:** Impossible to construct a device operating in a cycle that produces no effect other than the transfer of heat from a single thermal reservoir and the performance of an equivalent amount of work.
-2. **Clausius Statement:** Impossible to construct a device that transfers heat from a cooler body to a hotter body without requiring external work.
-3. **Carnot Thermal Efficiency:**
-   \\[ \\eta_{th} = 1 - \\frac{T_L}{T_H} \\]
-   *(Note: Temperatures \\(T_H\\) and \\(T_L\\) must always be in absolute units, Kelvin).*`,
+### 2. Carnot Cycle & Efficiency
+- Four reversible processes: Isothermal expansion, Isentropic expansion, Isothermal compression, Isentropic compression.
+- **Carnot Thermal Efficiency:**
+  \\[ \\eta_{\\text{Carnot}} = 1 - \\frac{T_L}{T_H} = \\frac{T_H - T_L}{T_H} \\quad (T \\text{ in Kelvin}) \\]
 
-  'bernoulli': `### 💧 ME 321 Fluid Mechanics: Bernoulli Equation
-1. **Equation:**
-   \\[ \\frac{P}{\\rho g} + \\frac{V^2}{2g} + z = \\text{Constant} \\]
-2. **Key Assumptions:**
-   - Steady flow
-   - Incompressible fluid (\\(\\rho = \\text{const}\\))
-   - Inviscid (frictionless / zero viscosity)
-   - Flow along a single streamline
-3. **Applications:** Venturimeter, Orifice Meter, Pitot tube for velocity measurement, aircraft wing lift generation.`,
+### 3. Vapor Compression Refrigeration (VCR)
+- **COP (Coefficient of Performance):**
+  \\[ \\text{COP}_{\\text{ref}} = \\frac{Q_L}{W_{\\text{in}}} = \\frac{h_1 - h_4}{h_2 - h_1} \\]
+- Common refrigerants: R-134a, R-410A, Ammonia (R-717).`,
+    bn: `### ১. থার্মোডাইনামিক্সের মূল সূত্রসমূহ (CUET ME 211)
+- **১ম সূত্র (শক্তির সংরক্ষণশীলতা):** \\( dQ = dU + dW \\) (সরবরাহকৃত তাপ অভ্যন্তরীণ শক্তি বৃদ্ধি ও কাজে ব্যয় হয়)।
+- **২য় সূত্র (কেলভিন-প্লাংক বিবৃতি):** কোনো সাইক্লিক ইঞ্জিন একক তাপাধার থেকে সম্পূর্ণ তাপ নিয়ে সমপরিমাণ কাজে রূপান্তর করতে পারে না (দক্ষতা কখনোই ১০০% হতে পারে না)।
+- **ক্লসিয়াসের বিবৃতি:** বাহ্যিক কাজ ছাড়া নিম্ন তাপমাত্রার বস্তু থেকে উচ্চ তাপমাত্রার বস্তুতে তাপ প্রবাহিত হতে পারে না।
 
-  'heat transfer': `### ♨️ ME 311 Heat Transfer: Core Laws & Formulas
-1. **Conduction (Fourier's Law):**
-   \\[ q = -k A \\frac{dT}{dx} \\]
-2. **Convection (Newton's Law of Cooling):**
-   \\[ q = h A (T_s - T_\\infty) \\]
-3. **Radiation (Stefan-Boltzmann Law):**
-   \\[ q = \\epsilon \\sigma A (T_s^4 - T_{surr}^4) \\quad (\\sigma = 5.67 \\times 10^{-8} \\text{ W/m}^2\\text{K}^4) \\]`
+### ২. কার্নো চক্রের দক্ষতা
+\\[ \\eta = 1 - \\frac{T_L}{T_H} \\]
+*(এখানে তাপমাত্রা \\(T_H\\) ও \\(T_L\\) অবশ্যই কেলভিনে (Kelvin) হিসাব করতে হবে)।*
+
+### ৩. রেফ্রিজারেশন চক্র ও COP
+\\[ \\text{COP} = \\frac{\\text{Refrigeration Effect}}{\\text{Work Input}} = \\frac{h_1 - h_4}{h_2 - h_1} \\]`
+  },
+
+  applied_thermo: {
+    title: '⚡ ME 411: Applied Thermodynamics, Brayton & Rankine Cycles',
+    en: `### 1. Rankine Steam Power Cycle
+- **Processes:** 1-2 Isentropic pump compression, 2-3 Constant pressure heat addition (Boiler), 3-4 Isentropic expansion (Turbine), 4-1 Constant pressure heat rejection (Condenser).
+- **Thermal Efficiency:** \\( \\eta = \\frac{W_{\\text{turb}} - W_{\\text{pump}}}{Q_{\\text{in}}} = \\frac{(h_3 - h_4) - (h_2 - h_1)}{h_3 - h_2} \\)
+- **Methods to increase efficiency:** Superheating steam, Reheating steam, Regeneration (feedwater heaters).
+
+### 2. Brayton Cycle (Gas Turbines & Jet Propulsion)
+- **Pressure Ratio (\\(r_p\\)):** \\( r_p = P_2 / P_1 \\)
+- **Thermal Efficiency:** \\[ \\eta_{\\text{Brayton}} = 1 - \\frac{1}{r_p^{(\\gamma-1)/\\gamma}} \\]
+- Used in aircraft turbojet/turbofan engines and combined cycle power plants.`,
+    bn: `### ১. র‍্যাঙ্কিন চক্র (Rankine Cycle - স্টিম পাওয়ার প্ল্যান্ট)
+- **চারটি ধাপ:** পাম্প সংকোচন (1-2), বয়লারে তাপ গ্রহণ (2-3), টারবাইনে কাজ (3-4), কনডেন্সারে ঘনীভবন (4-1)।
+- **দক্ষতা বৃদ্ধির উপায়:** স্টিম সুপারহিট করা, রি-হিট (Reheat) করা এবং রিজেনারেটিভ ফিডওয়াটার হিটার ব্যবহার করা।
+
+### ২. ব্রেইটন চক্র (Brayton Cycle - গ্যাস টারবাইন ও জেট ইঞ্জিন)
+\\[ \\eta = 1 - \\frac{1}{r_p^{(\\gamma-1)/\\gamma}} \\]
+- বিমান ইঞ্জিন (Jet Propulsion) এবং কম্বাইন্ড সাইকেল পাওয়ার প্ল্যান্টে ব্যবহৃত হয়।`
+  },
+
+  fluid_machinery: {
+    title: '💧 ME 421: Hydraulic Turbines & Centrifugal Pumps',
+    en: `### 1. Hydraulic Turbines Classification
+- **Pelton Wheel (Impulse Turbine):** High head (> 150m), Low discharge. Tangential flow. Uses bucket shaped blades with splitter. Governed by spear needle valve.
+- **Francis Turbine (Reaction Turbine):** Medium head (30m - 150m), Medium discharge. Mixed radial-inflow to axial-outflow. Requires draft tube.
+- **Kaplan Turbine (Reaction Axial):** Low head (< 30m), Very high discharge. Propeller blades are adjustable in operation.
+
+### 2. Centrifugal Pumps & Cavitation
+- **Specific Speed (\\(N_s\\)):**
+  \\[ N_s = \\frac{N \\sqrt{Q}}{H^{3/4}} \\]
+- **NPSH (Net Positive Suction Head):** To prevent cavitation, \\( \\text{NPSH}_{\\text{available}} > \\text{NPSH}_{\\text{required}} \\).
+- **Cavitation:** Formation of vapor bubbles at low pressure regions and their violent collapse causing severe metal surface erosion and vibration.`,
+    bn: `### ১. হাইড্রোলিক টারবাইনের শ্রেণিবিভাগ (CUET ME 421)
+- **পেল্টন হুইল (Pelton Wheel - ইমপালস):** উচ্চ হেড (> ১৫০ মিটার) ও কম প্রবাহ। স্প্লিটারযুক্ত বাকেট থাকে।
+- **ফ্রান্সিস টারবাইন (Francis Turbine - রিঅ্যাকশন):** মাঝারি হেড (৩০ - ১৫০ মিটার) ও মাঝারি প্রবাহ। ড্রাফট টিউব আবশ্যক।
+- **কাপলান টারবাইন (Kaplan Turbine - রিঅ্যাকশন অ্যাক্সিয়াল):** কম হেড (< ৩০ মিটার) ও সর্বোচ্চ পানি প্রবাহ।
+
+### ২. সেন্ট্রিফিউগাল পাম্প ও ক্যাভিটেশন (Cavitation)
+- **ক্যাভিটেশন কী:** পাম্পের কোনো অংশে পানির চাপ ভেপার প্রেশারের নিচে নেমে গেলে বাষ্পের বুদবুদ তৈরি হয় এবং ব্লেডে ধাক্কা লেগে মেটাল ক্ষয় হয়।
+- **প্রতিরোধ:** \\( \\text{NPSH}_{\\text{available}} > \\text{NPSH}_{\\text{required}} \\) নিশ্চিত করতে হবে এবং প্রাইমিং করতে হবে।`
+  },
+
+  heat_transfer: {
+    title: '♨️ ME 311: Conduction, Convection & Radiation',
+    en: `### 1. Three Modes of Heat Transfer
+- **Fourier's Conduction Law:**
+  \\[ q = -k A \\frac{dT}{dx} \\quad \\implies \\quad R_{\\text{thermal}} = \\frac{L}{k A} \\]
+- **Newton's Law of Cooling (Convection):**
+  \\[ q = h A (T_s - T_\\infty) \\]
+  Dimensionless numbers: Nusselt (\\(Nu = h L / k\\)), Reynolds (\\(Re = \\rho V L / \\mu\\)), Prandtl (\\(Pr = \\nu / \\alpha\\)).
+- **Stefan-Boltzmann Law (Radiation):**
+  \\[ E = \\epsilon \\sigma A (T_1^4 - T_2^4) \\quad (\\sigma = 5.67 \\times 10^{-8} \\text{ W/m}^2\\text{K}^4) \\]
+
+### 2. Heat Exchangers: LMTD & NTU Method
+- **Log Mean Temperature Difference (LMTD):**
+  \\[ \\Delta T_{lm} = \\frac{\\Delta T_1 - \\Delta T_2}{\\ln(\\Delta T_1 / \\Delta T_2)} \\]
+- Counter-flow heat exchangers achieve higher effectiveness than parallel-flow exchangers for the same surface area.`,
+    bn: `### ১. তাপ সঞ্চালনের তিন মোড (ME 311)
+- **পরিবহন (Fourier's Law):** \\( q = -kA \\frac{dT}{dx} \\)
+- **পরিচলন (Newton's Law):** \\( q = hA(T_s - T_\\infty) \\)
+- **বিকিরণ (Stefan-Boltzmann):** \\( q = \\epsilon \\sigma A(T_1^4 - T_2^4) \\) \\((\\sigma = 5.67 \\times 10^{-8} \\text{ W/m}^2\\text{K}^4)\\)
+
+### ২. হিট এক্সচেঞ্জার ও LMTD
+\\[ \\Delta T_{lm} = \\frac{\\Delta T_1 - \\Delta T_2}{\\ln(\\Delta T_1 / \\Delta T_2)} \\]
+- কাউন্টার-ফ্লো (Counter-flow) হিট এক্সচেঞ্জারের কার্যক্ষমতা প্যারালাল-ফ্লোর চেয়ে বেশি হয়।`
+  },
+
+  mechanics_design: {
+    title: '⚙️ ME 241 / ME 341: Stress-Strain, Mohr\'s Circle & Shaft Design',
+    en: `### 1. Bending & Torsion Formulas
+- **Pure Bending Formula:**
+  \\[ \\frac{M}{I} = \\frac{\\sigma}{y} = \\frac{E}{R} \\]
+- **Pure Torsion Formula:**
+  \\[ \\frac{T}{J} = \\frac{\\tau}{r} = \\frac{G \\theta}{L} \\]
+  For solid circular shaft of diameter \\(d\\): \\( \\tau = \\frac{16 T}{\\pi d^3} \\)
+
+### 2. Mohr's Circle for Plane Stress
+- Center: \\( C = \\left( \\frac{\\sigma_x + \\sigma_y}{2}, 0 \\right) \\)
+- Radius: \\( R = \\sqrt{\\left( \\frac{\\sigma_x - \\sigma_y}{2} \\right)^2 + \\tau_{xy}^2} \\)
+- Principal Stresses: \\( \\sigma_1, \\sigma_2 = \\frac{\\sigma_x + \\sigma_y}{2} \\pm R \\)
+- Max Shear Stress: \\( \\tau_{\\max} = R \\)
+
+### 3. Theories of Failure
+- **von Mises (Distortion Energy Theory):** Best for ductile materials subjected to dynamic/static multiaxial loads.
+- **Tresca (Max Shear Stress Theory):** Conservative design theory for ductile materials.
+- **Rankine (Max Normal Stress Theory):** Best for brittle materials (e.g. Cast Iron).`,
+    bn: `### ১. বেন্ডিং ও টরশন সূত্র (CUET ME 241)
+- **বেন্ডিং সূত্র:** \\( \\frac{M}{I} = \\frac{\\sigma}{y} = \\frac{E}{R} \\)
+- **টরশন সূত্র:** \\( \\frac{T}{J} = \\frac{\\tau}{r} = \\frac{G\\theta}{L} \\)
+  বৃত্তাকার শ্যাফটের জন্য: \\( \\tau = \\frac{16T}{\\pi d^3} \\)
+
+### ২. মোরের বৃত্ত (Mohr's Circle)
+- কেন্দ্র: \\( \\left( \\frac{\\sigma_x + \\sigma_y}{2}, 0 \\right) \\)
+- ব্যাসার্ধ: \\( R = \\sqrt{\\left(\\frac{\\sigma_x - \\sigma_y}{2}\\right)^2 + \\tau_{xy}^2} \\)
+- সর্বোচ্চ শিয়ার স্ট্রেস: \\( \\tau_{\\max} = R \\)
+
+### ৩. ফেইলিউর থিওরি (Theories of Failure)
+- **ভন মাইসেস (von Mises):** ডাকটাইল ধাতুর জন্য সবচেয়ে নিখুঁত।
+- **ম্যাক্সিমাম নরমাল স্ট্রেস (Rankine):** কাস্ট আয়রনের মতো ভঙ্গুর (brittle) পদার্থের জন্য প্রযোজ্য।`
+  },
+
+  workshop: {
+    title: '🔧 ME 154 / ME 251: Workshop Technology, Lathe & Welding',
+    en: `### 1. Lathe Machine
+- **Definition:** Machine tool where workpiece rotates and single-point cutting tool moves linearly.
+- **Operations:** Facing (perpendicular surface), Turning (reducing diameter), Taper turning, Knurling, Thread cutting.
+- **Headstock vs Tailstock:** Headstock drives spindle; Tailstock supports long jobs and holds drill bit.
+
+### 2. Welding Classification
+- **SMAW (Shielded Metal Arc Welding):** Flux-coated consumable electrode, AC/DC power source.
+- **TIG (GTAW):** Non-consumable tungsten electrode, inert argon shielding gas. Best for aluminum and thin stainless steel.
+- **MIG (GMAW):** Continuous spool wire electrode, argon/CO2 shield gas. High productivity.`,
+    bn: `### ১. লেদ মেশিন ও ওয়ার্কশপ ভাইভা (ME 154)
+- **লেদের কাজ:** ফেসিং, টার্নিং, টেপার টার্নিং, নার্লিং (গ্রিপের জন্য খসখসে প্যাটার্ন), থ্রেডিং বা প্যাঁচ কাটা।
+- **হেডস্টক বনাম টেলস্টক:** হেডস্টকে গিয়ার ও স্পিন্ডল থাকে যা জবকে ঘুরায়; টেলস্টক অপর প্রান্ত ধরে রাখে এবং ড্রিল বিট বহন করে।
+
+### ২. ওয়েল্ডিংয়ের প্রকারভেদ
+- **SMAW (আর্ক ওয়েল্ডিং):** ফ্লাক্স কোটেড ইলেকট্রোড ব্যবহৃত হয়।
+- **TIG (আর্গন ওয়েল্ডিং):** নন-কনজিউমেবল টাংস্টেন ইলেকট্রোড দিয়ে অ্যালুমিনিয়াম ও স্টেইনলেস স্টিল সূক্ষ্মভাবে জোড়া দেওয়া হয়।
+- **MIG:** স্পুল ওয়্যার স্বয়ংক্রিয়ভাবে ফিড হয়, দ্রুত কাজ হয়।`
+  },
+
+  bulletin_guide: {
+    title: '📘 CUET ME Bulletin, Ordinance & Grading Guidelines',
+    en: `### 1. Degree Requirements & Credit Distribution
+- Total credits required for B.Sc. in Mechanical Engineering: **160.00 Credits**.
+- Minimum CGPA required for award of degree: **2.20**.
+- 4 Academic Levels (Level 1 to Level 4), 2 Terms per Level (Total 8 Terms).
+
+### 2. Marks Distribution
+- **Theory Courses (100%):**
+  - Class Attendance: **10%**
+  - Class Tests (Best 3 out of 4 CTs): **20%**
+  - Term-Final Examination (Section A + Section B, 3 Hours): **70%**
+- **Sessional Courses (100%):**
+  - Attendance: **10%**
+  - Continuous Lab Reports & Performance: **50%**
+  - Lab Quiz & Final Viva Voce: **40%**
+
+### 3. Grading Policy Scale
+- 80% and above = **A+ (4.00)**
+- 75% to <80% = **A (3.75)**
+- 70% to <75% = **A- (3.50)**
+- 65% to <70% = **B+ (3.25)**
+- 60% to <65% = **B (3.00)**
+- Less than 40% = **F (0.00)**`,
+    bn: `### ১. চুয়েট মেকানিক্যাল সিলেবাস ও ডিগ্রি কারিকুলাম
+- মোট ক্রেডিট: **১৬০.০০ ক্রেডিট**।
+- ডিগ্রি অর্জনের ন্যূনতম CGPA: **২.২০**।
+- ৮টি সেমিস্টার (L1-T1 থেকে L4-T2)।
+
+### ২. নম্বর বণ্টন পদ্ধতি
+- **থিওরি কোর্স (১০০%):**
+  - উপস্থিতি (Attendance): **১০%**
+  - ক্লাস টেস্ট (৪টির মধ্যে সেরা ৩টি সিটি): **২০%**
+  - টার্ম ফাইনাল পরীক্ষা (৩ ঘণ্টা): **৭০%**
+- **সেশনাল ল্যাব কোর্স (১০০%):**
+  - ল্যাব শিট ও পারফরম্যান্স: **৫০%**
+  - ল্যাব কুইজ ও ভাইভা: **৪০%**
+  - উপস্থিতি: **১০%**
+
+### ৩. জিপিএ গ্রেডিং স্কেল
+- ৮০%+ = A+ (৪.০০)
+- ৭৫% - ৭৯% = A (৩.৭৫)
+- ৭০% - ৭৪% = A- (৩.৫০)
+- ৬৫% - ৬৯% = B+ (৩.২৫)
+- ৬০% - ৬৪% = B (৩.০০)
+- ৪০% এর কম = F (০.০০)`
+  }
 };
 
 function askPresetPrompt(promptText) {
-  document.getElementById('aiInputPrompt').value = promptText;
-  handleAiSubmit(new Event('submit'));
+  const input = document.getElementById('aiInputPrompt');
+  if (input) {
+    input.value = promptText;
+    handleAiSubmit(new Event('submit'));
+  }
+}
+
+function copyAiResponse(btn) {
+  const container = btn.closest('.ai-message-card');
+  if (!container) return;
+  const text = container.querySelector('.ai-prose').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Copied!`;
+    lucide.createIcons();
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      lucide.createIcons();
+    }, 2000);
+  });
 }
 
 function handleAiSubmit(e) {
@@ -1407,13 +1981,16 @@ function handleAiSubmit(e) {
   if (!query) return;
 
   const chatBox = document.getElementById('aiChatBox');
+  const isBangla = /[\u0980-\u09FF]/.test(query);
+
+  // User Message bubble
   const userDiv = document.createElement('div');
   userDiv.className = 'flex items-start gap-3 justify-end';
   userDiv.innerHTML = `
-    <div class="bg-purple-600 rounded-2xl rounded-tr-none p-3.5 text-sm text-white max-w-2xl leading-relaxed shadow-md">
+    <div class="bg-indigo-600 rounded-2xl rounded-tr-none p-3.5 text-xs sm:text-sm text-white max-w-xl leading-relaxed shadow-md">
       ${query}
     </div>
-    <div class="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0 text-white">
+    <div class="w-8 h-8 rounded-xl bg-slate-700 flex items-center justify-center flex-shrink-0 text-white shadow">
       <i data-lucide="user" class="w-4 h-4"></i>
     </div>
   `;
@@ -1422,16 +1999,17 @@ function handleAiSubmit(e) {
   chatBox.scrollTop = chatBox.scrollHeight;
   lucide.createIcons();
 
+  // Bot Loading Bubble
   const botDiv = document.createElement('div');
   botDiv.className = 'flex items-start gap-3';
   botDiv.innerHTML = `
-    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center flex-shrink-0 text-white">
-      <i data-lucide="bot" class="w-4 h-4"></i>
+    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center flex-shrink-0 text-white shadow">
+      <i data-lucide="sparkles" class="w-4 h-4"></i>
     </div>
-    <div class="bg-slate-800/80 rounded-2xl rounded-tl-none p-3.5 text-sm text-slate-200 border border-slate-700/60 max-w-2xl leading-relaxed">
+    <div class="ai-message-card bg-slate-800/80 rounded-2xl rounded-tl-none p-4 text-xs sm:text-sm text-slate-200 border border-slate-700/60 max-w-2xl leading-relaxed shadow-lg space-y-2">
       <div class="flex items-center gap-1.5 text-xs text-purple-400">
-        <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
-        <span>Analyzing academic course knowledge...</span>
+        <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
+        <span>${isBangla ? 'চুয়েট মেকানিক্যাল কোর্স বিশ্লেষণ করা হচ্ছে...' : 'Analyzing CUET Mechanical Engineering knowledge...'}</span>
       </div>
     </div>
   `;
@@ -1439,32 +2017,64 @@ function handleAiSubmit(e) {
   chatBox.scrollTop = chatBox.scrollHeight;
 
   setTimeout(() => {
-    let answer = '';
     const qLower = query.toLowerCase();
+    let topicKey = null;
 
-    if (qLower.includes('lathe') || qLower.includes('me 154') || qLower.includes('workshop')) {
-      answer = ME_KNOWLEDGE_BASE['lathe'];
-    } else if (qLower.includes('thermodynamic') || qLower.includes('carnot') || qLower.includes('me 211')) {
-      answer = ME_KNOWLEDGE_BASE['thermodynamics'];
-    } else if (qLower.includes('bernoulli') || qLower.includes('fluid') || qLower.includes('me 321')) {
-      answer = ME_KNOWLEDGE_BASE['bernoulli'];
-    } else if (qLower.includes('heat') || qLower.includes('conduction') || qLower.includes('me 311')) {
-      answer = ME_KNOWLEDGE_BASE['heat transfer'];
-    } else {
-      answer = `### 💡 Course Reference & Exam Insights
-Your Query: **"${query}"**
-
-1. **Course Vault:** You can find the full slides, lecture notes, and past question bank in the respective semester course folder in the **Course Explorer** tab.
-2. **Exam Preparation Tip:**
-   - Always draw a clear, labeled schematic diagram.
-   - Explicitly list the boundary conditions and assumptions.
-   - Solve previous year term-final questions for this specific topic.`;
+    if (qLower.includes('lathe') || qLower.includes('workshop') || qLower.includes('welding') || qLower.includes('লেদ') || qLower.includes('ওয়ার্কশপ')) {
+      topicKey = 'workshop';
+    } else if (qLower.includes('rankine') || qLower.includes('brayton') || qLower.includes('jet') || qLower.includes('turbine') || qLower.includes('র‍্যাঙ্কিন') || qLower.includes('টারবাইন')) {
+      topicKey = 'applied_thermo';
+    } else if (qLower.includes('pelton') || qLower.includes('francis') || qLower.includes('kaplan') || qLower.includes('pump') || qLower.includes('cavitation') || qLower.includes('পেল্টন') || qLower.includes('পাম্প')) {
+      topicKey = 'fluid_machinery';
+    } else if (qLower.includes('heat') || qLower.includes('conduction') || qLower.includes('convection') || qLower.includes('radiation') || qLower.includes('lmtd') || qLower.includes('তাপ')) {
+      topicKey = 'heat_transfer';
+    } else if (qLower.includes('stress') || qLower.includes('strain') || qLower.includes('mohr') || qLower.includes('bending') || qLower.includes('torsion') || qLower.includes('মোরের') || qLower.includes('স্ট্রেস')) {
+      topicKey = 'mechanics_design';
+    } else if (qLower.includes('bulletin') || qLower.includes('syllabus') || qLower.includes('grading') || qLower.includes('grade') || qLower.includes('credit') || qLower.includes('বুলেটিন') || qLower.includes('সিলেবাস') || qLower.includes('গ্রেডিং')) {
+      topicKey = 'bulletin_guide';
+    } else if (qLower.includes('thermodynamic') || qLower.includes('carnot') || qLower.includes('cop') || qLower.includes('refrigeration') || qLower.includes('কার্নো')) {
+      topicKey = 'thermodynamics';
     }
 
-    botDiv.querySelector('.bg-slate-800\\/80').innerHTML = answer.replace(/\n/g, '<br>');
+    let answerHtml = '';
+    if (topicKey && ME_KNOWLEDGE_BASE[topicKey]) {
+      const topic = ME_KNOWLEDGE_BASE[topicKey];
+      const rawText = isBangla ? topic.bn : topic.en;
+      answerHtml = `
+        <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+          <span class="font-bold text-xs text-indigo-300">${topic.title}</span>
+          <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
+            <i data-lucide="copy" class="w-3 h-3"></i> Copy
+          </button>
+        </div>
+        <div class="ai-prose">${rawText.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>')}</div>
+      `;
+    } else {
+      answerHtml = `
+        <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+          <span class="font-bold text-xs text-purple-300">💡 CUET ME Academic Guidance</span>
+          <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
+            <i data-lucide="copy" class="w-3 h-3"></i> Copy
+          </button>
+        </div>
+        <div class="ai-prose space-y-2">
+          <p><strong>Query:</strong> "${query}"</p>
+          <p>${isBangla 
+            ? 'এই বিষয়ের সম্পূর্ণ ক্লাস লেকচার নোটস, বিগত বছরের সিটি এবং টার্ম ফাইনাল প্রশ্নব্যাংক দেখতে <strong>Course Explorer</strong> ট্যাবে নির্দিষ্ট সেমিস্টার ফোল্ডারে প্রবেশ করুন।' 
+            : 'For comprehensive lecture slides, CT solutions, and term-final question banks on this topic, check the respective semester folder under the <strong>Course Explorer</strong> tab.'}</p>
+          <ul class="text-xs text-slate-300 space-y-1">
+            <li>📌 <strong>Exam Preparation Tip:</strong> Draw neat schematic diagrams with labelled axes and state your boundary assumptions clearly.</li>
+            <li>📌 <strong>Formula Mastery:</strong> Ensure all absolute temperature units are converted to Kelvin (K) and pressure to Pascal (Pa/kPa).</li>
+            <li>📌 <strong>Question Bank:</strong> Practice the past 5-year CUET final exam questions available in the Explorer folder.</li>
+          </ul>
+        </div>
+      `;
+    }
+
+    botDiv.querySelector('.ai-message-card').innerHTML = answerHtml;
     chatBox.scrollTop = chatBox.scrollHeight;
     lucide.createIcons();
-  }, 500);
+  }, 400);
 }
 
 /* =========================================================================
