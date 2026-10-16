@@ -98,3 +98,31 @@ dialog[open] {
   background: linear-gradient(135deg, #f59e0b, #ef4444);
   box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
 }
+
+/* Mobile Responsiveness & Bottom Navigation */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 4.5rem);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Accordion Smooth Transitions */
+.branch-content {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Chat bubble styling */
+.ai-prose p { margin-bottom: 0.5rem; }
+.ai-prose p:last-child { margin-bottom: 0; }
+.ai-prose ul { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+.ai-prose ol { list-style-type: decimal; margin-left: 1.25rem; margin-bottom: 0.5rem; }
+.ai-prose h3 { font-size: 0.95rem; font-weight: 700; color: #a5b4fc; margin-top: 0.5rem; margin-bottom: 0.25rem; }
+.ai-prose code { background: rgba(15, 23, 42, 0.8); padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-family: var(--font-mono); font-size: 0.8em; color: #38bdf8; }
+.ai-prose pre { background: rgba(15, 23, 42, 0.9); padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+
