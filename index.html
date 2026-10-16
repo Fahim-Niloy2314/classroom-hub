@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="bn" class="dark">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Classroom Hub | Fahim Niloy (CUET ME '20)</title>
-  <meta name="description" content="All-in-One Mechanical Engineering Academic Resource Portal & Study Hub for CUET '20 Series">
+  <meta name="description" content="All-in-One Mechanical Engineering Academic Resource Portal & Folder Explorer for CUET '20 Series">
+  
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -26,90 +27,107 @@
       }
     }
   </script>
-  <!-- Lucide Icons -->
+  
+  <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
 
-  <!-- TOP NAVIGATION BAR -->
+  <!-- ==================== TOP NAVIGATION BAR ==================== -->
   <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
       
       <!-- Brand Logo -->
-      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
+      <div class="flex items-center space-x-3 cursor-pointer flex-shrink-0" onclick="switchTab('home')">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
           <i data-lucide="graduation-cap" class="w-6 h-6 text-white"></i>
         </div>
         <div>
           <span class="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
             Classroom<span class="text-indigo-400">Hub</span>
-            <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">ME '20</span>
+            <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">CUET ME '20</span>
           </span>
-          <p class="text-xs text-slate-400 hidden sm:block">CUET Mechanical Engineering Archive</p>
+          <p class="text-xs text-slate-400 hidden sm:block" data-i18n="nav_sub">CUET Mechanical Engineering Archive</p>
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
-      <nav class="hidden md:flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+      <!-- Navigation Tabs (Desktop) -->
+      <nav class="hidden lg:flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
         <button id="nav-tab-home" onclick="switchTab('home')" class="nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-white bg-indigo-600 shadow-sm">
           <i data-lucide="home" class="w-4 h-4"></i>
-          <span>হোম (Home)</span>
+          <span data-i18n="tab_home">Home</span>
         </button>
         <button id="nav-tab-resources" onclick="switchTab('resources')" class="nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
-          <i data-lucide="book-open" class="w-4 h-4"></i>
-          <span>রিসোর্স আর্কাইভ</span>
+          <i data-lucide="folder" class="w-4 h-4"></i>
+          <span data-i18n="tab_resources">Course Explorer</span>
         </button>
         <button id="nav-tab-ai" onclick="switchTab('ai')" class="nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
           <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
-          <span>AI স্টাডি অ্যাসিস্ট্যান্ট</span>
+          <span data-i18n="tab_ai">AI Assistant</span>
         </button>
         <button id="nav-tab-tracker" onclick="switchTab('tracker')" class="nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
           <i data-lucide="check-square" class="w-4 h-4"></i>
-          <span>সিলেবাস ট্র্যাকার</span>
+          <span data-i18n="tab_tracker">Progress Tracker</span>
+        </button>
+        <!-- Admin Moderation Tab (Shown only to Fahim Niloy's Admin accounts) -->
+        <button id="nav-tab-admin" onclick="switchTab('admin')" class="hidden nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-amber-300 hover:bg-amber-500/10 border border-amber-500/30">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400"></i>
+          <span data-i18n="tab_admin">Admin Review</span>
+          <span id="adminPendingBadge" class="bg-amber-500 text-slate-950 px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
         </button>
       </nav>
 
-      <!-- Right Header Actions: Pro Badge + Auth -->
-      <div class="flex items-center space-x-3">
-        <!-- Lifetime Pro Badge Button -->
-        <button id="proBadgeBtn" onclick="openUpgradeModal()" class="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95 bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 shadow-sm">
-          <i data-lucide="crown" class="w-3.5 h-3.5 text-amber-400"></i>
-          <span id="proBadgeText">Free Access</span>
-          <span class="bg-amber-500 text-slate-950 px-1 rounded text-[9px] font-bold">UPGRADE</span>
+      <!-- Right Header Actions -->
+      <div class="flex items-center space-x-2">
+        
+        <!-- Language Switcher Toggle (EN | BN) -->
+        <button id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language / ভাষা পরিবর্তন করুন" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+          <i data-lucide="languages" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span id="langLabel">EN / বাং</span>
         </button>
 
-        <!-- User Profile / Login Button -->
-        <button id="authBtn" onclick="openAuthModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 text-sm font-medium transition-all">
-          <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
-          <span id="authBtnLabel">লগইন</span>
+        <!-- Pro / Premium Badge (Complimentary free for everyone) -->
+        <button id="proBadgeBtn" onclick="openUpgradeModal()" class="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 shadow-sm">
+          <i data-lucide="crown" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span id="proBadgeText" data-i18n="pro_badge_free">Pro (Free Access)</span>
         </button>
+
+        <!-- User Authentication & Sign Out Section -->
+        <div id="authHeaderContainer" class="flex items-center gap-2">
+          <!-- Populated dynamically via JS: Login button OR Profile pill with Logout -->
+        </div>
+
       </div>
 
     </div>
 
-    <!-- Mobile Nav Bar (Bottom or under header) -->
-    <div class="md:hidden flex items-center justify-around bg-slate-900 border-t border-slate-800 py-2 px-2 text-xs">
+    <!-- Mobile Nav Bar (Bottom) -->
+    <div class="lg:hidden flex items-center justify-around bg-slate-900 border-t border-slate-800 py-2 px-2 text-xs">
       <button onclick="switchTab('home')" class="flex flex-col items-center gap-1 text-indigo-400 py-1">
         <i data-lucide="home" class="w-4 h-4"></i>
-        <span>হোম</span>
+        <span data-i18n="tab_home">Home</span>
       </button>
       <button onclick="switchTab('resources')" class="flex flex-col items-center gap-1 text-slate-400 py-1">
-        <i data-lucide="book-open" class="w-4 h-4"></i>
-        <span>রিসোর্স</span>
+        <i data-lucide="folder" class="w-4 h-4"></i>
+        <span data-i18n="tab_resources">Explorer</span>
       </button>
       <button onclick="switchTab('ai')" class="flex flex-col items-center gap-1 text-slate-400 py-1">
         <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
-        <span>AI সাহায্যকারী</span>
+        <span data-i18n="tab_ai">AI</span>
       </button>
       <button onclick="switchTab('tracker')" class="flex flex-col items-center gap-1 text-slate-400 py-1">
         <i data-lucide="check-square" class="w-4 h-4"></i>
-        <span>ট্র্যাকার</span>
+        <span data-i18n="tab_tracker">Tracker</span>
+      </button>
+      <button id="mobileNavAdminBtn" onclick="switchTab('admin')" class="hidden flex flex-col items-center gap-1 text-amber-400 py-1">
+        <i data-lucide="shield-check" class="w-4 h-4"></i>
+        <span data-i18n="tab_admin">Admin</span>
       </button>
     </div>
   </header>
 
-  <!-- MAIN VIEWPORT -->
+  <!-- ==================== MAIN VIEWPORT ==================== -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
     <!-- ==================== 1. HOME VIEW ==================== -->
@@ -126,42 +144,42 @@
           <div class="lg:col-span-8 space-y-4">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Mechanical Engineering Academic Archive & Resource Hub
+              <span data-i18n="hero_badge">CUET Mechanical Engineering Academic Vault & Folder Explorer</span>
             </div>
             
             <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight text-white">
-              স্বাগতম! আমি <span class="text-gradient-primary">ফাহিম নিলয়</span>
+              <span data-i18n="hero_welcome">Welcome! I am</span> <span class="text-gradient-primary">Fahim Niloy</span>
             </h1>
 
-            <p class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl">
-              চট্টগ্রাম প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় (<strong class="text-white">CUET</strong>)-এর মেকানিক্যাল ইঞ্জিনিয়ারিং ডিপার্টমেন্টের ('২০ সিরিজ, রোল: <code class="text-indigo-300 bg-slate-800 px-1.5 py-0.5 rounded font-mono">2003063</code>) লেভেল ১ টার্ম ১ থেকে লেভেল ৪ টার্ম ২ পর্যন্ত সমস্ত ক্লাস লেকচার, ল্যাব ম্যানুয়াল, ভাইভা ও কুইজ প্রশ্নব্যাংক এবং একাডেমিক বুলেটিন এক প্ল্যাটফর্মে সাজিয়ে তৈরি এই স্মার্ট পোর্টাল।
+            <p class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl" data-i18n="hero_desc">
+              Chittagong University of Engineering and Technology (CUET), Department of Mechanical Engineering ('20 Batch, Roll: 2003063). Complete digital academic repository from Level 1 Term 1 to Level 4 Term 2, organized exactly like our course folders with lecture notes, lab sheets, question banks, and the undergraduate bulletin.
             </p>
 
             <!-- Links & Action Buttons -->
             <div class="flex flex-wrap items-center gap-3 pt-2">
               <button onclick="switchTab('resources')" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all transform hover:-translate-y-0.5">
                 <i data-lucide="folder-search" class="w-4 h-4"></i>
-                <span>রিসোর্স ব্রাউজ করুন</span>
+                <span data-i18n="btn_explore_courses">Browse Course Folders</span>
               </button>
               
               <!-- Direct Netlify Portfolio Link -->
               <a id="homeNetlifyLink" href="https://fahim-classroom-archive.netlify.app" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 font-medium text-sm flex items-center gap-2 transition-all">
                 <i data-lucide="globe" class="w-4 h-4"></i>
-                <span>আমার নেটলিফাই পোর্টফোলিও</span>
+                <span data-i18n="btn_portfolio">My Netlify Portfolio</span>
                 <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-70"></i>
               </a>
 
               <!-- Direct GitHub Link -->
               <a id="homeGithubLink" href="https://github.com/Fahim-Niloy2314/classroom-hub" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm flex items-center gap-2 transition-all">
                 <i data-lucide="github" class="w-4 h-4 text-purple-400"></i>
-                <span>গিটহাব প্রজেক্ট ও লাইভ ওয়েবসাইট</span>
+                <span data-i18n="btn_github">GitHub Repository & Live Page</span>
                 <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-70"></i>
               </a>
 
               <!-- Direct Google Link -->
               <a id="homeGoogleLink" href="https://drive.google.com" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm flex items-center gap-2 transition-all">
                 <i data-lucide="hard-drive" class="w-4 h-4 text-blue-400"></i>
-                <span>গুগল ড্রাইভ ফোল্ডার</span>
+                <span data-i18n="btn_drive">Google Drive</span>
                 <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-70"></i>
               </a>
             </div>
@@ -170,14 +188,16 @@
             <div class="pt-4 flex flex-wrap items-center gap-4 text-xs text-slate-400 border-t border-slate-800/80">
               <div class="flex items-center gap-2">
                 <i data-lucide="mail" class="w-4 h-4 text-indigo-400"></i>
-                <span>ইমেইল:</span>
-                <a id="homeEmailLink" href="mailto:fahimniloy2003063@gmail.com" class="text-slate-200 hover:text-indigo-400 underline">fahimniloy2003063@gmail.com</a>
+                <span data-i18n="label_email">Email:</span>
+                <a id="homeEmailLink" href="mailto:fahim.cuet.me20@gmail.com" class="text-slate-200 hover:text-indigo-400 underline">fahim.cuet.me20@gmail.com</a>
+                <span class="text-slate-600">|</span>
+                <a id="homeEmailSecondaryLink" href="mailto:fahimniloy2314@gmail.com" class="text-slate-200 hover:text-indigo-400 underline">fahimniloy2314@gmail.com</a>
               </div>
               <div class="flex items-center gap-2">
                 <i data-lucide="phone" class="w-4 h-4 text-emerald-400"></i>
-                <span>মোবাইল:</span>
+                <span data-i18n="label_phone">Phone:</span>
                 <a id="homePhoneLink" href="tel:+8801700000000" class="text-slate-200 hover:text-emerald-400 font-mono">+880 1700-000000</a>
-                <button onclick="openEditContactModal()" title="তথ্য পরিবর্তন করুন" class="text-slate-500 hover:text-indigo-400 p-0.5">
+                <button onclick="openEditContactModal()" title="Edit Contact" class="text-slate-500 hover:text-indigo-400 p-0.5">
                   <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                 </button>
               </div>
@@ -188,26 +208,26 @@
           <!-- Quick Stats Counter Card -->
           <div class="lg:col-span-4 bg-slate-900/90 rounded-2xl p-6 border border-slate-800 shadow-xl space-y-4">
             <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-              <span>একাডেমিক ডেটা ভল্ট</span>
-              <span class="text-xs text-emerald-400 font-normal">● লাইভ ইনডেক্সড</span>
+              <span data-i18n="stats_header">Academic Data Vault</span>
+              <span class="text-xs text-emerald-400 font-normal">● Live Indexed</span>
             </h3>
 
             <div class="grid grid-cols-2 gap-3">
               <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
                 <div class="text-2xl font-bold text-indigo-400" id="statFilesCount">3,896</div>
-                <div class="text-xs text-slate-400">মোট একাডেমিক ফাইল</div>
+                <div class="text-xs text-slate-400" data-i18n="stat_files">Total Academic Files</div>
               </div>
               <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
                 <div class="text-2xl font-bold text-emerald-400" id="statPdfCount">2,986</div>
-                <div class="text-xs text-slate-400">পিডিএফ ও লেকচার নোট</div>
+                <div class="text-xs text-slate-400" data-i18n="stat_pdfs">PDFs & Lecture Notes</div>
               </div>
               <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
                 <div class="text-2xl font-bold text-purple-400" id="statTermsCount">8</div>
-                <div class="text-xs text-slate-400">সেমিস্টার (L1-T1 থেকে L4-T2)</div>
+                <div class="text-xs text-slate-400" data-i18n="stat_semesters">Semesters (L1-T1 to L4-T2)</div>
               </div>
               <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
                 <div class="text-2xl font-bold text-amber-400" id="statCoursesCount">50+</div>
-                <div class="text-xs text-slate-400">কোর্স ও সেশনাল ল্যাব</div>
+                <div class="text-xs text-slate-400" data-i18n="stat_courses">Courses & Sessionals</div>
               </div>
             </div>
 
@@ -217,10 +237,10 @@
                 <i data-lucide="file-text" class="w-5 h-5 text-indigo-400"></i>
                 <div>
                   <div class="text-xs font-semibold text-white">Undergraduate ME Bulletin</div>
-                  <div class="text-[11px] text-slate-400">অফিসিয়াল সিলেবাস ও কারিকুলাম (46.7 MB)</div>
+                  <div class="text-[11px] text-slate-400" data-i18n="bulletin_sub">Official Syllabus & Curriculum (46.7 MB)</div>
                 </div>
               </div>
-              <span class="text-xs text-indigo-300 font-medium">পড়ুন →</span>
+              <span class="text-xs text-indigo-300 font-medium">Read →</span>
             </div>
 
           </div>
@@ -228,92 +248,104 @@
         </div>
       </div>
 
-      <!-- SEMESTERS OVERVIEW GRID (L1-T1 to L4-T2) -->
+      <!-- SEMESTERS OVERVIEW FOLDER GRID (L1-T1 to L4-T2) -->
       <div>
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-bold text-white flex items-center gap-2">
-            <i data-lucide="layers" class="w-5 h-5 text-indigo-400"></i>
-            <span>সেমিস্টার ভিত্তিক রিসোর্স তালিকা</span>
+            <i data-lucide="folder" class="w-5 h-5 text-indigo-400"></i>
+            <span data-i18n="semesters_header">Semester Folders</span>
           </h2>
-          <span class="text-xs text-slate-400">যেকোনো সেমিস্টারে ক্লিক করে কোর্স দেখুন</span>
+          <span class="text-xs text-slate-400" data-i18n="semesters_sub">Click any semester folder to browse its course folders</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="homeSemestersGrid">
-          <!-- Dynamically populated via JS -->
+          <!-- Populated via JS -->
         </div>
       </div>
 
-      <!-- LIFETIME ACCESS BANNER -->
-      <div class="rounded-2xl glass-card p-6 border border-amber-500/30 bg-gradient-to-r from-amber-950/30 via-slate-900 to-indigo-950/30 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <!-- PRO ACCESS / COMPLIMENTARY BANNER -->
+      <div class="rounded-2xl glass-card p-6 border border-emerald-500/30 bg-gradient-to-r from-emerald-950/20 via-slate-900 to-indigo-950/30 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div class="space-y-2 text-center sm:text-left">
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
-            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-            <span>এককালীন পেমেন্ট — আজীবন অ্যাক্সেস (Lifetime Access)</span>
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span data-i18n="pro_banner_badge">All Features Unlocked — 100% Free for Everyone</span>
           </div>
-          <h3 class="text-xl font-bold text-white">সম্পূর্ণ মেকানিক্যাল ইঞ্জিনিয়ারিং রিসোর্স আনলক করুন</h3>
-          <p class="text-xs sm:text-sm text-slate-300 max-w-xl">
-            একবার যুক্ত হয়ে সম্পূর্ণ ৪ বছরের সব প্রশ্নব্যাংক, সেশনাল কোড, অফলাইন ডাউনলোড ও এআই স্টাডি অ্যাসিস্ট্যান্ট সবসময় ব্যবহার করার সুবিধা।
+          <h3 class="text-xl font-bold text-white" data-i18n="pro_banner_title">Full Academic Access for All CUETians</h3>
+          <p class="text-xs sm:text-sm text-slate-300 max-w-xl" data-i18n="pro_banner_desc">
+            Paid subscription is currently under development. All 8 semesters, question banks, lecture slides, CAD models, and AI study assistant are completely open and complimentary!
           </p>
         </div>
-        <button onclick="openUpgradeModal()" class="whitespace-nowrap px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
-          <i data-lucide="sparkles" class="w-4 h-4"></i>
-          <span>আপগ্রেড অপশন দেখুন (৳499)</span>
+        <button onclick="openUpgradeModal()" class="whitespace-nowrap px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
+          <i data-lucide="info" class="w-4 h-4"></i>
+          <span data-i18n="btn_pro_details">Pro Access Details</span>
         </button>
       </div>
 
     </section>
 
-    <!-- ==================== 2. RESOURCES & ARCHIVE VIEW ==================== -->
+    <!-- ==================== 2. COURSE & FOLDER EXPLORER VIEW ==================== -->
     <section id="view-resources" class="hidden space-y-6">
       
-      <!-- Top Filters & Search Bar -->
+      <!-- Top Control Bar: Search & Contribute Resource -->
       <div class="glass-panel p-4 sm:p-6 rounded-2xl space-y-4">
         
-        <!-- Search and Quick Category Filter -->
         <div class="flex flex-col sm:flex-row items-center gap-3">
+          <!-- Search Input -->
           <div class="relative flex-1 w-full">
             <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
             <input 
               id="resourceSearchInput" 
               type="text" 
-              placeholder="কোর্স কোড, টপিক বা ফাইলের নাম দিয়ে খুঁজুন (যেমন: ME 154, Lathe, Thermodynamics, Quiz)..." 
+              placeholder="Search by course code, topic, or file name (e.g., ME 411, ME 154, Lathe, Thermodynamics)..." 
               oninput="handleSearch(this.value)"
               class="w-full pl-11 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm text-white placeholder-slate-400 transition-all outline-none"
             >
           </div>
           
-          <button onclick="clearSearch()" class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-all">
+          <!-- Submit Resource Button (For students) -->
+          <button onclick="openSubmitResourceModal()" class="whitespace-nowrap px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md transition-all">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span data-i18n="btn_contribute">+ Share Resource</span>
+          </button>
+
+          <!-- Reset Filter -->
+          <button onclick="clearSearch()" class="whitespace-nowrap px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-all">
             <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-            <span>রিসেট ফিল্টার</span>
+            <span data-i18n="btn_reset">Reset</span>
           </button>
         </div>
 
-        <!-- Term Selection Pills -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none" id="termFilterPills">
-          <!-- Populated via JS: All, L1-T1, L1-T2, etc. -->
+        <!-- Interactive Breadcrumbs Navigation (Classroom > L4-T2 > ME-411) -->
+        <div class="flex items-center gap-2 text-xs font-medium text-slate-400 overflow-x-auto pb-1" id="explorerBreadcrumbs">
+          <!-- Populated dynamically via JS -->
         </div>
 
         <!-- Category & Format Filter Pills -->
         <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs" id="categoryFilterPills">
-          <!-- Populated via JS: All, PDFs, Questions, Labs, Slides, CAD -->
+          <!-- Populated via JS -->
         </div>
 
       </div>
 
-      <!-- Results Header -->
+      <!-- Navigation Level Indicator & Back Button -->
       <div class="flex items-center justify-between px-1">
-        <div class="text-sm text-slate-300 font-medium flex items-center gap-2">
-          <span>মোট পাওয়া গেছে:</span>
-          <span id="filteredCountBadge" class="bg-indigo-600/30 text-indigo-300 px-2 py-0.5 rounded-full text-xs font-bold border border-indigo-500/40">0</span>
-          <span class="text-slate-500">ফাইল</span>
+        <div class="flex items-center gap-3">
+          <button id="explorerBackBtn" onclick="navigateExplorerUp()" class="hidden px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-semibold flex items-center gap-1 transition-all">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+            <span data-i18n="btn_back">Back</span>
+          </button>
+          <div class="text-sm text-slate-300 font-medium flex items-center gap-2">
+            <span id="explorerViewTitle">All Semesters</span>
+            <span id="filteredCountBadge" class="bg-indigo-600/30 text-indigo-300 px-2 py-0.5 rounded-full text-xs font-bold border border-indigo-500/40">0</span>
+          </div>
         </div>
-        <div class="text-xs text-slate-400 hidden sm:block">
-          ক্লিক করে ব্রাউজারে পড়ুন অথবা সিস্টেমে সরাসরি ওপেন করুন
+        <div class="text-xs text-slate-400 hidden sm:block" data-i18n="explorer_hint">
+          Click folders to drill down into courses and files
         </div>
       </div>
 
-      <!-- Files Display Grid / Container -->
-      <div id="resourcesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Explorer Content Container: Shows Semesters OR Course Folders OR Files -->
+      <div id="explorerGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <!-- Rendered via JS -->
       </div>
 
@@ -330,9 +362,9 @@
               <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
               <span>Gemini AI Academic Assistant</span>
             </div>
-            <h2 class="text-2xl font-bold text-white">মেকানিক্যাল ইঞ্জিনিয়ারিং স্টাডি অ্যাসিস্ট্যান্ট</h2>
-            <p class="text-xs sm:text-sm text-slate-300">
-              আপনার কোর্সের যেকোনো টপিকের সারাংশ, ভাইভা প্রশ্ন, কুইজের উত্তর বা গাণিতিক সূত্রের ব্যাখ্যা জানতে প্রশ্ন করুন।
+            <h2 class="text-2xl font-bold text-white" data-i18n="ai_header">Mechanical Engineering AI Study Companion</h2>
+            <p class="text-xs sm:text-sm text-slate-300" data-i18n="ai_sub">
+              Ask any question regarding your CUET ME courses, viva questions, thermodynamics formulas, fluid mechanics, or exam tips.
             </p>
           </div>
           <span class="px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 text-xs font-medium">
@@ -342,22 +374,22 @@
 
         <!-- Preset Topic Question Pills -->
         <div class="mb-6 space-y-2">
-          <div class="text-xs font-medium text-slate-400">জনপ্রিয় প্রশ্নসমূহ (ক্লিক করুন):</div>
+          <div class="text-xs font-medium text-slate-400" data-i18n="ai_popular">Popular questions (Click to ask):</div>
           <div class="flex flex-wrap gap-2 text-xs">
-            <button onclick="askPresetPrompt('ME 154 Workshop এর Lathe Machine ভাইভায় সাধারণত কী কী প্রশ্ন জিজ্ঞাসা করা হয়?')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700/80 transition-all text-left">
-              🔧 Lathe Machine ভাইভা প্রশ্ন (ME 154)
+            <button onclick="askPresetPrompt('What are common viva and quiz questions for ME 154 Workshop Lathe Machine?')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700/80 transition-all text-left">
+              🔧 Lathe Machine Viva (ME 154)
             </button>
-            <button onclick="askPresetPrompt('ME 211 Thermodynamics এর Second Law ও Carnot Cycle এর মূল ধারণা সহজ বাংলায় সংক্ষেপে বুঝিয়ে দাও।')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700/80 transition-all text-left">
-              🔥 Thermodynamics 2nd Law সারমর্ম (ME 211)
+            <button onclick="askPresetPrompt('Explain ME 211 Thermodynamics Second Law and Carnot Cycle efficiency concisely.')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700/80 transition-all text-left">
+              🔥 Thermodynamics 2nd Law (ME 211)
             </button>
-            <button onclick="askPresetPrompt('Fluid Mechanics এ Bernoulli Equation এর শর্ত ও ইঞ্জিনিয়ারিং অ্যাপ্লিকেশন কী কী?')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700/80 transition-all text-left">
-              💧 Bernoulli Equation ও ব্যবহার (ME 321)
+            <button onclick="askPresetPrompt('What are the assumptions and engineering applications of Bernoulli equation in Fluid Mechanics (ME 321)?')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700/80 transition-all text-left">
+              💧 Bernoulli Equation (ME 321)
             </button>
-            <button onclick="askPresetPrompt('Heat Transfer এ Conduction, Convection ও Radiation এর মূল সূত্রগুলো সংক্ষেপে তালিকা করে দাও।')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700/80 transition-all text-left">
-              ♨️ Heat Transfer প্রধান সূত্রাবলী (ME 311)
+            <button onclick="askPresetPrompt('List the primary equations for Conduction, Convection and Radiation in Heat Transfer (ME 311).')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700/80 transition-all text-left">
+              ♨️ Heat Transfer Formulas (ME 311)
             </button>
-            <button onclick="askPresetPrompt('Undergraduate Mechanical Engineering এর সিলেবাস ও কোর্স প্ল্যানের মূল বিষয়গুলো কী কী?')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-pink-300 border border-slate-700/80 transition-all text-left">
-              📘 UG Bulletin & Syllabus আউটলাইন
+            <button onclick="askPresetPrompt('Outline the CUET Undergraduate Mechanical Engineering curriculum and credit distribution.')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-pink-300 border border-slate-700/80 transition-all text-left">
+              📘 CUET ME Bulletin & Syllabus Outline
             </button>
           </div>
         </div>
@@ -369,8 +401,8 @@
             <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center flex-shrink-0 text-white">
               <i data-lucide="bot" class="w-4 h-4"></i>
             </div>
-            <div class="bg-slate-800/80 rounded-2xl rounded-tl-none p-3.5 text-sm text-slate-200 border border-slate-700/60 max-w-2xl leading-relaxed">
-              আসসালামু আলাইকুম! আমি আপনার <strong>ClassroomHub AI</strong> স্টাডি পার্টনার। আপনার মেকানিক্যাল ইঞ্জিনিয়ারিংয়ের থিওরি, সেশনাল ল্যাব, ভাইভা প্রশ্ন বা ফর্মুলা নিয়ে যেকোনো প্রশ্ন করতে পারেন।
+            <div class="bg-slate-800/80 rounded-2xl rounded-tl-none p-3.5 text-sm text-slate-200 border border-slate-700/60 max-w-2xl leading-relaxed" data-i18n="ai_greeting">
+              Hello! I am your <strong>ClassroomHub AI</strong> study partner. Ask me any question about your Mechanical Engineering courses, theories, lab calculations, or viva questions!
             </div>
           </div>
         </div>
@@ -380,11 +412,11 @@
           <input 
             id="aiInputPrompt" 
             type="text" 
-            placeholder="আপনার প্রশ্নটি এখানে লিখুন..." 
+            placeholder="Type your academic question here..." 
             class="flex-1 px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white placeholder-slate-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none"
           >
           <button type="submit" class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-sm flex items-center gap-2 shadow-lg shadow-purple-600/30 transition-all">
-            <span>পাঠান</span>
+            <span data-i18n="btn_send">Send</span>
             <i data-lucide="send" class="w-4 h-4"></i>
           </button>
         </form>
@@ -402,15 +434,15 @@
           <div>
             <h2 class="text-2xl font-bold text-white flex items-center gap-2">
               <i data-lucide="clipboard-check" class="w-6 h-6 text-emerald-400"></i>
-              <span>সিলেবাস ও পড়ালেখার প্রোগ্রেস ট্র্যাকার</span>
+              <span data-i18n="tracker_header">Syllabus & Preparation Tracker</span>
             </h2>
-            <p class="text-xs text-slate-400">যেসব কোর্স বা বিষয় আপনার পড়া শেষ হয়েছে তা টিক দিয়ে প্রোগ্রেস ট্র্যাক করুন</p>
+            <p class="text-xs text-slate-400" data-i18n="tracker_sub">Mark courses and topics you have completed to monitor your academic readiness</p>
           </div>
 
           <!-- Overall Progress Meter -->
           <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800 min-w-[200px]">
             <div class="flex items-center justify-between text-xs mb-1.5">
-              <span class="text-slate-400 font-medium">সম্পূর্ণ প্রোগ্রেস:</span>
+              <span class="text-slate-400 font-medium" data-i18n="tracker_label">Overall Progress:</span>
               <span id="trackerProgressPercent" class="text-emerald-400 font-bold font-mono">0%</span>
             </div>
             <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
@@ -423,10 +455,10 @@
         <div class="rounded-xl bg-slate-900/60 p-4 border border-slate-800">
           <h3 class="text-sm font-semibold text-amber-300 flex items-center gap-1.5 mb-2">
             <i data-lucide="star" class="w-4 h-4 text-amber-400 fill-amber-400"></i>
-            <span>বুকমার্ক করা ফাইলসমূহ (<span id="bookmarkedCount">0</span>)</span>
+            <span data-i18n="bookmarks_header">Bookmarked Resources</span> (<span id="bookmarkedCount">0</span>)
           </h3>
           <div id="bookmarkedList" class="flex flex-wrap gap-2 text-xs text-slate-400">
-            <p class="text-slate-500 italic">কোনো ফাইল এখনো বুকমার্ক করা হয়নি। রিসোর্স পেইজ থেকে তারা চিহ্নে ক্লিক করে বুকমার্ক করুন।</p>
+            <p class="text-slate-500 italic" data-i18n="bookmarks_empty">No files bookmarked yet. Click the star icon on any file to bookmark it for quick revision.</p>
           </div>
         </div>
 
@@ -439,9 +471,35 @@
 
     </section>
 
+    <!-- ==================== 5. ADMIN REVIEW & MODERATION VIEW ==================== -->
+    <section id="view-admin" class="hidden space-y-6">
+      
+      <div class="glass-panel p-6 rounded-2xl border border-amber-500/30 space-y-6">
+        <div class="flex items-center justify-between">
+          <div class="space-y-1">
+            <div class="inline-flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider">
+              <i data-lucide="shield-check" class="w-4 h-4"></i>
+              <span>Owner & Admin Moderation Hub</span>
+            </div>
+            <h2 class="text-2xl font-bold text-white" data-i18n="admin_header">Community Resource Review Queue</h2>
+            <p class="text-xs text-slate-400" data-i18n="admin_sub">Review resources submitted by students before publishing them to the public archive.</p>
+          </div>
+          <span class="px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold font-mono">
+            Admin: Fahim Niloy
+          </span>
+        </div>
+
+        <!-- Pending Items List -->
+        <div id="adminPendingList" class="space-y-3">
+          <!-- Populated via JS -->
+        </div>
+      </div>
+
+    </section>
+
   </main>
 
-  <!-- ==================== MODERN MODALS (dialog closedby="any") ==================== -->
+  <!-- ==================== MODALS (<dialog closedby="any">) ==================== -->
 
   <!-- 1. AUTHENTICATION MODAL -->
   <dialog id="authDialog" closedby="any" aria-labelledby="authDialogTitle" class="rounded-3xl shadow-2xl p-0">
@@ -453,7 +511,7 @@
           <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
             <i data-lucide="lock" class="w-4 h-4"></i>
           </div>
-          <h3 id="authDialogTitle" class="text-lg font-bold text-white">অ্যাকাউন্ট অ্যাক্সেস</h3>
+          <h3 id="authDialogTitle" class="text-lg font-bold text-white" data-i18n="modal_auth_title">Account Sign In</h3>
         </div>
         <button onclick="closeAuthModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -462,9 +520,9 @@
 
       <!-- Auth Tabs: Sign In / Phone OTP Register / Forgot Password -->
       <div class="flex rounded-xl bg-slate-800 p-1 text-xs font-medium text-slate-400">
-        <button id="authTabBtn-login" onclick="switchAuthTab('login')" class="flex-1 py-1.5 rounded-lg text-white bg-indigo-600 transition-all">লগইন</button>
-        <button id="authTabBtn-register" onclick="switchAuthTab('register')" class="flex-1 py-1.5 rounded-lg hover:text-white transition-all">মোবাইল OTP সাইন-আপ</button>
-        <button id="authTabBtn-forgot" onclick="switchAuthTab('forgot')" class="flex-1 py-1.5 rounded-lg hover:text-white transition-all">ফরগেট পাসওয়ার্ড</button>
+        <button id="authTabBtn-login" onclick="switchAuthTab('login')" class="flex-1 py-1.5 rounded-lg text-white bg-indigo-600 transition-all">Sign In</button>
+        <button id="authTabBtn-register" onclick="switchAuthTab('register')" class="flex-1 py-1.5 rounded-lg hover:text-white transition-all">Mobile OTP Sign-Up</button>
+        <button id="authTabBtn-forgot" onclick="switchAuthTab('forgot')" class="flex-1 py-1.5 rounded-lg hover:text-white transition-all">Forgot Password</button>
       </div>
 
       <!-- TAB A: LOGIN -->
@@ -477,70 +535,70 @@
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
-          <span>গুগল অ্যাকাউন্ট দিয়ে লগইন করুন</span>
+          <span data-i18n="btn_google_signin">Continue with Google</span>
         </button>
 
         <div class="flex items-center gap-2 my-2">
           <div class="h-px bg-slate-800 flex-1"></div>
-          <span class="text-[11px] text-slate-500 uppercase">অথবা ইমেইল / মোবাইল</span>
+          <span class="text-[11px] text-slate-500 uppercase" data-i18n="label_or_email">OR EMAIL / PHONE</span>
           <div class="h-px bg-slate-800 flex-1"></div>
         </div>
 
         <form onsubmit="handleEmailLogin(event)" class="space-y-3">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">ইমেইল বা মোবাইল নাম্বার</label>
-            <input id="loginIdentifier" type="text" required placeholder="017... বা your@email.com" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-indigo-500 outline-none">
+            <label class="block text-xs font-medium text-slate-400 mb-1" data-i18n="field_email_phone">Email or Mobile Number</label>
+            <input id="loginIdentifier" type="text" required placeholder="017... or fahim.cuet.me20@gmail.com" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-indigo-500 outline-none">
           </div>
           <div>
             <div class="flex justify-between items-center mb-1">
-              <label class="block text-xs font-medium text-slate-400">পাসওয়ার্ড</label>
-              <button type="button" onclick="switchAuthTab('forgot')" class="text-xs text-indigo-400 hover:underline">ভুলে গেছেন?</button>
+              <label class="block text-xs font-medium text-slate-400" data-i18n="field_password">Password</label>
+              <button type="button" onclick="switchAuthTab('forgot')" class="text-xs text-indigo-400 hover:underline" data-i18n="link_forgot">Forgot?</button>
             </div>
             <input id="loginPassword" type="password" required placeholder="••••••••" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-indigo-500 outline-none">
           </div>
-          <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-md">
-            লগইন করুন
+          <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-md" data-i18n="btn_signin">
+            Sign In
           </button>
         </form>
       </div>
 
       <!-- TAB B: MOBILE REGISTER WITH OTP -->
       <div id="authPanel-register" class="hidden space-y-4">
-        <div class="text-xs text-slate-400">
-          আপনার মোবাইল নাম্বার দিলে আমরা একটি ৬ ডিজিটের ওটিপি (OTP) পাঠাব। ওটিপি যাচাই করে পাসওয়ার্ড সেট করুন।
+        <div class="text-xs text-slate-400" data-i18n="otp_register_hint">
+          Enter your mobile number to receive a 6-digit OTP code, then set your account password.
         </div>
 
         <!-- Step 1: Phone Input -->
         <div id="registerStep1" class="space-y-3">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">আপনার নাম</label>
-            <input id="regName" type="text" placeholder="যেমন: সাজিদ করিম" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-indigo-500 outline-none">
+            <label class="block text-xs font-medium text-slate-400 mb-1" data-i18n="field_fullname">Full Name</label>
+            <input id="regName" type="text" placeholder="e.g. Sajid Karim" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-indigo-500 outline-none">
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">মোবাইল নাম্বার (+880)</label>
+            <label class="block text-xs font-medium text-slate-400 mb-1" data-i18n="field_mobile">Mobile Number (+880)</label>
             <input id="regPhone" type="tel" placeholder="017XXXXXXXX" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-indigo-500 outline-none">
           </div>
           <button onclick="sendRegisterOtp()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all flex items-center justify-center gap-2">
             <i data-lucide="smartphone" class="w-4 h-4"></i>
-            <span>OTP কোড পাঠান</span>
+            <span data-i18n="btn_send_otp">Send OTP Code</span>
           </button>
         </div>
 
         <!-- Step 2: OTP & Set Password -->
         <div id="registerStep2" class="hidden space-y-3">
           <div class="p-3 rounded-xl bg-emerald-950/40 border border-emerald-700/50 text-xs text-emerald-300">
-            আমরা <span id="displayRegPhone" class="font-bold text-white"></span> নাম্বারে একটি ৬-সংখ্যার OTP পাঠিয়েছি।
+            We sent a 6-digit OTP code to <span id="displayRegPhone" class="font-bold text-white"></span>.
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">৬ ডিজিটের OTP কোড</label>
+            <label class="block text-xs font-medium text-slate-400 mb-1" data-i18n="field_otp">6-Digit OTP Code</label>
             <input id="regOtpInput" type="text" maxlength="6" placeholder="123456" class="w-full text-center tracking-widest font-mono text-lg px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white focus:border-emerald-500 outline-none">
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">নতুন পাসওয়ার্ড সেট করুন</label>
-            <input id="regNewPassword" type="password" placeholder="কমপক্ষে ৬ অক্ষর" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-emerald-500 outline-none">
+            <label class="block text-xs font-medium text-slate-400 mb-1" data-i18n="field_set_password">Set New Password</label>
+            <input id="regNewPassword" type="password" placeholder="At least 6 characters" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-emerald-500 outline-none">
           </div>
-          <button onclick="verifyOtpAndRegister()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all">
-            যাচাই ও অ্যাকাউন্ট সম্পন্ন করুন
+          <button onclick="verifyOtpAndRegister()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all" data-i18n="btn_verify_complete">
+            Verify & Create Account
           </button>
         </div>
 
@@ -548,31 +606,31 @@
 
       <!-- TAB C: FORGOT PASSWORD -->
       <div id="authPanel-forgot" class="hidden space-y-4">
-        <div class="text-xs text-slate-400">
-          আপনার রেজিস্টার্ড মোবাইল নাম্বার বা ইমেইল লিখুন। পাসওয়ার্ড রিসেটের ওটিপি কোড পাঠানো হবে।
+        <div class="text-xs text-slate-400" data-i18n="forgot_hint">
+          Enter your registered mobile or email to receive a password reset code.
         </div>
         
         <div id="forgotStep1" class="space-y-3">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">মোবাইল বা ইমেইল</label>
-            <input id="forgotIdentifier" type="text" placeholder="017XXXXXXXX বা mail@domain.com" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-indigo-500 outline-none">
+            <label class="block text-xs font-medium text-slate-400 mb-1" data-i18n="field_email_phone">Mobile or Email</label>
+            <input id="forgotIdentifier" type="text" placeholder="017XXXXXXXX or user@domain.com" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:border-indigo-500 outline-none">
           </div>
-          <button onclick="sendForgotOtp()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all">
-            রিসেট কোড পাঠান
+          <button onclick="sendForgotOtp()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all" data-i18n="btn_send_reset">
+            Send Reset Code
           </button>
         </div>
 
         <div id="forgotStep2" class="hidden space-y-3">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">প্রাপ্ত OTP কোড</label>
+            <label class="block text-xs font-medium text-slate-400 mb-1" data-i18n="field_otp">Received OTP Code</label>
             <input id="forgotOtpInput" type="text" maxlength="6" placeholder="123456" class="w-full text-center tracking-widest font-mono text-lg px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">নতুন পাসওয়ার্ড</label>
-            <input id="forgotNewPassword" type="password" placeholder="নতুন পাসওয়ার্ড দিন" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white outline-none">
+            <label class="block text-xs font-medium text-slate-400 mb-1" data-i18n="field_new_password">New Password</label>
+            <input id="forgotNewPassword" type="password" placeholder="Enter new password" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white outline-none">
           </div>
-          <button onclick="resetPasswordWithOtp()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all">
-            পাসওয়ার্ড পরিবর্তন ও লগইন
+          <button onclick="resetPasswordWithOtp()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all" data-i18n="btn_update_signin">
+            Update Password & Sign In
           </button>
         </div>
 
@@ -581,18 +639,18 @@
     </div>
   </dialog>
 
-  <!-- 2. LIFETIME ACCESS / PRO UPGRADE MODAL -->
+  <!-- 2. PRO ACCESS STATUS MODAL -->
   <dialog id="upgradeDialog" closedby="any" aria-labelledby="upgradeDialogTitle" class="rounded-3xl shadow-2xl p-0">
-    <div class="glass-panel bg-slate-900 border border-amber-500/40 rounded-3xl w-full max-w-lg p-6 sm:p-8 space-y-6 text-slate-100">
+    <div class="glass-panel bg-slate-900 border border-emerald-500/40 rounded-3xl w-full max-w-lg p-6 sm:p-8 space-y-6 text-slate-100">
       
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-red-500 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-amber-500/30">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-emerald-500/30">
             <i data-lucide="crown" class="w-5 h-5 text-slate-950"></i>
           </div>
           <div>
-            <h3 id="upgradeDialogTitle" class="text-lg font-bold text-white">লাইফটাইম মেম্বারশিপ আনলক</h3>
-            <p class="text-xs text-amber-400">এককালীন পেমেন্ট — সারাজীবনের জন্য অ্যাক্সেস</p>
+            <h3 id="upgradeDialogTitle" class="text-lg font-bold text-white" data-i18n="pro_modal_title">Pro Access Status</h3>
+            <p class="text-xs text-emerald-400" data-i18n="pro_modal_sub">All features are currently unlocked & complimentary</p>
           </div>
         </div>
         <button onclick="closeUpgradeModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
@@ -600,68 +658,40 @@
         </button>
       </div>
 
-      <!-- Features Checklist -->
-      <div class="space-y-2.5 bg-slate-800/70 p-4 rounded-2xl border border-slate-700/60 text-xs sm:text-sm text-slate-300">
-        <div class="flex items-center gap-2">
-          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-          <span>৪ বছরের ৮টি সেমিস্টারের সব কোর্স নোটস ও রেফারেন্স বই</span>
+      <!-- Notice Banner -->
+      <div class="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-700/50 space-y-2 text-xs sm:text-sm text-emerald-200">
+        <div class="font-bold text-emerald-400 flex items-center gap-1.5 text-sm">
+          <i data-lucide="info" class="w-4 h-4"></i>
+          <span data-i18n="pro_modal_notice_title">Premium Service Notice:</span>
         </div>
-        <div class="flex items-center gap-2">
-          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-          <span>বিগত বছরের সম্পূর্ণ কুইজ, সিটি ও টার্ম ফাইনাল প্রশ্নব্যাংক সমাধান</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-          <span>সব সেশনাল কোড, ল্যাব রিপোর্ট ও CAD ফাইল ডাউনলোড</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-          <span>আনলিমিটেড AI স্টাডি অ্যাসিস্ট্যান্ট প্রশ্ন সমাধান</span>
-        </div>
-      </div>
-
-      <!-- Pricing Card -->
-      <div class="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-slate-800 to-amber-500/10 border border-amber-500/30 flex items-center justify-between">
-        <div>
-          <span class="text-xs text-slate-400 line-through">নিয়মিত ফি: ৳১,৫০০</span>
-          <div class="text-2xl font-extrabold text-amber-400">৳৪৯৯ <span class="text-xs font-normal text-slate-300">/ এককালীন</span></div>
-        </div>
-        <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/40">
-          ৬৭% বিশেষ ছাড়
-        </span>
-      </div>
-
-      <!-- Payment Gateways Mock Preview -->
-      <div class="space-y-3">
-        <label class="block text-xs font-semibold text-slate-300">পেমেন্ট মেথড নির্বাচন করুন (Payment Gateway):</label>
-        <div class="grid grid-cols-3 gap-2">
-          <button onclick="handlePaymentGateway('bKash')" class="p-3 rounded-xl bg-pink-900/30 hover:bg-pink-900/50 border border-pink-700/50 flex flex-col items-center gap-1 text-xs font-bold text-pink-300 transition-all">
-            <span class="text-sm">বিকাশ</span>
-            <span class="text-[10px] font-normal text-slate-400">bKash</span>
-          </button>
-          <button onclick="handlePaymentGateway('Nagad')" class="p-3 rounded-xl bg-orange-900/30 hover:bg-orange-900/50 border border-orange-700/50 flex flex-col items-center gap-1 text-xs font-bold text-orange-300 transition-all">
-            <span class="text-sm">নগদ</span>
-            <span class="text-[10px] font-normal text-slate-400">Nagad</span>
-          </button>
-          <button onclick="handlePaymentGateway('Card')" class="p-3 rounded-xl bg-indigo-900/30 hover:bg-indigo-900/50 border border-indigo-700/50 flex flex-col items-center gap-1 text-xs font-bold text-indigo-300 transition-all">
-            <span class="text-sm">কার্ড</span>
-            <span class="text-[10px] font-normal text-slate-400">Visa / Master</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Instant Activation Key entry for testing & admin -->
-      <div class="pt-2 border-t border-slate-800">
-        <div class="flex items-center gap-2">
-          <input id="activationKeyInput" type="text" placeholder="প্রো অ্যাক্টিভেশন কী (যেমন: ME20-LIFETIME)" class="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white uppercase tracking-wider outline-none focus:border-amber-500">
-          <button onclick="redeemActivationKey()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all">
-            আনলক করুন
-          </button>
-        </div>
-        <p class="text-[11px] text-slate-500 mt-1">
-          টিপস: টেস্ট করতে <code class="text-amber-400 font-mono">ME20-LIFETIME</code> বা <code class="text-amber-400 font-mono">2003063</code> ব্যবহার করুন।
+        <p data-i18n="pro_modal_notice_body">
+          The paid subscription / payment gateway has not been launched yet. All users currently enjoy full Pro access with unlimited downloads, full folder exploration, and AI study tools completely free of charge!
         </p>
       </div>
+
+      <!-- Features Checklist -->
+      <div class="space-y-2 bg-slate-800/70 p-4 rounded-2xl border border-slate-700/60 text-xs sm:text-sm text-slate-300">
+        <div class="flex items-center gap-2">
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+          <span data-i18n="pro_feat_1">Full access to all 8 semesters & 50+ course folders</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+          <span data-i18n="pro_feat_2">Past year CT, quiz, and term-final question banks</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+          <span data-i18n="pro_feat_3">Sessional MATLAB codes, lab reports, and CAD parts</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+          <span data-i18n="pro_feat_4">Unlimited Gemini AI study companion Q&A</span>
+        </div>
+      </div>
+
+      <button onclick="closeUpgradeModal()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all" data-i18n="btn_understood">
+        Got it! Continue Learning
+      </button>
 
     </div>
   </dialog>
@@ -674,17 +704,17 @@
       <div class="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
         <div class="flex items-center gap-3 overflow-hidden">
           <i data-lucide="file-text" class="w-5 h-5 text-indigo-400 flex-shrink-0"></i>
-          <span id="pdfViewerTitle" class="text-sm font-semibold text-white truncate max-w-md sm:max-w-xl">ডকুমেন্ট ভিউয়ার</span>
+          <span id="pdfViewerTitle" class="text-sm font-semibold text-white truncate max-w-md sm:max-w-xl">Document Viewer</span>
         </div>
         
         <div class="flex items-center gap-2">
           <button id="viewerOpenLocalBtn" onclick="openCurrentFileLocally()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium flex items-center gap-1.5 shadow transition-all">
             <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-            <span class="hidden sm:inline">সিস্টেমে খুলুন (Windows)</span>
+            <span class="hidden sm:inline" data-i18n="btn_open_system">Open in Windows</span>
           </button>
           <a id="viewerDownloadBtn" href="#" download class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition-all">
             <i data-lucide="download" class="w-3.5 h-3.5"></i>
-            <span>ডাউনলোড</span>
+            <span data-i18n="btn_download">Download</span>
           </a>
           <button onclick="closePdfViewer()" class="text-slate-400 hover:text-white p-1.5 rounded-lg">
             <i data-lucide="x" class="w-5 h-5"></i>
@@ -692,7 +722,7 @@
         </div>
       </div>
 
-      <!-- Viewer Body Frame -->
+      <!-- Viewer Frame -->
       <div class="flex-1 bg-slate-950 relative">
         <iframe id="pdfViewerFrame" class="w-full h-full border-0" src="about:blank"></iframe>
       </div>
@@ -700,13 +730,88 @@
     </div>
   </dialog>
 
-  <!-- 4. EDIT CONTACT / PROFILE MODAL -->
+  <!-- 4. SUBMIT / CONTRIBUTE RESOURCE MODAL -->
+  <dialog id="submitResourceDialog" closedby="any" aria-labelledby="submitDialogTitle" class="rounded-3xl shadow-2xl p-0">
+    <div class="glass-panel bg-slate-900 border border-indigo-500/40 rounded-3xl w-full max-w-lg p-6 sm:p-8 space-y-4 text-slate-100">
+      
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+          </div>
+          <h3 id="submitDialogTitle" class="text-lg font-bold text-white" data-i18n="modal_contrib_title">Share / Submit Academic Resource</h3>
+        </div>
+        <button onclick="closeSubmitResourceModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400" data-i18n="modal_contrib_sub">
+        Your submitted notes, question solutions, or lab manuals will be sent to Fahim Niloy for review and published upon acceptance.
+      </p>
+
+      <form onsubmit="handleResourceSubmission(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1" data-i18n="field_res_title">Resource Title / Topic</label>
+          <input id="contribTitle" type="text" required placeholder="e.g. ME 411 Applied Thermo CT 1 Solution" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none focus:border-indigo-500">
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-medium text-slate-300 mb-1" data-i18n="field_res_term">Semester</label>
+            <select id="contribTerm" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+              <option value="L1-T1">L1-T1</option>
+              <option value="L1-T2">L1-T2</option>
+              <option value="L2-T1">L2-T1</option>
+              <option value="L2-T2">L2-T2</option>
+              <option value="L3-T1">L3-T1</option>
+              <option value="L3-T2">L3-T2</option>
+              <option value="L4-T1">L4-T1</option>
+              <option value="L4-T2" selected>L4-T2</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-300 mb-1" data-i18n="field_res_category">Category</label>
+            <select id="contribCategory" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+              <option value="Questions & Viva">Questions & Viva</option>
+              <option value="Lecture Notes & Books">Lecture Notes & Books</option>
+              <option value="Lab & Sessional">Lab & Sessional</option>
+              <option value="Lecture Slides">Lecture Slides</option>
+              <option value="Codes & CAD Models">Codes & CAD Models</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-300 mb-1" data-i18n="field_res_course">Course Name / Code</label>
+          <input id="contribCourse" type="text" required placeholder="e.g. ME-411 (Applied Thermodynamics)" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-300 mb-1" data-i18n="field_res_url">Google Drive Link / File URL</label>
+          <input id="contribUrl" type="url" required placeholder="https://drive.google.com/..." class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-300 mb-1" data-i18n="field_res_contributor">Your Name & Roll</label>
+          <input id="contribAuthor" type="text" required placeholder="e.g. Tanvir (Roll: 20030XX)" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+        </div>
+
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all shadow-md" data-i18n="btn_submit_for_review">
+          Submit for Review
+        </button>
+      </form>
+
+    </div>
+  </dialog>
+
+  <!-- 5. EDIT CONTACT / PROFILE MODAL -->
   <dialog id="editContactDialog" closedby="any" aria-labelledby="editContactTitle" class="rounded-3xl shadow-2xl p-0">
     <div class="glass-panel bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md p-6 space-y-4 text-slate-100">
       <div class="flex items-center justify-between">
         <h3 id="editContactTitle" class="text-base font-bold text-white flex items-center gap-2">
           <i data-lucide="settings" class="w-4 h-4 text-indigo-400"></i>
-          <span>যোগাযোগ ও লিংক পরিবর্তন করুন</span>
+          <span data-i18n="modal_contact_title">Update Contacts & Links</span>
         </h3>
         <button onclick="closeEditContactModal()" class="text-slate-400 hover:text-white p-1">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -715,29 +820,33 @@
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-medium text-slate-400 mb-1">ইমেইল ঠিকানা</label>
+          <label class="block font-medium text-slate-400 mb-1" data-i18n="field_primary_email">Primary Email</label>
           <input id="editEmailInput" type="email" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
         </div>
         <div>
-          <label class="block font-medium text-slate-400 mb-1">মোবাইল নাম্বার</label>
+          <label class="block font-medium text-slate-400 mb-1" data-i18n="field_secondary_email">Secondary Email (Admin)</label>
+          <input id="editEmailSecondaryInput" type="email" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-400 mb-1" data-i18n="field_phone">Phone Number</label>
           <input id="editPhoneInput" type="tel" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
         </div>
         <div>
-          <label class="block font-medium text-slate-400 mb-1">গিটহাব ওয়েবসাইট / রিপোজিটরি লিংক</label>
-          <input id="editGithubInput" type="url" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+          <label class="block font-medium text-slate-400 mb-1" data-i18n="field_portfolio">Netlify Portfolio Link</label>
+          <input id="editNetlifyInput" type="url" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
         </div>
         <div>
-          <label class="block font-medium text-slate-400 mb-1">গুগল ড্রাইভ লিংক</label>
-          <input id="editGoogleInput" type="url" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+          <label class="block font-medium text-slate-400 mb-1" data-i18n="field_github">GitHub Repository Link</label>
+          <input id="editGithubInput" type="url" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
         </div>
-        <button onclick="saveContactSettings()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all">
-          সংরক্ষণ করুন
+        <button onclick="saveContactSettings()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all" data-i18n="btn_save">
+          Save Settings
         </button>
       </div>
     </div>
   </dialog>
 
-  <!-- 5. FLOATING SMS OTP SIMULATION TOAST -->
+  <!-- 6. FLOATING SMS OTP SIMULATION TOAST -->
   <div id="otpToast" class="fixed bottom-6 right-6 z-50 hidden transition-all duration-300 transform translate-y-4 opacity-0 max-w-sm">
     <div class="rounded-2xl glass-panel bg-slate-900 border border-emerald-500/40 p-4 shadow-2xl space-y-2 text-slate-100">
       <div class="flex items-center justify-between">
@@ -745,7 +854,7 @@
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
           <span class="text-xs font-bold text-emerald-400 flex items-center gap-1">
             <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
-            <span>ইনকামিং SMS ওটিপি</span>
+            <span>Simulated SMS OTP</span>
           </span>
         </div>
         <button onclick="hideOtpToast()" class="text-slate-400 hover:text-white p-0.5">
@@ -753,36 +862,37 @@
         </button>
       </div>
       <p class="text-xs text-slate-300">
-        আপনার ক্লাসরুম হাব ভেরিফিকেশন কোড: <strong id="otpToastCode" class="font-mono text-base text-emerald-400 bg-slate-800 px-2 py-0.5 rounded"></strong>
+        Your ClassroomHub verification code: <strong id="otpToastCode" class="font-mono text-base text-emerald-400 bg-slate-800 px-2 py-0.5 rounded"></strong>
       </p>
       <button onclick="autoFillOtp()" class="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs transition-all flex items-center justify-center gap-1.5">
         <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-        <span>অটো-ফিল করুন (Auto-Fill)</span>
+        <span>Auto-Fill Code</span>
       </button>
     </div>
   </div>
 
-  <!-- FOOTER -->
+  <!-- ==================== FOOTER ==================== -->
   <footer class="border-t border-slate-800/80 bg-slate-950/80 mt-12 py-6 text-xs text-slate-500">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div>
         © 2026 <strong>Fahim Niloy</strong> (Roll: 2003063), Department of Mechanical Engineering, CUET.
       </div>
       <div class="flex items-center gap-4">
-        <a id="footerGithubLink" href="https://github.com/Fahim-Niloy2314/classroom-hub" target="_blank" class="hover:text-indigo-400">গিটহাব পোর্টাল</a>
+        <a id="footerNetlifyLink" href="https://fahim-classroom-archive.netlify.app" target="_blank" class="hover:text-teal-400">Netlify Portfolio</a>
         <span>•</span>
-        <a href="mailto:fahimniloy2003063@gmail.com" class="hover:text-indigo-400">যোগাযোগ</a>
+        <a id="footerGithubLink" href="https://github.com/Fahim-Niloy2314/classroom-hub" target="_blank" class="hover:text-indigo-400">GitHub Project</a>
         <span>•</span>
-        <button onclick="openUpgradeModal()" class="hover:text-amber-400">প্রো মেম্বারশিপ</button>
+        <a href="mailto:fahim.cuet.me20@gmail.com" class="hover:text-indigo-400">Contact</a>
+        <span>•</span>
+        <button onclick="openUpgradeModal()" class="hover:text-emerald-400">Pro Access</button>
       </div>
     </div>
   </footer>
 
-  <!-- Indexed Data JS and App Logic JS -->
+  <!-- Scripts -->
   <script src="data.js"></script>
   <script src="app.js"></script>
   <script>
-    // Initialize Lucide icons on load
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
     });
