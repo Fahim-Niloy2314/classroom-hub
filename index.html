@@ -102,33 +102,11 @@
 
     </div>
 
-    <!-- Mobile Nav Bar (Bottom) -->
-    <div class="lg:hidden flex items-center justify-around bg-slate-900 border-t border-slate-800 py-2 px-2 text-xs">
-      <button onclick="switchTab('home')" class="flex flex-col items-center gap-1 text-indigo-400 py-1">
-        <i data-lucide="home" class="w-4 h-4"></i>
-        <span data-i18n="tab_home">Home</span>
-      </button>
-      <button onclick="switchTab('resources')" class="flex flex-col items-center gap-1 text-slate-400 py-1">
-        <i data-lucide="folder" class="w-4 h-4"></i>
-        <span data-i18n="tab_resources">Explorer</span>
-      </button>
-      <button onclick="switchTab('ai')" class="flex flex-col items-center gap-1 text-slate-400 py-1">
-        <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
-        <span data-i18n="tab_ai">AI</span>
-      </button>
-      <button onclick="switchTab('tracker')" class="flex flex-col items-center gap-1 text-slate-400 py-1">
-        <i data-lucide="check-square" class="w-4 h-4"></i>
-        <span data-i18n="tab_tracker">Tracker</span>
-      </button>
-      <button id="mobileNavAdminBtn" onclick="switchTab('admin')" class="hidden flex flex-col items-center gap-1 text-amber-400 py-1">
-        <i data-lucide="shield-check" class="w-4 h-4"></i>
-        <span data-i18n="tab_admin">Admin</span>
-      </button>
     </div>
   </header>
 
   <!-- ==================== MAIN VIEWPORT ==================== -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 pb-24 lg:pb-8">
 
     <!-- ==================== 1. HOME VIEW ==================== -->
     <section id="view-home" class="space-y-8">
@@ -176,12 +154,6 @@
                 <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-70"></i>
               </a>
 
-              <!-- Direct Google Link -->
-              <a id="homeGoogleLink" href="https://drive.google.com" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm flex items-center gap-2 transition-all">
-                <i data-lucide="hard-drive" class="w-4 h-4 text-blue-400"></i>
-                <span data-i18n="btn_drive">Google Drive</span>
-                <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-70"></i>
-              </a>
             </div>
 
             <!-- Contact Information Bar -->
@@ -197,7 +169,7 @@
                 <i data-lucide="phone" class="w-4 h-4 text-emerald-400"></i>
                 <span data-i18n="label_phone">Phone:</span>
                 <a id="homePhoneLink" href="tel:+8801850162261" class="text-slate-200 hover:text-emerald-400 font-mono">+880 1850-162261</a>
-                <button onclick="openEditContactModal()" title="Edit Contact" class="text-slate-500 hover:text-indigo-400 p-0.5">
+                <button id="editContactBtn" onclick="openEditContactModal()" title="Edit Contact (Admin Only)" class="hidden text-slate-500 hover:text-indigo-400 p-0.5 transition-colors">
                   <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                 </button>
               </div>
@@ -232,15 +204,20 @@
             </div>
 
             <!-- UG Bulletin Highlight -->
-            <div onclick="previewFileByName('Bulletin _ UG _ ME.pdf')" class="cursor-pointer p-3 rounded-xl bg-indigo-950/40 hover:bg-indigo-900/50 border border-indigo-700/40 flex items-center justify-between transition-all">
+            <div onclick="openBulletinModal()" class="cursor-pointer p-3 rounded-xl bg-gradient-to-r from-indigo-950/60 to-purple-950/40 hover:from-indigo-900/70 hover:to-purple-900/50 border border-indigo-500/40 hover:border-indigo-400 flex items-center justify-between transition-all group shadow-md">
               <div class="flex items-center gap-3">
-                <i data-lucide="file-text" class="w-5 h-5 text-indigo-400"></i>
+                <div class="w-8 h-8 rounded-lg bg-indigo-600/40 border border-indigo-500/50 flex items-center justify-center text-indigo-300 group-hover:scale-105 transition-transform">
+                  <i data-lucide="book-open" class="w-4 h-4"></i>
+                </div>
                 <div>
-                  <div class="text-xs font-semibold text-white">Undergraduate ME Bulletin</div>
+                  <div class="text-xs font-bold text-white group-hover:text-indigo-200 transition-colors">Undergraduate ME Bulletin</div>
                   <div class="text-[11px] text-slate-400" data-i18n="bulletin_sub">Official Syllabus & Curriculum (46.7 MB)</div>
                 </div>
               </div>
-              <span class="text-xs text-indigo-300 font-medium">Read →</span>
+              <span class="text-xs text-indigo-300 font-semibold px-2 py-1 rounded-lg bg-indigo-500/20 group-hover:bg-indigo-500/30 transition-all flex items-center gap-1">
+                <span>View</span>
+                <i data-lucide="arrow-right" class="w-3 h-3"></i>
+              </span>
             </div>
 
           </div>
@@ -462,9 +439,42 @@
           </div>
         </div>
 
-        <!-- Terms and Courses Checklist -->
+        <!-- Tracker Stats & Level Filter Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-800">
+          <!-- Level Filters -->
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+            <button onclick="filterTrackerLevel('ALL')" id="trackerFilterBtn-ALL" class="px-3 py-1 rounded-xl text-xs font-semibold bg-emerald-600 text-white transition-all shadow-sm">
+              All Levels
+            </button>
+            <button onclick="filterTrackerLevel('L1')" id="trackerFilterBtn-L1" class="px-3 py-1 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">
+              Level 1
+            </button>
+            <button onclick="filterTrackerLevel('L2')" id="trackerFilterBtn-L2" class="px-3 py-1 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">
+              Level 2
+            </button>
+            <button onclick="filterTrackerLevel('L3')" id="trackerFilterBtn-L3" class="px-3 py-1 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">
+              Level 3
+            </button>
+            <button onclick="filterTrackerLevel('L4')" id="trackerFilterBtn-L4" class="px-3 py-1 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">
+              Level 4
+            </button>
+          </div>
+
+          <!-- Milestones Counter -->
+          <div class="flex items-center gap-3 text-xs text-slate-400">
+            <span class="flex items-center gap-1">
+              <span id="trackerCompletedCount" class="font-bold text-emerald-400 font-mono">0</span> / <span id="trackerTotalMilestones" class="font-mono">0</span> milestones
+            </span>
+            <span>•</span>
+            <span class="flex items-center gap-1">
+              <span id="trackerCompletedCourses" class="font-bold text-cyan-400 font-mono">0</span> courses mastered
+            </span>
+          </div>
+        </div>
+
+        <!-- Terms and Courses Checklist Branching Tree -->
         <div id="trackerTermsList" class="space-y-4">
-          <!-- Populated via JS -->
+          <!-- Populated via JS with Branching Accordion -->
         </div>
 
       </div>
@@ -528,7 +538,7 @@
       <!-- TAB A: LOGIN -->
       <div id="authPanel-login" class="space-y-4">
         <!-- Google Sign In Button -->
-        <button onclick="handleGoogleSignIn()" class="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow transition-all">
+        <button onclick="openGoogleSignInPortal()" class="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow transition-all">
           <svg class="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -634,6 +644,106 @@
           </button>
         </div>
 
+      </div>
+
+    </div>
+  </dialog>
+
+  <!-- 1.B GOOGLE SIGN-IN & ACCOUNT SELECTION PORTAL -->
+  <dialog id="googleAccountDialog" closedby="any" aria-labelledby="googleDialogTitle" class="rounded-3xl shadow-2xl p-0">
+    <div class="glass-panel bg-slate-900 border border-slate-700/80 rounded-3xl w-full max-w-md p-6 sm:p-7 space-y-5 text-slate-100">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-md">
+            <svg class="w-6 h-6" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 id="googleDialogTitle" class="text-base font-bold text-white leading-tight" data-i18n="google_portal_title">Sign in with Google</h3>
+            <p class="text-xs text-slate-400" data-i18n="google_portal_sub">to continue to CUET ME Academic Vault</p>
+          </div>
+        </div>
+        <button onclick="closeGoogleSignInPortal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Accounts List -->
+      <div class="space-y-2">
+        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-1" data-i18n="google_choose_account">
+          Choose an account
+        </div>
+
+        <!-- Account 1: Fahim Niloy Primary -->
+        <button onclick="signInWithSelectedGoogleAccount('fahim.cuet.me20@gmail.com', 'Fahim Niloy (Owner)')" class="w-full p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 hover:border-indigo-500/60 flex items-center justify-between text-left transition-all group">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 font-bold flex items-center justify-center text-sm shadow">
+              FN
+            </div>
+            <div class="leading-tight">
+              <div class="font-bold text-white group-hover:text-indigo-300 transition-colors flex items-center gap-1.5">
+                <span>Fahim Niloy</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 font-bold">Admin / Owner</span>
+              </div>
+              <div class="text-xs text-slate-400 font-mono">fahim.cuet.me20@gmail.com</div>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all"></i>
+        </button>
+
+        <!-- Account 2: Fahim Niloy Secondary -->
+        <button onclick="signInWithSelectedGoogleAccount('fahimniloy2314@gmail.com', 'Fahim Niloy (Admin)')" class="w-full p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 hover:border-indigo-500/60 flex items-center justify-between text-left transition-all group">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center text-sm shadow">
+              FN
+            </div>
+            <div class="leading-tight">
+              <div class="font-bold text-white group-hover:text-indigo-300 transition-colors flex items-center gap-1.5">
+                <span>Fahim Niloy</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-bold">Admin</span>
+              </div>
+              <div class="text-xs text-slate-400 font-mono">fahimniloy2314@gmail.com</div>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all"></i>
+        </button>
+
+        <!-- Account 3: Use Another Account Toggle -->
+        <button onclick="toggleCustomGoogleInput()" class="w-full p-3 rounded-2xl bg-slate-800/40 hover:bg-slate-800/80 border border-slate-700/40 flex items-center gap-3 text-left transition-all group">
+          <div class="w-10 h-10 rounded-full bg-slate-700/60 text-slate-300 flex items-center justify-center">
+            <i data-lucide="user-plus" class="w-5 h-5 text-slate-400 group-hover:text-white"></i>
+          </div>
+          <div class="leading-tight">
+            <div class="font-semibold text-slate-200 group-hover:text-white" data-i18n="google_use_another">Use another Google account</div>
+            <div class="text-[11px] text-slate-400" data-i18n="google_use_another_sub">Sign in with student Gmail or CUET institutional email</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Custom Google Account Input Form (Initially Hidden) -->
+      <form id="customGoogleForm" onsubmit="handleCustomGoogleSignIn(event)" class="hidden p-4 rounded-2xl bg-slate-800/80 border border-slate-700/70 space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1" data-i18n="google_enter_name">Your Name</label>
+          <input id="customGoogleName" type="text" required placeholder="e.g. Tanvir Ahmed" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1" data-i18n="google_enter_email">Google Email Address</label>
+          <input id="customGoogleEmail" type="email" required placeholder="your.name@gmail.com or u2003001@cuet.ac.bd" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-indigo-500 outline-none">
+        </div>
+        <button type="submit" class="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow flex items-center justify-center gap-1.5" data-i18n="google_btn_continue">
+          <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+          <span>Continue with this Account</span>
+        </button>
+      </form>
+
+      <div class="text-[11px] text-slate-500 text-center leading-relaxed" data-i18n="google_security_note">
+        🔒 Authenticated Google portal for CUET ME ClassroomHub. Admin rights are granted exclusively to designated admin accounts.
       </div>
 
     </div>
@@ -870,6 +980,155 @@
       </button>
     </div>
   </div>
+
+  <!-- 7. UNDERGRADUATE ME BULLETIN & SYLLABUS MODAL -->
+  <dialog id="bulletinDialog" closedby="any" aria-labelledby="bulletinDialogTitle" class="rounded-3xl shadow-2xl p-0 w-full max-w-4xl">
+    <div class="glass-panel bg-slate-900 border border-indigo-500/40 rounded-3xl w-full p-5 sm:p-7 space-y-4 text-slate-100 max-h-[90vh] flex flex-col">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow">
+            <i data-lucide="book-open" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 id="bulletinDialogTitle" class="text-base sm:text-lg font-bold text-white leading-tight">
+              Undergraduate Academic Bulletin & Ordinance
+            </h3>
+            <p class="text-xs text-slate-400">
+              Department of Mechanical Engineering, CUET • Official Syllabus (46.7 MB)
+            </p>
+          </div>
+        </div>
+        <button onclick="closeBulletinModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Action Tabs & Quick Launch -->
+      <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+        <div class="flex items-center gap-1.5">
+          <button id="bulletinTabBtn-summary" onclick="switchBulletinTab('summary')" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white transition-all shadow-sm">
+            📋 Syllabus & Ordinance Summary
+          </button>
+          <button id="bulletinTabBtn-viewer" onclick="switchBulletinTab('viewer')" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all">
+            📄 Full PDF Document (46.7 MB)
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openFileLocally('Bulletin _ UG _ ME.pdf')" class="px-2.5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition-all">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Open in Windows</span>
+          </button>
+          <a id="bulletinDirectDownloadBtn" href="/api/file?path=Bulletin%20_%20UG%20_%20ME.pdf&download=1" download class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow transition-all">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Download PDF</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- TAB 1: SUMMARY / CURRICULUM HIGHLIGHTS -->
+      <div id="bulletinPanel-summary" class="flex-1 overflow-y-auto space-y-4 text-xs pr-1">
+        
+        <!-- CUET Grading Policy -->
+        <div class="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/60 space-y-2">
+          <h4 class="font-bold text-amber-300 text-sm flex items-center gap-1.5">
+            <i data-lucide="award" class="w-4 h-4"></i>
+            <span>CUET Ordinance: Grading System & GPA Scale</span>
+          </h4>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center pt-1">
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-700/50">
+              <div class="font-bold text-emerald-400 text-sm">80% +</div>
+              <div class="text-[11px] text-white">Grade A+ (4.00)</div>
+            </div>
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-700/50">
+              <div class="font-bold text-teal-400 text-sm">75% - 79%</div>
+              <div class="text-[11px] text-white">Grade A (3.75)</div>
+            </div>
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-700/50">
+              <div class="font-bold text-indigo-400 text-sm">70% - 74%</div>
+              <div class="text-[11px] text-white">Grade A- (3.50)</div>
+            </div>
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-700/50">
+              <div class="font-bold text-purple-400 text-sm">65% - 69%</div>
+              <div class="text-[11px] text-white">Grade B+ (3.25)</div>
+            </div>
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-700/50">
+              <div class="font-bold text-slate-300 text-sm">&lt; 40%</div>
+              <div class="text-[11px] text-red-400 font-bold">Grade F (0.00)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Marks Distribution -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/60 space-y-1.5">
+            <h4 class="font-bold text-indigo-300 text-sm">Theory Course Marks Distribution</h4>
+            <ul class="space-y-1 text-slate-300">
+              <li class="flex justify-between"><span>Class Attendance:</span><strong class="text-white">10%</strong></li>
+              <li class="flex justify-between"><span>Class Tests (Best 3 out of 4):</span><strong class="text-white">20%</strong></li>
+              <li class="flex justify-between"><span>Term Final Examination (3 Hours):</span><strong class="text-white">70%</strong></li>
+              <li class="flex justify-between border-t border-slate-700 pt-1"><span>Total Marks:</span><strong class="text-emerald-400 font-bold">100%</strong></li>
+            </ul>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/60 space-y-1.5">
+            <h4 class="font-bold text-teal-300 text-sm">Sessional Course Marks Distribution</h4>
+            <ul class="space-y-1 text-slate-300">
+              <li class="flex justify-between"><span>Class Attendance & Participation:</span><strong class="text-white">10%</strong></li>
+              <li class="flex justify-between"><span>Lab Performance & Reports:</span><strong class="text-white">50%</strong></li>
+              <li class="flex justify-between"><span>Lab Quiz / Central Viva Voce:</span><strong class="text-white">40%</strong></li>
+              <li class="flex justify-between border-t border-slate-700 pt-1"><span>Total Sessional:</span><strong class="text-teal-400 font-bold">100%</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Academic Degree Structure -->
+        <div class="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/60 space-y-2">
+          <h4 class="font-bold text-white text-sm">B.Sc. in Mechanical Engineering Degree Requirements</h4>
+          <p class="text-slate-300 leading-relaxed">
+            The undergraduate program consists of <strong>8 semesters</strong> across 4 academic levels (Level 1 to Level 4). A student must earn a minimum of <strong>160.00 credits</strong> with a minimum CGPA of <strong>2.20</strong>, complete industrial training / internship, and successfully defend the final undergraduate thesis project to graduate.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- TAB 2: FULL PDF EMBED VIEWER -->
+      <div id="bulletinPanel-viewer" class="hidden flex-1 min-h-[50vh] bg-slate-950 rounded-2xl overflow-hidden relative border border-slate-800 flex flex-col items-center justify-center p-4">
+        <iframe id="bulletinPdfFrame" src="about:blank" class="w-full h-full border-0 rounded-xl"></iframe>
+        <div id="bulletinMobileNotice" class="text-center text-xs text-slate-400 mt-2 p-3 bg-slate-900/80 rounded-xl border border-slate-800 max-w-md">
+          <span>💡 On mobile devices, tap </span>
+          <a href="/api/file?path=Bulletin%20_%20UG%20_%20ME.pdf&download=1" target="_blank" class="text-emerald-400 font-bold underline">Download / Open PDF</a>
+          <span> to view the complete 46.7 MB bulletin in your phone's native PDF reader.</span>
+        </div>
+      </div>
+
+    </div>
+  </dialog>
+
+  <!-- FIXED MOBILE BOTTOM NAVIGATION BAR -->
+  <nav id="mobileBottomNav" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/80 px-2 py-1.5 flex items-center justify-around text-[10px] shadow-2xl">
+    <button onclick="switchTab('home')" id="mobileNav-home" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-indigo-400 font-bold bg-indigo-500/10">
+      <i data-lucide="home" class="w-4 h-4"></i>
+      <span data-i18n="tab_home">Home</span>
+    </button>
+    <button onclick="switchTab('resources')" id="mobileNav-resources" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
+      <i data-lucide="folder" class="w-4 h-4"></i>
+      <span data-i18n="tab_resources">Explorer</span>
+    </button>
+    <button onclick="switchTab('ai')" id="mobileNav-ai" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
+      <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
+      <span data-i18n="tab_ai">AI Hub</span>
+    </button>
+    <button onclick="switchTab('tracker')" id="mobileNav-tracker" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
+      <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i>
+      <span data-i18n="tab_tracker">Tracker</span>
+    </button>
+    <button onclick="switchTab('admin')" id="mobileNav-admin" class="hidden flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-amber-400 hover:text-amber-300">
+      <i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i>
+      <span data-i18n="tab_admin">Admin</span>
+    </button>
+  </nav>
 
   <!-- ==================== FOOTER ==================== -->
   <footer class="border-t border-slate-800/80 bg-slate-950/80 mt-12 py-6 text-xs text-slate-500">
