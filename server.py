@@ -3,7 +3,7 @@ import sys
 import json
 import mimetypes
 import subprocess
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 import urllib.parse
 
 # Set UTF-8 encoding for Windows stdout
@@ -19,6 +19,23 @@ CLASSROOM_DIR = r"G:\My Drive\Classroom"
 BASE_DIR = CLASSROOM_DIR if os.path.exists(CLASSROOM_DIR) else os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 APP_DIR = os.path.dirname(__file__)
 
+def resolve_file_path(file_rel):
+    if not file_rel:
+        return None
+    candidates = [
+        os.path.join(BASE_DIR, file_rel),
+        os.path.join(APP_DIR, file_rel),
+        os.path.join(BASE_DIR, file_rel.replace("_", " ")),
+        os.path.join(BASE_DIR, file_rel.replace(" ", "_")),
+        os.path.join(APP_DIR, file_rel.replace("_", " ")),
+        os.path.join(APP_DIR, file_rel.replace(" ", "_")),
+    ]
+    for cand in candidates:
+        abs_p = os.path.abspath(cand)
+        if os.path.isfile(abs_p):
+            return abs_p
+    return None
+
 class ClassroomHubHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=APP_DIR, **kwargs)
@@ -28,8 +45,8 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
         params = urllib.parse.parse_qs(parsed.query)
         if parsed.path == "/api/file":
             file_rel = urllib.parse.unquote(params.get("path", [""])[0])
-            full_path = os.path.abspath(os.path.join(BASE_DIR, file_rel))
-            if not full_path.lower().startswith(BASE_DIR.lower()) or not os.path.isfile(full_path):
+            full_path = resolve_file_path(file_rel)
+            if not full_path or not os.path.isfile(full_path):
                 self.send_error(404, "File not found")
                 return
             mime_type, _ = mimetypes.guess_type(full_path)
@@ -54,9 +71,8 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
             if not file_rel:
                 self.send_error(400, "Missing path parameter")
                 return
-            full_path = os.path.abspath(os.path.join(BASE_DIR, file_rel))
-            # Case-insensitive security check on Windows
-            if not full_path.lower().startswith(BASE_DIR.lower()) or not os.path.exists(full_path):
+            full_path = resolve_file_path(file_rel)
+            if not full_path or not os.path.exists(full_path):
                 self.send_error(404, "File not found or access denied")
                 return
             try:
@@ -82,8 +98,8 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
             if not file_rel:
                 self.send_error(400, "Missing path parameter")
                 return
-            full_path = os.path.abspath(os.path.join(BASE_DIR, file_rel))
-            if not full_path.lower().startswith(BASE_DIR.lower()) or not os.path.isfile(full_path):
+            full_path = resolve_file_path(file_rel)
+            if not full_path or not os.path.isfile(full_path):
                 self.send_error(404, "File not found")
                 return
 
@@ -115,7 +131,7 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
 def run_server(port=PORT):
     server_address = ("", port)
     try:
-        httpd = HTTPServer(server_address, ClassroomHubHandler)
+        httpd = ThreadingHTTPServer(server_address, ClassroomHubHandler)
         print(f"======================================================")
         print(f"🚀 Fahim Niloy's Classroom Hub Server Running!")
         print(f"📍 Local URL: http://localhost:{port}")
