@@ -129,6 +129,9 @@ const I18N = {
     btn_open_system: 'Open in Windows',
     btn_download: 'Download',
     btn_preview: 'Read',
+    btn_open_drive: 'Open & Read on Google Drive',
+    btn_download_drive: 'Download File',
+    cloud_fallback_desc: 'In online cloud mode, all 33 GB Academic Vault files are hosted directly on Google Drive. Click below to view or download instantly.',
     modal_contrib_title: 'Share / Submit Academic Resource',
     modal_contrib_sub: 'Your submitted notes, question solutions, or lab manuals will be sent to Fahim Niloy for review and published upon acceptance.',
     field_res_title: 'Resource Title / Topic',
@@ -240,6 +243,9 @@ const I18N = {
     btn_open_system: 'Windows-এ খুলুন',
     btn_download: 'ডাউনলোড',
     btn_preview: 'পড়ুন',
+    btn_open_drive: 'গুগল ড্রাইভে পড়ুন',
+    btn_download_drive: 'ফাইল ডাউনলোড',
+    cloud_fallback_desc: 'অনলাইন ক্লাউড মোডে ক্লাসরুমের ৩৩ জিবি একাডেমিক ফাইলগুলো সরাসরি গুগল ড্রাইভ ভল্টে সংরক্ষিত রয়েছে। নিচের বাটনে ক্লিক করে ফাইলটি সরাসরি পড়ুন অথবা ডাউনলোড করুন।',
     modal_contrib_title: 'একাডেমিক রিসোর্স শেয়ার / জমা দিন',
     modal_contrib_sub: 'আপনার শেয়ার করা নোটস বা ফাইল ফাহিম নিলয়ের রিভিউয়ের পর আর্কাইভে লাইভ যুক্ত হবে।',
     field_res_title: 'রিসোর্স শিরোনাম / বিষয়',
@@ -382,10 +388,17 @@ function switchTab(tab) {
     if (el) el.classList.toggle('hidden', v !== tab);
   });
 
+  const isUserAdmin = currentUser && isAdmin(currentUser);
+
   // Desktop tab active states
   views.forEach(v => {
     const btn = document.getElementById(`nav-tab-${v}`);
     if (btn) {
+      if (v === 'admin' && !isUserAdmin) {
+        btn.classList.add('hidden');
+        return;
+      }
+      if (v === 'admin') btn.classList.remove('hidden');
       if (v === tab) {
         btn.className = 'nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-white bg-indigo-600 shadow-sm';
       } else {
@@ -398,6 +411,11 @@ function switchTab(tab) {
   views.forEach(v => {
     const mBtn = document.getElementById(`mobileNav-${v}`);
     if (mBtn) {
+      if (v === 'admin' && !isUserAdmin) {
+        mBtn.classList.add('hidden');
+        return;
+      }
+      if (v === 'admin') mBtn.classList.remove('hidden');
       if (v === tab) {
         mBtn.className = 'flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-indigo-400 font-bold bg-indigo-500/15 shadow-sm';
       } else {
@@ -418,9 +436,11 @@ function switchTab(tab) {
    6. USER AUTHENTICATION, ADMIN IDENTIFICATION & SIGN OUT
    ========================================================================= */
 function isAdmin(user) {
-  if (!user || !user.email) return false;
-  const em = user.email.toLowerCase().trim();
-  return ADMIN_EMAILS.includes(em);
+  if (!user) return false;
+  if (user.role === 'admin') return true;
+  if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim())) return true;
+  if (user.phone && ['01850162261', '+8801850162261', '1850162261'].includes(user.phone.replace(/[\s\-]/g, ''))) return true;
+  return false;
 }
 
 function updateAuthUI() {
@@ -511,21 +531,151 @@ function switchAuthTab(tab) {
   });
 }
 
-/* Dedicated Google Sign-In Portal & Account Verification */
+/* =========================================================================
+   6.B MOBILE OTP AUTHENTICATION (DIRECT SIGN-IN)
+   ========================================================================= */
+let directOtpTimer = null;
+let directOtpSecondsLeft = 60;
+let currentDirectPhone = '';
+let currentDirectName = '';
+
+function requestDirectMobileOtp() {
+  const phoneInput = document.getElementById('directOtpPhone');
+  const nameInput = document.getElementById('directOtpName');
+  let rawPhone = (phoneInput?.value || '').trim().replace(/[\s-]/g, '');
+
+  if (!rawPhone) {
+    showToast(currentLang === 'en' ? 'Please enter your mobile number' : 'আপনার মোবাইল নাম্বারটি লিখুন');
+    if (phoneInput) phoneInput.focus();
+    return;
+  }
+
+  // Normalize BD phone number
+  if (rawPhone.startsWith('+880')) rawPhone = rawPhone.substring(4);
+  else if (rawPhone.startsWith('880')) rawPhone = rawPhone.substring(3);
+  if (rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1);
+
+  if (rawPhone.length < 10) {
+    showToast(currentLang === 'en' ? 'Please enter a valid 11-digit mobile number' : 'সঠিক ১১ ডিজিটের মোবাইল নাম্বার দিন');
+    return;
+  }
+
+  const fullPhone = '0' + rawPhone;
+  currentDirectPhone = fullPhone;
+  currentDirectName = (nameInput?.value || '').trim();
+
+  // Generate 6-digit OTP
+  currentGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+  otpTarget = 'direct';
+
+  // Switch to Step 2
+  const step1 = document.getElementById('directOtpStep1');
+  const step2 = document.getElementById('directOtpStep2');
+  const dispPhone = document.getElementById('displayDirectPhone');
+  const codeInput = document.getElementById('directOtpCodeInput');
+
+  if (step1) step1.classList.add('hidden');
+  if (step2) step2.classList.remove('hidden');
+  if (dispPhone) dispPhone.textContent = `+880 ${fullPhone}`;
+  if (codeInput) {
+    codeInput.value = '';
+    setTimeout(() => codeInput.focus(), 100);
+  }
+
+  // Start 60s countdown
+  startDirectOtpCountdown();
+
+  // Show simulated SMS toast with auto-fill option
+  showOtpToast(currentGeneratedOtp);
+  showToast(currentLang === 'en' 
+    ? `OTP sent to +880 ${fullPhone}` 
+    : `+880 ${fullPhone} নাম্বারে ৬ ডিজিটের ওটিপি পাঠানো হয়েছে`);
+}
+
+function startDirectOtpCountdown() {
+  clearInterval(directOtpTimer);
+  directOtpSecondsLeft = 60;
+  const countEl = document.getElementById('directOtpCountdown');
+  const resendBtn = document.getElementById('directOtpResendBtn');
+  if (resendBtn) resendBtn.disabled = true;
+
+  directOtpTimer = setInterval(() => {
+    directOtpSecondsLeft--;
+    if (countEl) countEl.textContent = `Resend code in ${directOtpSecondsLeft}s`;
+    if (directOtpSecondsLeft <= 0) {
+      clearInterval(directOtpTimer);
+      if (countEl) countEl.textContent = "Didn't receive code?";
+      if (resendBtn) resendBtn.disabled = false;
+    }
+  }, 1000);
+}
+
+function resetDirectOtpStep() {
+  clearInterval(directOtpTimer);
+  const step1 = document.getElementById('directOtpStep1');
+  const step2 = document.getElementById('directOtpStep2');
+  if (step1) step1.classList.remove('hidden');
+  if (step2) step2.classList.add('hidden');
+}
+
+function verifyDirectMobileOtp() {
+  const codeInput = document.getElementById('directOtpCodeInput');
+  const enteredCode = (codeInput?.value || '').trim();
+
+  if (!enteredCode || enteredCode !== currentGeneratedOtp) {
+    showToast(currentLang === 'en' ? 'Invalid verification code. Please check SMS OTP.' : 'ভুল ওটিপি কোড। অনুগ্রহ করে সঠিক কোডটি লিখুন।');
+    if (codeInput) codeInput.focus();
+    return;
+  }
+
+  clearInterval(directOtpTimer);
+
+  // Check if owner phone (Fahim Niloy: 01850162261)
+  const isOwnerPhone = currentDirectPhone.endsWith('1850162261') || currentDirectPhone === '01850162261';
+
+  if (isOwnerPhone) {
+    currentUser = {
+      name: currentDirectName || 'Fahim Niloy (Founder)',
+      email: 'fahim.cuet.me20@gmail.com',
+      phone: currentDirectPhone,
+      method: 'mobile_otp',
+      role: 'admin'
+    };
+    showToast(currentLang === 'en' 
+      ? 'Welcome Owner & Admin (Fahim Niloy)! Signed in via Mobile OTP.' 
+      : 'স্বাগতম অ্যাডমিন ফাহিম নিলয়! মোবাইল ওটিপি দিয়ে সফলভাবে সাইন ইন হয়েছে।');
+  } else {
+    currentUser = {
+      name: currentDirectName || `Student (${currentDirectPhone.slice(-4)})`,
+      email: `${currentDirectPhone}@classroom.hub`,
+      phone: currentDirectPhone,
+      method: 'mobile_otp',
+      role: 'student'
+    };
+    showToast(currentLang === 'en' 
+      ? `Signed in as ${currentUser.name}` 
+      : `${currentUser.name} হিসেবে সফলভাবে সাইন ইন হয়েছে`);
+  }
+
+  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+  updateAuthUI();
+  closeAuthModal();
+  hideOtpToast();
+}
+
+/* =========================================================================
+   6.C GOOGLE ACCOUNT SELECTION & AUTHENTICATION
+   ========================================================================= */
+const VALID_ADMIN_PINS = ['2003063', 'cuetme20', 'me20', '01850162261', '+8801850162261', '1850162261', 'admin', 'fahimniloy'];
+let selectedGoogleEmail = '';
+let selectedGoogleName = '';
+
 function openGoogleSignInPortal() {
   const gDialog = document.getElementById('googleAccountDialog');
   if (gDialog) {
-    const emailInput = document.getElementById('googleAuthEmail');
-    const nameInput = document.getElementById('googleAuthName');
-    const pinSection = document.getElementById('googleAdminPinSection');
-    const pinInput = document.getElementById('googleAdminPin');
-    if (emailInput) emailInput.value = '';
-    if (nameInput) nameInput.value = '';
-    if (pinInput) pinInput.value = '';
-    if (pinSection) pinSection.classList.add('hidden');
+    showGoogleAccountPickerView();
     gDialog.showModal();
     lucide.createIcons();
-    if (emailInput) setTimeout(() => emailInput.focus(), 100);
   }
 }
 
@@ -534,80 +684,134 @@ function closeGoogleSignInPortal() {
   if (gDialog) gDialog.close();
 }
 
-function handleGoogleEmailChange(val) {
-  const cleanEmail = (val || '').toLowerCase().trim();
-  const pinSection = document.getElementById('googleAdminPinSection');
-  const isAdm = ADMIN_EMAILS.includes(cleanEmail);
-  if (pinSection) {
-    if (isAdm) {
-      pinSection.classList.remove('hidden');
-      const pinInput = document.getElementById('googleAdminPin');
-      if (pinInput && !pinInput.value) pinInput.focus();
-    } else {
-      pinSection.classList.add('hidden');
-    }
-    lucide.createIcons();
-  }
+function showGoogleAccountPickerView() {
+  const pickerView = document.getElementById('googleAccountPickerView');
+  const passwordView = document.getElementById('googlePasswordPromptView');
+  const customView = document.getElementById('googleCustomAccountView');
+  const title = document.getElementById('googleDialogTitle');
+
+  if (pickerView) pickerView.classList.remove('hidden');
+  if (passwordView) passwordView.classList.add('hidden');
+  if (customView) customView.classList.add('hidden');
+  if (title) title.textContent = 'Choose an account';
+  lucide.createIcons();
 }
 
-const VALID_ADMIN_PINS = ['2003063', 'cuetme20', 'me20', '01850162261', '+8801850162261', '1850162261', 'admin', 'fahimniloy'];
+function selectGoogleAccount(email, name) {
+  selectedGoogleEmail = email.toLowerCase().trim();
+  selectedGoogleName = name || email.split('@')[0];
 
-function handleGoogleAuthSubmit(e) {
-  e.preventDefault();
-  const emailInput = document.getElementById('googleAuthEmail');
-  const nameInput = document.getElementById('googleAuthName');
-  const pinInput = document.getElementById('googleAdminPin');
+  const pickerView = document.getElementById('googleAccountPickerView');
+  const passwordView = document.getElementById('googlePasswordPromptView');
+  const nameEl = document.getElementById('googleSelectedName');
+  const emailEl = document.getElementById('googleSelectedEmail');
+  const avatarEl = document.getElementById('googleSelectedAvatar');
+  const passInput = document.getElementById('googleAccountPasswordInput');
+  const title = document.getElementById('googleDialogTitle');
 
-  const email = (emailInput?.value || '').toLowerCase().trim();
-  let name = (nameInput?.value || '').trim();
-  const isAdm = ADMIN_EMAILS.includes(email);
+  if (pickerView) pickerView.classList.add('hidden');
+  if (passwordView) passwordView.classList.remove('hidden');
+  if (title) title.textContent = 'Verify your account';
 
-  if (!email) {
-    showToast(currentLang === 'en' ? 'Please enter a valid Google email address' : 'সঠিক গুগল ইমেইল দিন');
-    return;
+  if (nameEl) nameEl.textContent = selectedGoogleName;
+  if (emailEl) emailEl.textContent = selectedGoogleEmail;
+  if (avatarEl) avatarEl.textContent = selectedGoogleName.charAt(0).toUpperCase();
+  if (passInput) {
+    passInput.value = '';
+    setTimeout(() => passInput.focus(), 100);
   }
+  lucide.createIcons();
+}
 
-  // Strict Admin Verification
+function handleGooglePasswordSubmit(e) {
+  e.preventDefault();
+  const passInput = document.getElementById('googleAccountPasswordInput');
+  const enteredPass = (passInput?.value || '').trim().toLowerCase();
+
+  const isAdm = ADMIN_EMAILS.includes(selectedGoogleEmail);
+
   if (isAdm) {
-    const enteredPin = (pinInput?.value || '').trim().toLowerCase();
-    if (!enteredPin || !VALID_ADMIN_PINS.includes(enteredPin)) {
-      showToast(currentLang === 'en' 
-        ? 'Admin Verification Failed: Incorrect PIN/Password for Fahim Niloy.' 
-        : 'অ্যাডমিন যাচাইকরণ ব্যর্থ: ফাহিম নিলয়ের অ্যাকাউন্টের সঠিক পিন/পাসওয়ার্ড দিন।');
-      if (pinInput) pinInput.focus();
+    if (!enteredPass || !VALID_ADMIN_PINS.includes(enteredPass)) {
+      showToast(currentLang === 'en' ? 'Wrong password. Try again.' : 'ভুল পাসওয়ার্ড। আবার চেষ্টা করুন।');
+      if (passInput) passInput.focus();
       return;
     }
-    name = name || 'Fahim Niloy (Owner)';
     currentUser = {
-      name: name,
+      name: selectedGoogleName || 'Fahim Niloy',
+      email: selectedGoogleEmail,
+      method: 'google',
+      role: 'admin'
+    };
+    showToast(currentLang === 'en' 
+      ? `Welcome back, ${currentUser.name}!` 
+      : `স্বাগতম ${currentUser.name}! আপনার অ্যাকাউন্টে সফলভাবে সাইন ইন হয়েছে।`);
+  } else {
+    currentUser = {
+      name: selectedGoogleName,
+      email: selectedGoogleEmail,
+      method: 'google',
+      role: 'student'
+    };
+    showToast(currentLang === 'en' 
+      ? `Signed in as ${currentUser.name}` 
+      : `${currentUser.name} হিসেবে সফলভাবে সাইন ইন হয়েছে`);
+  }
+
+  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+  updateAuthUI();
+  closeGoogleSignInPortal();
+  closeAuthModal();
+}
+
+function showGoogleCustomAccountView() {
+  const pickerView = document.getElementById('googleAccountPickerView');
+  const customView = document.getElementById('googleCustomAccountView');
+  const title = document.getElementById('googleDialogTitle');
+
+  if (pickerView) pickerView.classList.add('hidden');
+  if (customView) customView.classList.remove('hidden');
+  if (title) title.textContent = 'Sign in with Google';
+  lucide.createIcons();
+}
+
+function handleGoogleCustomSubmit(e) {
+  e.preventDefault();
+  const emailInput = document.getElementById('googleCustomEmail');
+  const nameInput = document.getElementById('googleCustomName');
+  const passInput = document.getElementById('googleCustomPassword');
+
+  const email = (emailInput?.value || '').toLowerCase().trim();
+  const name = (nameInput?.value || '').trim() || email.split('@')[0];
+  const pass = (passInput?.value || '').trim().toLowerCase();
+
+  if (!email) return;
+
+  const isAdm = ADMIN_EMAILS.includes(email);
+  if (isAdm) {
+    if (!pass || !VALID_ADMIN_PINS.includes(pass)) {
+      showToast(currentLang === 'en' ? 'Wrong password for Admin account.' : 'ভুল পাসওয়ার্ড। আবার চেষ্টা করুন।');
+      return;
+    }
+    currentUser = {
+      name: name || 'Fahim Niloy',
       email: email,
       method: 'google',
       role: 'admin'
     };
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-    updateAuthUI();
-    closeGoogleSignInPortal();
-    closeAuthModal();
-    showToast(currentLang === 'en' 
-      ? 'Welcome Owner & Admin (Fahim Niloy)! Full permissions granted.' 
-      : 'স্বাগতম অ্যাডমিন ও প্রতিষ্ঠাতা ফাহিম নিলয়! পূর্ণ প্রশাসনিক সুবিধা সক্রিয় হয়েছে।');
   } else {
-    // Regular Student / User
-    name = name || email.split('@')[0];
     currentUser = {
       name: name,
       email: email,
       method: 'google',
       role: 'student'
     };
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-    updateAuthUI();
-    closeGoogleSignInPortal();
-    closeAuthModal();
-    showToast(currentLang === 'en' 
-      ? `Signed in as ${currentUser.name} (Student)` 
-      : `${currentUser.name} হিসেবে শিক্ষার্থী অ্যাকাউন্টে সফলভাবে সাইন ইন হয়েছে`);
   }
+
+  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+  updateAuthUI();
+  closeGoogleSignInPortal();
+  closeAuthModal();
+  showToast(currentLang === 'en' ? `Signed in as ${currentUser.name}` : `${currentUser.name} হিসেবে সফলভাবে সাইন ইন হয়েছে`);
 }
 
 function handleGoogleSignIn() {
@@ -624,6 +828,7 @@ function handleEmailLogin(e) {
   currentUser = {
     name: isAdm ? 'Fahim Niloy' : (id.includes('@') ? id.split('@')[0] : `User-${id.slice(-4)}`),
     email: id,
+    role: isAdm ? 'admin' : 'student',
     method: 'password'
   };
   localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
@@ -666,6 +871,7 @@ function verifyOtpAndRegister() {
     name: name,
     phone: phone,
     email: `${phone}@classroom.hub`,
+    role: 'student',
     method: 'phone_otp'
   };
   localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
@@ -698,6 +904,7 @@ function resetPasswordWithOtp() {
   currentUser = {
     name: 'Verified User',
     email: document.getElementById('forgotIdentifier').value.trim(),
+    role: 'student',
     method: 'password_reset'
   };
   localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
@@ -721,7 +928,10 @@ function hideOtpToast() {
 }
 
 function autoFillOtp() {
-  if (otpTarget === 'register') {
+  if (otpTarget === 'direct') {
+    const el = document.getElementById('directOtpCodeInput');
+    if (el) el.value = currentGeneratedOtp;
+  } else if (otpTarget === 'register') {
     const el = document.getElementById('regOtpInput');
     if (el) el.value = currentGeneratedOtp;
   } else if (otpTarget === 'forgot') {
@@ -884,6 +1094,13 @@ function closeBulletinModal() {
   if (frame) frame.src = 'about:blank';
 }
 
+const BULLETIN_RELEASE_URL = 'https://github.com/Fahim-Niloy2314/classroom-hub/releases/download/v1.0.0/Bulletin_UG_ME.pdf';
+
+function isLocalHost() {
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
+}
+
 function switchBulletinTab(tab) {
   const tabs = ['summary', 'viewer'];
   tabs.forEach(t => {
@@ -903,7 +1120,11 @@ function switchBulletinTab(tab) {
   if (tab === 'viewer') {
     const frame = document.getElementById('bulletinPdfFrame');
     if (frame && (frame.src === 'about:blank' || !frame.src || frame.src.endsWith('about:blank'))) {
-      frame.src = 'Bulletin_UG_ME.pdf';
+      if (isLocalHost()) {
+        frame.src = 'Bulletin_UG_ME.pdf';
+      } else {
+        frame.src = `https://docs.google.com/viewer?url=${encodeURIComponent(BULLETIN_RELEASE_URL)}&embedded=true`;
+      }
     }
   }
 }
@@ -1246,9 +1467,9 @@ function renderFileList(files, container) {
               <span class="hidden sm:inline">${dict.btn_open_system}</span>
             </button>
 
-            <a href="/api/file?path=${encodeURIComponent(f.path)}&download=1" download title="Download" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 transition-all">
+            <button onclick="handleFileDownload('${encodeURIComponent(f.path)}', '${encodeURIComponent(f.name)}')" title="Download" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 transition-all">
               <i data-lucide="download" class="w-3.5 h-3.5"></i>
-            </a>
+            </button>
           `}
         </div>
       </div>
@@ -1277,21 +1498,117 @@ function getFileIcon(ext) {
 }
 
 /* =========================================================================
-   10. PDF VIEWER & LOCAL LAUNCHER
+   10. PDF VIEWER & RESILIENT FILE DOWNLOAD / STREAMING
    ========================================================================= */
+let currentPreviewName = '';
+
+function handleFileDownload(encPath, encName) {
+  const path = decodeURIComponent(encPath || '');
+  const name = decodeURIComponent(encName || '');
+
+  // 1. If Undergraduate ME Bulletin, use direct binary download from GitHub Releases (v1.0.0)
+  if (name.toLowerCase().includes('bulletin') || path.toLowerCase().includes('bulletin')) {
+    window.open(BULLETIN_RELEASE_URL, '_blank');
+    showToast(currentLang === 'en' ? 'Downloading Undergraduate ME Bulletin (48.9 MB)...' : 'আন্ডারগ্র্যাজুয়েট এমই বুলেটিন ডাউনলোড হচ্ছে (৪৮.৯ মেগাবাইট)...');
+    return;
+  }
+
+  // 2. If running locally with Python desktop server
+  if (isLocalHost()) {
+    const downloadUrl = `/api/file?path=${encodeURIComponent(path)}&download=1`;
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast(currentLang === 'en' ? `Downloading ${name}...` : `${name} ডাউনলোড হচ্ছে...`);
+    return;
+  }
+
+  // 3. Online mode (GitHub Pages / Netlify / Mobile):
+  // Search query on Google Drive vault
+  const driveSearchUrl = `https://drive.google.com/drive/u/0/search?q=${encodeURIComponent(name)}`;
+  window.open(driveSearchUrl, '_blank');
+  showToast(currentLang === 'en' ? `Opening ${name} on Google Drive Vault...` : `গুগল ড্রাইভে ${name} ওপেন হচ্ছে...`);
+}
+
 function previewFile(encPath, encName) {
-  const path = decodeURIComponent(encPath);
-  const name = decodeURIComponent(encName);
+  const path = decodeURIComponent(encPath || '');
+  const name = decodeURIComponent(encName || '');
   currentPreviewPath = path;
+  currentPreviewName = name;
 
   const dialog = document.getElementById('pdfViewerDialog');
+  if (!dialog) return;
+
   const title = document.getElementById('pdfViewerTitle');
   const frame = document.getElementById('pdfViewerFrame');
   const dl = document.getElementById('viewerDownloadBtn');
+  const localBtn = document.getElementById('viewerOpenLocalBtn');
+  const cloudFallback = document.getElementById('viewerCloudFallback');
+  const driveBtn = document.getElementById('viewerDriveBtn');
+  const fallbackDlBtn = document.getElementById('viewerFallbackDlBtn');
+  const fallbackName = document.getElementById('viewerFallbackFilename');
 
-  title.textContent = name;
-  frame.src = `/api/file?path=${encodeURIComponent(path)}`;
-  dl.href = `/api/file?path=${encodeURIComponent(path)}&download=1`;
+  if (title) title.textContent = name;
+  if (fallbackName) fallbackName.textContent = name;
+
+  // Toggle local desktop app launch button based on localhost presence
+  if (localBtn) localBtn.classList.toggle('hidden', !isLocalHost());
+
+  // 1. If Undergraduate Bulletin:
+  if (name.toLowerCase().includes('bulletin') || path.toLowerCase().includes('bulletin')) {
+    if (cloudFallback) cloudFallback.classList.add('hidden');
+    if (frame) {
+      frame.classList.remove('hidden');
+      frame.src = isLocalHost() ? 'Bulletin_UG_ME.pdf' : `https://docs.google.com/viewer?url=${encodeURIComponent(BULLETIN_RELEASE_URL)}&embedded=true`;
+    }
+    if (dl) {
+      dl.onclick = (e) => {
+        e.preventDefault();
+        handleFileDownload(path, name);
+      };
+    }
+    dialog.showModal();
+    lucide.createIcons();
+    return;
+  }
+
+  // 2. If running locally on localhost
+  if (isLocalHost()) {
+    if (cloudFallback) cloudFallback.classList.add('hidden');
+    if (frame) {
+      frame.classList.remove('hidden');
+      frame.src = `/api/file?path=${encodeURIComponent(path)}`;
+    }
+    if (dl) {
+      dl.onclick = (e) => {
+        e.preventDefault();
+        handleFileDownload(path, name);
+      };
+    }
+  } else {
+    // 3. Online mode (GitHub Pages / Mobile)
+    const driveSearchUrl = `https://drive.google.com/drive/u/0/search?q=${encodeURIComponent(name)}`;
+    if (frame) {
+      frame.classList.add('hidden');
+      frame.src = 'about:blank';
+    }
+    if (cloudFallback) cloudFallback.classList.remove('hidden');
+    if (driveBtn) {
+      driveBtn.onclick = () => window.open(driveSearchUrl, '_blank');
+    }
+    if (fallbackDlBtn) {
+      fallbackDlBtn.onclick = () => window.open(driveSearchUrl, '_blank');
+    }
+    if (dl) {
+      dl.onclick = (e) => {
+        e.preventDefault();
+        window.open(driveSearchUrl, '_blank');
+      };
+    }
+  }
 
   dialog.showModal();
   lucide.createIcons();
