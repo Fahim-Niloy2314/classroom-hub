@@ -85,6 +85,11 @@
 
       <!-- Right Header Actions (Compact, Zero Overflow) -->
       <div class="flex items-center gap-2 flex-shrink-0">
+        <!-- Theme Toggle Button (Light / Dark) -->
+        <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme (Light / Dark)" class="p-1.5 sm:px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs font-semibold flex items-center gap-1 transition-all shadow-sm">
+          <i data-lucide="sun" id="themeIcon" class="w-3.5 h-3.5 text-amber-400"></i>
+        </button>
+
         <!-- Language Switcher Toggle (EN | BN) -->
         <button id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language / ভাষা পরিবর্তন করুন" class="px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs font-semibold flex items-center gap-1 transition-all shadow-sm">
           <i data-lucide="languages" class="w-3.5 h-3.5 text-indigo-400"></i>
@@ -122,8 +127,23 @@
               <span class="text-indigo-400">Academic Vault & Archive</span>
             </h1>
 
-            <p class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl" data-i18n="hero_desc">
-              Curated by <strong>Fahim Niloy</strong> (Department of Mechanical Engineering, '20 Batch, Roll: 2003063). A comprehensive, digitized academic archive spanning <strong>Level 1 Term 1</strong> to <strong>Level 4 Term 2</strong>. Over 3,893 lecture notes, lab sheets, previous years' question banks, and the undergraduate bulletin.
+            <!-- Creator Academic Profile Credentials -->
+            <div class="space-y-1.5 pt-1">
+              <div class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                <span>Mohammad Fahim Ahmed</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 font-medium">Fahim Niloy</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-300 font-medium">
+                <span class="text-indigo-400">Department of Mechanical Engineering</span>
+                <span class="text-slate-500">•</span>
+                <span>Batch: <strong class="text-white font-mono">'20</strong></span>
+                <span class="text-slate-500">•</span>
+                <span>Student ID: <strong class="text-white font-mono">2003063</strong></span>
+              </div>
+            </div>
+
+            <p class="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-2xl" data-i18n="hero_desc">
+              A comprehensive digitized academic repository preserving 3,893+ course materials from Level 1 Term 1 to Level 4 Term 2.
             </p>
 
             <!-- Links & Action Buttons -->
@@ -445,50 +465,61 @@
           <div class="space-y-1">
             <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-400 uppercase tracking-wider">
               <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-              <span>Gemini AI Academic Companion</span>
+              <span>Fahim Niloy AI Chatbot & Study Mentor</span>
             </div>
-            <h2 class="text-xl sm:text-2xl font-bold text-white" data-i18n="ai_header">CUET Mechanical Engineering Study Assistant</h2>
-            <p class="text-xs sm:text-sm text-slate-300" data-i18n="ai_sub">
-              Ask any question regarding your CUET ME courses, viva questions, thermodynamics formulas, fluid mechanics, or exam tips.
+            <h2 class="text-xl sm:text-2xl font-bold text-white">Talk with Fahim Niloy (AI Academic Companion)</h2>
+            <p class="text-xs sm:text-sm text-slate-300">
+              Chat with Fahim Niloy (CUET ME '20) about course theories, formulas, viva tips, or ask him to find any question bank or lecture note for you.
             </p>
           </div>
-          <span class="px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 text-xs font-medium">
-            AI Powered
+          <span class="px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 text-xs font-medium flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+            <span>Online</span>
           </span>
         </div>
 
         <!-- Preset Topic Question Pills -->
         <div class="mb-6 space-y-2">
-          <div class="text-xs font-medium text-slate-400" data-i18n="ai_popular">Suggested questions:</div>
+          <div class="text-xs font-medium text-slate-400">Suggested questions (Click to ask):</div>
           <div class="flex flex-wrap gap-2 text-xs">
-            <button onclick="askPresetPrompt('What are common viva and quiz questions for ME 154 Workshop Lathe Machine?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-slate-800 transition-all text-left">
+            <button onclick="askPresetPrompt('Hi Fahim, who are you and tell me about yourself?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-purple-300 border border-purple-500/30 transition-all text-left">
+              👋 Hi Fahim, who are you?
+            </button>
+            <button onclick="askPresetPrompt('Can you find ME 211 Thermodynamics question banks and lecture notes?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-slate-800 transition-all text-left">
+              📁 Find ME 211 Question Banks
+            </button>
+            <button onclick="askPresetPrompt('What are common viva and quiz questions for ME 154 Workshop Lathe Machine?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-800 transition-all text-left">
               🔧 Lathe Machine Viva (ME 154)
             </button>
             <button onclick="askPresetPrompt('Explain ME 211 Thermodynamics Second Law and Carnot Cycle efficiency concisely.')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-emerald-300 border border-slate-800 transition-all text-left">
               🔥 Thermodynamics 2nd Law (ME 211)
             </button>
-            <button onclick="askPresetPrompt('What are the assumptions and engineering applications of Bernoulli equation in Fluid Mechanics (ME 321)?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-800 transition-all text-left">
+            <button onclick="askPresetPrompt('What are the assumptions and engineering applications of Bernoulli equation in Fluid Mechanics (ME 321)?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-300 border border-slate-800 transition-all text-left">
               💧 Bernoulli Equation (ME 321)
-            </button>
-            <button onclick="askPresetPrompt('List the primary equations for Conduction, Convection and Radiation in Heat Transfer (ME 311).')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-300 border border-slate-800 transition-all text-left">
-              ♨️ Heat Transfer Formulas (ME 311)
             </button>
           </div>
         </div>
 
         <!-- Chat Conversation Area -->
         <div id="aiChatMessages" class="space-y-4 mb-4 max-h-[500px] overflow-y-auto pr-2">
-          <!-- Initial Welcome Message -->
+          <!-- Initial Welcome Message from Fahim Niloy -->
           <div class="flex items-start gap-3">
-            <div class="w-8 h-8 rounded-lg bg-purple-600/20 text-purple-400 flex items-center justify-center flex-shrink-0 border border-purple-500/30">
-              <i data-lucide="bot" class="w-4 h-4"></i>
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+              <span class="font-bold text-xs">FN</span>
             </div>
-            <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed ai-prose">
+            <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed ai-prose shadow-lg">
+              <div class="font-bold text-indigo-300 text-xs mb-1 flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
+                <span>Fahim Niloy (CUET ME '20)</span>
+              </div>
               <p>
-                Hello! I am your <strong>CUET Mechanical Engineering Study Companion</strong>. You can ask me any course concepts, viva questions, formulas, or syllabus topics from Level 1 Term 1 through Level 4 Term 2.
+                Hello! <strong>I am Fahim Niloy</strong> (Department of Mechanical Engineering, CUET '20 Batch, Roll: 2003063).
               </p>
-              <p class="text-xs text-slate-400 mt-2">
-                Type your question below or click any of the suggested topics above to get started.
+              <p class="mt-2 text-slate-300">
+                I built this ClassroomHub repository to preserve all our academic materials from Level 1 Term 1 to Level 4 Term 2. You can chat with me, ask me about any course theories, viva questions, thermodynamics formulas, or ask me to search and give you direct links to any lecture notes or question banks from our 3,893 files!
+              </p>
+              <p class="text-[11px] text-slate-400 mt-2">
+                Type your question or greeting below, or click any suggested question above to get started!
               </p>
             </div>
           </div>
@@ -499,7 +530,7 @@
           <input 
             id="aiInput" 
             type="text" 
-            placeholder="Ask a question about your ME courses (e.g., Rankine cycle, lathe operations, Navier-Stokes)..." 
+            placeholder="Ask Fahim Niloy anything (e.g., 'Hi Fahim', 'ME 211 questions', 'Lathe machine viva')..." 
             class="flex-1 px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-xs sm:text-sm text-white placeholder-slate-500 outline-none transition-all"
           >
           <button 
