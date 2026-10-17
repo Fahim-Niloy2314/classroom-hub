@@ -920,13 +920,22 @@ function clearSearch() {
 
 function navigateExplorerUp() {
   if (explorerState.selectedSubfolder) {
-    explorerState.selectedSubfolder = null;
+    if (explorerState.selectedSubfolder.includes('/')) {
+      const parts = explorerState.selectedSubfolder.split('/');
+      parts.pop();
+      explorerState.selectedSubfolder = parts.join('/');
+    } else {
+      explorerState.selectedSubfolder = null;
+    }
   } else if (explorerState.level === 'files') {
     explorerState.level = 'courses';
     explorerState.selectedCourse = null;
+    explorerState.selectedSubfolder = null;
   } else if (explorerState.level === 'courses') {
     explorerState.level = 'semesters';
     explorerState.selectedTerm = null;
+    explorerState.selectedCourse = null;
+    explorerState.selectedSubfolder = null;
   }
   setupSemesterPills();
   renderExplorer();
@@ -949,6 +958,11 @@ function openCourseFolder(courseName) {
   renderExplorer();
 }
 
+function openSubfolder(encPath) {
+  explorerState.selectedSubfolder = decodeURIComponent(encPath || '');
+  renderExplorer();
+}
+
 function renderBreadcrumbs() {
   const container = document.getElementById('explorerBreadcrumbs');
   const backBtn = document.getElementById('explorerBackBtn');
@@ -956,7 +970,7 @@ function renderBreadcrumbs() {
   if (!container) return;
 
   const crumbs = [
-    { label: dict.all_semesters_title, action: () => { explorerState.level = 'semesters'; explorerState.selectedTerm = null; explorerState.selectedCourse = null; explorerState.selectedSubfolder = null; renderExplorer(); } }
+    { label: dict.all_semesters_title, action: () => { explorerState.level = 'semesters'; explorerState.selectedTerm = null; explorerState.selectedCourse = null; explorerState.selectedSubfolder = null; setupSemesterPills(); renderExplorer(); } }
   ];
 
   if (explorerState.selectedTerm) {
@@ -967,16 +981,24 @@ function renderBreadcrumbs() {
   }
 
   if (explorerState.selectedCourse) {
+    const decodedCourse = decodeURIComponent(explorerState.selectedCourse);
     crumbs.push({
-      label: `${explorerState.selectedCourse}`,
+      label: decodedCourse,
       action: () => { explorerState.level = 'files'; explorerState.selectedSubfolder = null; renderExplorer(); }
     });
   }
 
   if (explorerState.selectedSubfolder) {
-    crumbs.push({
-      label: `${explorerState.selectedSubfolder}`,
-      action: () => {}
+    const parts = explorerState.selectedSubfolder.split('/');
+    let cumulative = '';
+    parts.forEach((part, idx) => {
+      cumulative = cumulative ? `${cumulative}/${part}` : part;
+      const targetPath = cumulative;
+      const isLast = idx === parts.length - 1;
+      crumbs.push({
+        label: part,
+        action: isLast ? () => {} : () => { explorerState.selectedSubfolder = targetPath; renderExplorer(); }
+      });
     });
   }
 
@@ -985,8 +1007,8 @@ function renderBreadcrumbs() {
     return `
       <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
         ${idx > 0 ? '<i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-600"></i>' : ''}
-        <button onclick="(${c.action.toString()})()" class="${isLast ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-white'} flex items-center gap-1">
-          <i data-lucide="${idx === crumbs.length - 1 && explorerState.level === 'files' ? 'folder-open' : 'folder'}" class="w-3.5 h-3.5"></i>
+        <button onclick="(${c.action.toString()})()" class="${isLast ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-white'} flex items-center gap-1 text-xs transition-colors">
+          <i data-lucide="${isLast && explorerState.level === 'files' ? 'folder-open' : 'folder'}" class="w-3.5 h-3.5"></i>
           <span>${c.label}</span>
         </button>
       </span>
@@ -1121,28 +1143,128 @@ function renderExplorer() {
     return;
   }
 
-  // CASE 4: LEVEL 3 -> FILES INSIDE SELECTED COURSE
+  // CASE 4: LEVEL 3 -> HIERARCHICAL FOLDERS & FILES INSIDE SELECTED COURSE
   if (explorerState.level === 'files') {
     const termObj = appData.terms.find(t => t.code === explorerState.selectedTerm);
     const decodedCourseName = decodeURIComponent(explorerState.selectedCourse);
     const courseObj = termObj?.courses.find(c => c.name === decodedCourseName);
     
-    titleEl.textContent = `${decodedCourseName}`;
-    
-    let files = courseObj ? [...courseObj.files] : [];
-    
-    // Include approved community files for this course
-    const extraFiles = communityResources.filter(cr => cr.term_code === explorerState.selectedTerm && cr.course === decodedCourseName);
-    files.push(...extraFiles);
-
-    // Apply category filter
-    if (explorerState.selectedCategory !== 'ALL') {
-      files = files.filter(f => f.category === explorerState.selectedCategory);
+    if (!courseObj) {
+      grid.innerHTML = `<p class="col-span-full text-center text-slate-500 py-10">Course not found</p>`;
+      return;
     }
 
-    countBadge.textContent = files.length;
-    renderFileList(files, grid);
+    const currentSubfolder = explorerState.selectedSubfolder;
+    const allCourseFiles = [...courseObj.files];
+
+    // Include approved community files
+    const extraFiles = communityResources.filter(cr => cr.term_code === explorerState.selectedTerm && cr.course === decodedCourseName);
+    allCourseFiles.push(...extraFiles);
+
+    // Title representation
+    if (currentSubfolder) {
+      const subfolderBaseName = currentSubfolder.split('/').pop();
+      titleEl.textContent = `${subfolderBaseName} (${decodedCourseName})`;
+    } else {
+      titleEl.textContent = decodedCourseName;
+    }
+
+    // Partition into immediate subfolders and direct files at this level
+    const immediateFoldersMap = {}; // folderName -> total files count
+    let directFiles = [];
+
+    if (!currentSubfolder) {
+      // Top level of course
+      allCourseFiles.forEach(f => {
+        if (f.subfolder) {
+          const topSegment = f.subfolder.split('/')[0];
+          immediateFoldersMap[topSegment] = (immediateFoldersMap[topSegment] || 0) + 1;
+        } else {
+          directFiles.push(f);
+        }
+      });
+    } else {
+      // Inside a subfolder
+      allCourseFiles.forEach(f => {
+        if (!f.subfolder) return;
+        if (f.subfolder === currentSubfolder) {
+          directFiles.push(f);
+        } else if (f.subfolder.startsWith(currentSubfolder + '/')) {
+          const remainder = f.subfolder.substring(currentSubfolder.length + 1);
+          const nextSegment = remainder.split('/')[0];
+          immediateFoldersMap[nextSegment] = (immediateFoldersMap[nextSegment] || 0) + 1;
+        }
+      });
+    }
+
+    // Apply category filter to direct files if active
+    if (explorerState.selectedCategory !== 'ALL') {
+      directFiles = directFiles.filter(f => f.category === explorerState.selectedCategory);
+    }
+
+    const subfolderKeys = Object.keys(immediateFoldersMap).sort((a, b) => a.localeCompare(undefined, { numeric: true, sensitivity: 'base' }));
+
+    countBadge.textContent = subfolderKeys.length + directFiles.length;
+
+    let html = '';
+
+    // A. Render Immediate Subfolders (Exact Google Drive folder layout)
+    if (subfolderKeys.length > 0) {
+      html += subfolderKeys.map(sfName => {
+        const fullPath = currentSubfolder ? `${currentSubfolder}/${sfName}` : sfName;
+        const count = immediateFoldersMap[sfName];
+        return `
+          <div onclick="openSubfolder('${encodeURIComponent(fullPath)}')" class="p-4 rounded-2xl glass-card cursor-pointer group flex items-center justify-between border border-slate-800 hover:border-indigo-500/50 transition-all">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all flex-shrink-0">
+                <i data-lucide="folder" class="w-6 h-6"></i>
+              </div>
+              <div class="min-w-0">
+                <h4 class="text-sm font-bold text-white group-hover:text-amber-300 transition-colors truncate" title="${sfName}">
+                  ${sfName}
+                </h4>
+                <p class="text-xs text-slate-400 mt-0.5 font-mono">
+                  ${count} ${currentLang === 'en' ? 'files' : 'ফাইল'}
+                </p>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600 group-hover:text-white transition-colors flex-shrink-0"></i>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // B. Render Direct Files at this level
+    if (directFiles.length > 0) {
+      if (subfolderKeys.length > 0) {
+        html += `
+          <div class="col-span-full pt-4 pb-1 border-t border-slate-800/80 flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="file-text" class="w-3.5 h-3.5 text-indigo-400"></i>
+              <span>${currentLang === 'en' ? 'Files in this folder' : 'এই ফোল্ডারের ফাইলসমূহ'} (${directFiles.length})</span>
+            </span>
+          </div>
+        `;
+      }
+      grid.innerHTML = html;
+      const tempDiv = document.createElement('div');
+      renderFileList(directFiles, tempDiv);
+      grid.innerHTML += tempDiv.innerHTML;
+    } else {
+      grid.innerHTML = html;
+    }
+
+    if (subfolderKeys.length === 0 && directFiles.length === 0) {
+      grid.innerHTML = `
+        <div class="col-span-full py-16 text-center text-slate-400 glass-panel rounded-2xl">
+          <i data-lucide="folder-open" class="w-12 h-12 mx-auto mb-3 text-slate-600"></i>
+          <h3 class="text-base font-semibold text-slate-300">${dict.no_files_found || 'Empty folder'}</h3>
+        </div>
+      `;
+    }
+
     lucide.createIcons();
+    return;
   }
 }
 
