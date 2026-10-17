@@ -275,8 +275,12 @@
               type="text" 
               placeholder="Search by course code, topic, or file name (e.g., ME 411, ME 154, Lathe, Thermodynamics)..." 
               oninput="handleSearch(this.value)"
-              class="w-full pl-11 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm text-white placeholder-slate-400 transition-all outline-none"
+              class="w-full pl-11 pr-20 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm text-white placeholder-slate-400 transition-all outline-none"
             >
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 pointer-events-none">
+              <kbd class="px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 bg-slate-800 border border-slate-700 rounded shadow-sm">Ctrl</kbd>
+              <kbd class="px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 bg-slate-800 border border-slate-700 rounded shadow-sm">K</kbd>
+            </div>
           </div>
           
           <!-- Submit Resource Button (For students) -->
