@@ -67,10 +67,7 @@
           <i data-lucide="folder" class="w-3.5 h-3.5"></i>
           <span data-i18n="tab_resources">Courses</span>
         </button>
-        <button id="nav-tab-videos" onclick="switchTab('videos')" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
-          <i data-lucide="video" class="w-3.5 h-3.5 text-red-400"></i>
-          <span data-i18n="tab_videos">Video Lectures</span>
-        </button>
+
         <button id="nav-tab-ai" onclick="switchTab('ai')" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
           <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
           <span data-i18n="tab_ai">AI Assistant</span>
@@ -271,7 +268,7 @@
         </div>
 
         <!-- Action Card 2: Curated YouTube Video Lectures -->
-        <div onclick="switchTab('videos')" class="p-5 rounded-2xl glass-card border border-slate-800 hover:border-red-500/50 cursor-pointer group transition-all duration-300 flex flex-col justify-between space-y-3 shadow-lg hover:shadow-red-500/10">
+        <div onclick="scrollToVideoSection()" class="p-5 rounded-2xl glass-card border border-slate-800 hover:border-red-500/50 cursor-pointer group transition-all duration-300 flex flex-col justify-between space-y-3 shadow-lg hover:shadow-red-500/10">
           <div class="space-y-2.5">
             <div class="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center border border-red-500/20 group-hover:scale-105 transition-transform">
               <i data-lucide="youtube" class="w-5 h-5 text-red-500"></i>
@@ -279,13 +276,13 @@
             <div>
               <h3 class="text-base font-bold text-white group-hover:text-red-300 transition-colors">Video Lectures</h3>
               <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                Curated YouTube playlists in Hindi, Bangla & English (Tikle's Academy, Gate Smashers, Lesics).
+                সেমিস্টার ও কোর্স অনুযায়ী ভেরিফাইড ভিডিও লেকচার (বাংলা, হিন্দি ও ইংলিশ)।
               </p>
             </div>
           </div>
           <div class="flex items-center gap-1.5 text-xs font-semibold text-red-400 group-hover:text-red-300 pt-2 border-t border-slate-800/80">
-            <span>Watch Lectures</span>
-            <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+            <span>নিচে দেখুন</span>
+            <i data-lucide="arrow-down" class="w-3.5 h-3.5 group-hover:translate-y-1 transition-transform"></i>
           </div>
         </div>
 
@@ -325,6 +322,63 @@
             <span>Start Chatting</span>
             <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
           </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== CURATED VIDEO LECTURES & PLAYLISTS (ORGANIZED BY SEMESTER/TERM) ==================== -->
+      <div id="homeVideoSection" class="p-6 sm:p-8 rounded-3xl glass-card border border-slate-800 space-y-6">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+          <div class="space-y-1">
+            <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 uppercase tracking-wider">
+              <i data-lucide="youtube" class="w-4 h-4 text-red-500"></i>
+              <span>Academic Video Vault</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+              <span>Engineering Video Lectures & Playlists</span>
+              <span id="homeVideoCountBadge" class="text-xs font-normal px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">Verified</span>
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-400">
+              CUET মেকানিক্যাল ইঞ্জিনিয়ারিং ও জেনারেল কোর্সের জন্য অনলাইন সেরা ও ভেরিফাইড ভিডিও প্লেলিস্ট (বাংলা, হিন্দি ও ইংলিশ)।
+            </p>
+          </div>
+          
+          <!-- Language Filters -->
+          <div class="flex flex-wrap items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
+            <button onclick="setHomeVideoLang('ALL')" id="homeVidLang-ALL" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-600 text-white shadow-sm transition-all">All</button>
+            <button onclick="setHomeVideoLang('bn')" id="homeVidLang-bn" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all flex items-center gap-1">🇧🇩 বাংলা</button>
+            <button onclick="setHomeVideoLang('hi')" id="homeVidLang-hi" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all flex items-center gap-1">🇮🇳 হিন্দি</button>
+            <button onclick="setHomeVideoLang('en')" id="homeVidLang-en" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all flex items-center gap-1">🇬🇧 English</button>
+          </div>
+        </div>
+
+        <!-- Filter Controls: Semester/Term Pills & Live Search -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <!-- Term folder selector pills -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+            <button onclick="setHomeVideoTerm('ALL')" id="homeVidTerm-ALL" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-sm transition-all">সব টার্ম (All)</button>
+            <button onclick="setHomeVideoTerm('L1-T1')" id="homeVidTerm-L1-T1" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L1-T1</button>
+            <button onclick="setHomeVideoTerm('L1-T2')" id="homeVidTerm-L1-T2" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L1-T2</button>
+            <button onclick="setHomeVideoTerm('L2-T1')" id="homeVidTerm-L2-T1" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L2-T1</button>
+            <button onclick="setHomeVideoTerm('L2-T2')" id="homeVidTerm-L2-T2" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L2-T2</button>
+            <button onclick="setHomeVideoTerm('L3-T1')" id="homeVidTerm-L3-T1" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L3-T1</button>
+            <button onclick="setHomeVideoTerm('L3-T2')" id="homeVidTerm-L3-T2" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L3-T2</button>
+            <button onclick="setHomeVideoTerm('L4-T1')" id="homeVidTerm-L4-T1" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L4-T1</button>
+            <button onclick="setHomeVideoTerm('L4-T2')" id="homeVidTerm-L4-T2" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L4-T2</button>
+          </div>
+
+          <!-- Search input -->
+          <div class="relative w-full md:w-64">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input id="homeVideoSearchInput" oninput="renderHomeVideos()" type="text" placeholder="টপিক বা কোর্স খুঁজুন..." class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-red-500 outline-none transition-all">
+          </div>
+        </div>
+
+        <!-- Video Cards Grid -->
+        <div id="homeVideosContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Populated dynamically via renderHomeVideos() -->
         </div>
 
       </div>
@@ -596,8 +650,8 @@
             <button onclick="askPresetPrompt('What is entropy and how does the Second Law of Thermodynamics explain it?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-emerald-300 border border-slate-800 transition-all text-left">
               🔥 Explain Entropy & 2nd Law
             </button>
-            <button onclick="askPresetPrompt('Why is Mohr's Circle used in Stress Analysis and Machine Design?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-800 transition-all text-left">
-              ⚙️ Mohr's Circle Concept
+            <button onclick="askPresetPrompt('Why is Mohr Circle used in Stress Analysis and Machine Design?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-800 transition-all text-left">
+              ⚙️ Mohr Circle Concept
             </button>
             <button onclick="askPresetPrompt('ME 211 Thermodynamics কোর্সের কি কোনো প্রশ্নব্যাংক বা লেকচার নোট আছে?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-slate-800 transition-all text-left">
               📁 ME 211 এর কোর্স ফাইল আছে কি?
@@ -1891,15 +1945,21 @@
       </div>
 
       <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
-        <p>
-          Connect your free personal <strong>Google Gemini API Key</strong> to unlock real-time Gemini 2.0 / 1.5 Flash AI reasoning!
-        </p>
-        <div class="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[11px]">
-          🔑 <strong>Get Free API Key:</strong> Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="underline font-bold text-white hover:text-purple-300">Google AI Studio</a>, generate a free API key, and paste it below. It is stored securely in your browser's private localStorage.
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+          <div class="font-bold text-white flex items-center gap-1.5 text-xs text-indigo-400">
+            <i data-lucide="info" class="w-3.5 h-3.5"></i>
+            <span>গুগল জেমিনি এপিআই কী (Google Gemini API Key) কী?</span>
+          </div>
+          <p class="text-[11px] text-slate-400 leading-normal">
+            এটি গুগলের ডেভলপার প্ল্যাটফর্ম (<a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="underline text-indigo-300 hover:text-white">Google AI Studio</a>)-এর একটি সম্পূর্ণ <strong>বিনামূল্যে</strong> পাওয়া কোড। এটি কোনো ব্যক্তিগত চ্যাট নয়; এর মাধ্যমে ওয়েবসাইটটি সরাসরি গুগলের Gemini AI সার্ভারের সাথে যুক্ত হয়ে লাইভ উত্তর দিতে পারে।
+          </p>
+          <p class="text-[11px] text-amber-300/90 font-medium">
+            ✨ এটি যুক্ত করা সম্পূর্ণ ঐচ্ছিক (Optional)। এই কি (Key) না থাকলেও ওয়েবসাইটের বিল্ট-ইন ফাহিম নিলয় এআই সম্পূর্ণ স্বাভাবিকভাবে সবার জন্য কাজ করবে!
+          </p>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Gemini API Key</label>
+          <label class="block text-xs font-medium text-slate-300 mb-1">আপনার Gemini API Key (যদি থাকে):</label>
           <input id="geminiApiKeyInput" type="password" placeholder="AIzaSy..." class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-purple-500 font-mono">
         </div>
       </div>
@@ -1981,10 +2041,7 @@
       <i data-lucide="folder" class="w-4 h-4"></i>
       <span data-i18n="tab_resources">Courses</span>
     </button>
-    <button onclick="switchTab('videos')" id="mobileNav-videos" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
-      <i data-lucide="video" class="w-4 h-4 text-red-400"></i>
-      <span data-i18n="tab_videos">Videos</span>
-    </button>
+
     <button onclick="openBulletinModal()" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
       <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
       <span>Syllabus</span>
