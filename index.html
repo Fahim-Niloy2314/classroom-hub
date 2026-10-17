@@ -42,62 +42,49 @@
 
   <!-- ==================== TOP NAVIGATION BAR ==================== -->
   <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 min-w-0">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3 min-w-0">
       
       <!-- Brand Logo -->
-      <div class="flex items-center space-x-2.5 sm:space-x-3 cursor-pointer flex-shrink-0" onclick="switchTab('home')">
-        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 flex-shrink-0">
-          <i data-lucide="graduation-cap" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+      <div class="flex items-center space-x-2 sm:space-x-2.5 cursor-pointer flex-shrink-0" onclick="switchTab('home')">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 flex-shrink-0">
+          <i data-lucide="graduation-cap" class="w-4 h-4 sm:w-5 sm:h-5"></i>
         </div>
-        <div class="min-w-0">
-          <span class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-1.5 whitespace-nowrap">
+        <div class="flex items-center gap-1.5 whitespace-nowrap">
+          <span class="text-base sm:text-lg font-bold tracking-tight text-white">
             Classroom<span class="text-indigo-400">Hub</span>
-            <span class="hidden sm:inline-flex text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">CUET ME '20</span>
           </span>
-          <p class="text-[11px] text-slate-400 hidden lg:block truncate" data-i18n="nav_sub">CUET Mechanical Engineering Archive</p>
+          <span class="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">ME '20</span>
         </div>
       </div>
 
       <!-- Navigation Tabs (Desktop) -->
       <nav class="hidden lg:flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 flex-shrink-0">
-        <button id="nav-tab-home" onclick="switchTab('home')" class="nav-tab px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 text-white bg-indigo-600 shadow-sm">
-          <i data-lucide="home" class="w-4 h-4"></i>
+        <button id="nav-tab-home" onclick="switchTab('home')" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-white bg-indigo-600 shadow-sm">
+          <i data-lucide="home" class="w-3.5 h-3.5"></i>
           <span data-i18n="tab_home">Home</span>
         </button>
-        <button id="nav-tab-resources" onclick="switchTab('resources')" class="nav-tab px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
-          <i data-lucide="folder" class="w-4 h-4"></i>
-          <span data-i18n="tab_resources">Course Vault</span>
+        <button id="nav-tab-resources" onclick="switchTab('resources')" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+          <i data-lucide="folder" class="w-3.5 h-3.5"></i>
+          <span data-i18n="tab_resources">Courses</span>
         </button>
-        <button id="nav-tab-bulletin" onclick="openBulletinModal()" class="nav-tab px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
-          <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
-          <span>Syllabus</span>
+        <button id="nav-tab-ai" onclick="switchTab('ai')" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
+          <span data-i18n="tab_ai">AI Assistant</span>
         </button>
-        <button id="nav-tab-ai" onclick="switchTab('ai')" class="nav-tab px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
-          <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
-          <span data-i18n="tab_ai">AI Companion</span>
-        </button>
-        <button id="nav-tab-tracker" onclick="switchTab('tracker')" class="nav-tab px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
-          <i data-lucide="check-square" class="w-4 h-4 text-amber-400"></i>
+        <button id="nav-tab-tracker" onclick="switchTab('tracker')" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+          <i data-lucide="check-square" class="w-3.5 h-3.5 text-amber-400"></i>
           <span data-i18n="tab_tracker">Tracker</span>
         </button>
         <!-- Admin Moderation Tab (Shown only to Fahim Niloy's Admin accounts) -->
-        <button id="nav-tab-admin" onclick="switchTab('admin')" class="hidden nav-tab px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 text-amber-300 hover:bg-amber-500/10 border border-amber-500/30">
-          <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400"></i>
+        <button id="nav-tab-admin" onclick="switchTab('admin')" class="hidden nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-amber-300 hover:bg-amber-500/10 border border-amber-500/30">
+          <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400"></i>
           <span data-i18n="tab_admin">Admin</span>
           <span id="adminPendingBadge" class="bg-amber-500 text-slate-950 px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
         </button>
       </nav>
 
-      <!-- Right Header Actions -->
-      <div class="flex items-center space-x-2 flex-shrink-0">
-        
-        <!-- Direct Google Drive Button -->
-        <a href="https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h" target="_blank" rel="noopener noreferrer" title="Google Drive Archive (All Drives Together)" class="hidden sm:flex px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-teal-300 border border-teal-500/30 text-xs font-semibold items-center gap-1.5 transition-all shadow-sm">
-          <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-teal-400"></i>
-          <span>Google Drive</span>
-          <i data-lucide="external-link" class="w-3 h-3 opacity-60"></i>
-        </a>
-
+      <!-- Right Header Actions (Compact, Zero Overflow) -->
+      <div class="flex items-center gap-2 flex-shrink-0">
         <!-- Language Switcher Toggle (EN | BN) -->
         <button id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language / ভাষা পরিবর্তন করুন" class="px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs font-semibold flex items-center gap-1 transition-all shadow-sm">
           <i data-lucide="languages" class="w-3.5 h-3.5 text-indigo-400"></i>
@@ -105,10 +92,9 @@
         </button>
 
         <!-- User Authentication Section -->
-        <div id="authHeaderContainer" class="flex items-center gap-1.5">
+        <div id="authHeaderContainer" class="flex items-center">
           <!-- Populated dynamically: Sign In button OR Profile pill with Logout -->
         </div>
-
       </div>
 
     </div>
@@ -163,12 +149,10 @@
 
             <!-- Creator Contact Information Bar -->
             <div class="pt-4 flex flex-wrap items-center gap-4 text-xs text-slate-400 border-t border-slate-800">
-              <div class="flex flex-wrap items-center gap-1.5 break-all max-w-full">
+              <div class="flex items-center gap-1.5 break-all max-w-full">
                 <i data-lucide="mail" class="w-4 h-4 text-indigo-400 flex-shrink-0"></i>
                 <span class="font-medium text-slate-400">Email:</span>
-                <a id="homeEmailLink" href="mailto:fahim.cuet.me20@gmail.com" class="text-slate-200 hover:text-indigo-400 underline font-mono">fahim.cuet.me20@gmail.com</a>
-                <span class="text-slate-600">|</span>
-                <a id="homeEmailSecondaryLink" href="mailto:fahimniloy2314@gmail.com" class="text-slate-200 hover:text-indigo-400 underline font-mono">fahimniloy2314@gmail.com</a>
+                <a id="homeEmailLink" href="mailto:fahimniloy2314@gmail.com" class="text-slate-200 hover:text-indigo-400 underline font-mono">fahimniloy2314@gmail.com</a>
               </div>
               <div class="flex items-center gap-2">
                 <i data-lucide="phone" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
