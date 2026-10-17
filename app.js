@@ -128,8 +128,8 @@ const I18N = {
     btn_understood: 'Got it! Continue Learning',
     btn_open_system: 'Open in Windows',
     btn_download: 'Download',
-    btn_preview: 'Read',
-    btn_open_drive: 'Open & Read on Google Drive',
+    btn_preview: 'Preview',
+    btn_open_drive: 'Open Preview in Google Drive',
     btn_download_drive: 'Download File',
     cloud_fallback_desc: 'In online cloud mode, all 33 GB Academic Vault files are hosted directly on Google Drive. Click below to view or download instantly.',
     modal_contrib_title: 'Share / Submit Academic Resource',
@@ -242,8 +242,8 @@ const I18N = {
     btn_understood: 'বুঝেছি! পড়াশোনা চালিয়ে যান',
     btn_open_system: 'Windows-এ খুলুন',
     btn_download: 'ডাউনলোড',
-    btn_preview: 'পড়ুন',
-    btn_open_drive: 'গুগল ড্রাইভে পড়ুন',
+    btn_preview: 'প্রিভিউ',
+    btn_open_drive: 'গুগল ড্রাইভে প্রিভিউ দেখুন',
     btn_download_drive: 'ফাইল ডাউনলোড',
     cloud_fallback_desc: 'অনলাইন ক্লাউড মোডে ক্লাসরুমের ৩৩ জিবি একাডেমিক ফাইলগুলো সরাসরি গুগল ড্রাইভ ভল্টে সংরক্ষিত রয়েছে। নিচের বাটনে ক্লিক করে ফাইলটি সরাসরি পড়ুন অথবা ডাউনলোড করুন।',
     modal_contrib_title: 'একাডেমিক রিসোর্স শেয়ার / জমা দিন',
@@ -436,14 +436,16 @@ function switchTab(tab) {
 /* =========================================================================
    6. USER AUTHENTICATION & ACCESS CONTROL (Clean, Modern, Reliable)
    ========================================================================= */
-const ADMIN_ROLLS = ['2003063'];
+const ADMIN_EMAILS_LIST = [
+  'fahim.cuet.me20@gmail.com',
+  'fahimniloy2314@gmail.com'
+];
+const ADMIN_SECRET_KEY = 'CuetMe20#AdminVault';
 
 function isAdmin(user) {
   if (!user) return false;
   if (user.role === 'admin') return true;
-  if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim())) return true;
-  if (user.roll && ADMIN_ROLLS.includes(user.roll.trim())) return true;
-  if (user.phone && ['01850162261', '+8801850162261', '1850162261'].includes(user.phone.replace(/[\s\-]/g, ''))) return true;
+  if (user.email && ADMIN_EMAILS_LIST.includes(user.email.toLowerCase().trim())) return true;
   return false;
 }
 
@@ -510,63 +512,123 @@ function closeAuthModal() {
   if (dialog) dialog.close();
 }
 
-// 1-Click Google Sign-in as Fahim Niloy (Founder & Admin)
-function handleQuickGoogleLogin() {
-  currentUser = {
-    name: 'Fahim Niloy',
-    email: 'fahim.cuet.me20@gmail.com',
-    role: 'admin',
-    roll: '2003063',
-    batch: 'ME 20',
-    method: 'google'
-  };
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-  updateAuthUI();
+function handleGoogleSignInPrompt() {
   closeAuthModal();
-  showToast(currentLang === 'en' 
-    ? 'Signed in as Fahim Niloy (Admin Access Granted)' 
-    : 'ফাহিম নিলয় হিসেবে সাইন ইন সম্পন্ন (অ্যাডমিন সুবিধা চালু)');
+  const gDialog = document.getElementById('googleSignInDialog');
+  if (gDialog) {
+    const adminPassField = document.getElementById('googleAdminPassField');
+    if (adminPassField) adminPassField.classList.add('hidden');
+    const emailInput = document.getElementById('googleCustomEmailInput');
+    if (emailInput) emailInput.value = '';
+    gDialog.showModal();
+    lucide.createIcons();
+  }
 }
 
-// Sign-in with CUET Roll or Email
-function handleStudentRollLogin(e) {
-  if (e && e.preventDefault) e.preventDefault();
-  const input = document.getElementById('loginIdentifier');
-  const val = (input ? input.value : '').trim();
+function closeGoogleSignInModal() {
+  const gDialog = document.getElementById('googleSignInDialog');
+  if (gDialog) gDialog.close();
+}
 
-  if (!val) {
-    showToast(currentLang === 'en' ? 'Please enter your CUET Roll or Email' : 'আপনার কুয়েট রোল বা ইমেইল লিখুন');
+function handleGoogleCustomAccount(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const emailInput = document.getElementById('googleCustomEmailInput');
+  const passInput = document.getElementById('googleAdminPassInput');
+  const adminPassField = document.getElementById('googleAdminPassField');
+  const email = (emailInput?.value || '').trim();
+  const pass = (passInput?.value || '').trim();
+
+  if (!email) {
+    showToast(currentLang === 'en' ? 'Please enter your Google email' : 'আপনার গুগল ইমেইলটি লিখুন');
     return;
   }
 
-  // Check if roll or email matches Admin
-  const isOwner = val === '2003063' || ADMIN_EMAILS.includes(val.toLowerCase()) || val.toLowerCase().includes('fahim');
+  const isAdminEmail = ADMIN_EMAILS_LIST.includes(email.toLowerCase());
 
-  if (isOwner) {
-    currentUser = {
-      name: 'Fahim Niloy (Admin)',
-      email: 'fahim.cuet.me20@gmail.com',
-      roll: '2003063',
-      role: 'admin',
-      batch: 'ME 20',
-      method: 'cuet_id'
-    };
-    showToast(currentLang === 'en' ? 'Welcome back, Fahim Niloy! Admin mode unlocked.' : 'স্বাগতম ফাহিম নিলয়! অ্যাডমিন মোড চালু হয়েছে।');
+  if (isAdminEmail) {
+    if (!pass) {
+      if (adminPassField) {
+        adminPassField.classList.remove('hidden');
+        if (passInput) passInput.focus();
+      }
+      showToast(currentLang === 'en' ? 'Admin email recognized. Please enter Admin Password.' : 'অ্যাডমিন ইমেইল শনাক্ত হয়েছে। পাসওয়ার্ড দিন।');
+      return;
+    }
+
+    if (pass === ADMIN_SECRET_KEY || pass === '2003063') {
+      currentUser = {
+        name: 'Fahim Niloy (Admin)',
+        email: email,
+        role: 'admin',
+        method: 'google'
+      };
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+      updateAuthUI();
+      closeGoogleSignInModal();
+      showToast(currentLang === 'en' ? 'Welcome Admin! Signed in successfully.' : 'স্বাগতম অ্যাডমিন! গুগল দিয়ে সাইন ইন সফল হয়েছে।');
+    } else {
+      showToast(currentLang === 'en' ? 'Incorrect admin password.' : 'ভুল অ্যাডমিন পাসওয়ার্ড। আবার চেষ্টা করুন।');
+    }
   } else {
-    const isRollOnly = /^\d+$/.test(val);
+    // Normal student signing in with their own Google email
+    const displayName = email.split('@')[0];
     currentUser = {
-      name: isRollOnly ? `CUETian (${val})` : val.split('@')[0],
-      email: isRollOnly ? `u${val}@student.cuet.ac.bd` : val,
-      roll: isRollOnly ? val : '',
+      name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
+      email: email,
       role: 'student',
-      method: 'cuet_id'
+      method: 'google'
     };
-    showToast(currentLang === 'en' ? `Signed in successfully as ${currentUser.name}` : `${currentUser.name} হিসেবে সাইন ইন সম্পন্ন`);
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+    updateAuthUI();
+    closeGoogleSignInModal();
+    showToast(currentLang === 'en' ? `Signed in as ${currentUser.name}` : `${currentUser.name} হিসেবে সাইন ইন সম্পন্ন`);
+  }
+}
+
+function handleStandardAuthSubmit(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const idInput = document.getElementById('authEmailInput');
+  const passInput = document.getElementById('authPasswordInput');
+  const id = (idInput?.value || '').trim();
+  const pass = (passInput?.value || '').trim();
+
+  if (!id) {
+    showToast(currentLang === 'en' ? 'Please enter your email or Student ID' : 'ইমেইল বা স্টুডেন্ট আইডি লিখুন');
+    return;
   }
 
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-  updateAuthUI();
-  closeAuthModal();
+  const isAdminUser = ADMIN_EMAILS_LIST.includes(id.toLowerCase()) || id === '2003063';
+
+  if (isAdminUser) {
+    if (pass === ADMIN_SECRET_KEY || pass === '2003063') {
+      currentUser = {
+        name: 'Fahim Niloy (Admin)',
+        email: 'fahim.cuet.me20@gmail.com',
+        role: 'admin',
+        method: 'email_password'
+      };
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+      updateAuthUI();
+      closeAuthModal();
+      showToast(currentLang === 'en' ? 'Admin credentials verified. Welcome Fahim Niloy!' : 'অ্যাডমিন ভেরিফিকেশন সফল! স্বাগতম ফাহিম নিলয়।');
+    } else {
+      showToast(currentLang === 'en' ? 'Incorrect admin password. Please try again.' : 'ভুল অ্যাডমিন পাসওয়ার্ড। অনুগ্রহ করে সঠিক পাসওয়ার্ড দিন।');
+    }
+  } else {
+    // Standard Student Sign In
+    const isRollOnly = /^\d+$/.test(id);
+    const studentName = isRollOnly ? `Student (${id})` : (id.split('@')[0]);
+    currentUser = {
+      name: studentName,
+      email: isRollOnly ? `u${id}@student.cuet.ac.bd` : id,
+      role: 'student',
+      method: 'email_password'
+    };
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+    updateAuthUI();
+    closeAuthModal();
+    showToast(currentLang === 'en' ? `Signed in as ${currentUser.name}` : `${currentUser.name} হিসেবে সফলভাবে সাইন ইন সম্পন্ন`);
+  }
 }
 
 function handleLogout() {
@@ -1131,41 +1193,18 @@ function renderFileList(files, container) {
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-1.5 sm:gap-2">
-          ${f.url ? `
-            <a href="${f.url}" target="_blank" rel="noopener noreferrer" class="flex-1 py-1.5 px-2 rounded-lg bg-teal-600/20 hover:bg-teal-600 text-teal-300 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-1">
-              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-              <span>${dict.btn_preview} (Drive)</span>
-            </a>
-          ` : isLocalHost() ? `
-            <button onclick="previewFile('${encodeURIComponent(f.path)}', '${encodeURIComponent(f.name)}')" class="flex-1 py-1.5 px-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-1">
-              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-              <span>${dict.btn_preview}</span>
-            </button>
-            
-            <button onclick="openFileLocally('${encodeURIComponent(f.path)}')" title="Open in System Default App" class="py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all flex items-center gap-1">
-              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+        <div class="pt-3 border-t border-slate-800/80 flex items-center gap-2">
+          <a href="${f.drive_view_url || f.url || 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h'}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            <span>${dict.btn_preview}</span>
+            <i data-lucide="external-link" class="w-3 h-3 opacity-70"></i>
+          </a>
+          ${isLocalHost() ? `
+            <button onclick="openFileLocally('${encodeURIComponent(f.path)}')" title="Open in Windows Default App" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all flex items-center gap-1 border border-slate-700">
+              <i data-lucide="laptop" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">${dict.btn_open_system}</span>
             </button>
-
-            <button onclick="handleFileDownload('${encodeURIComponent(f.path)}', '${encodeURIComponent(f.name)}')" title="Download" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 transition-all">
-              <i data-lucide="download" class="w-3.5 h-3.5"></i>
-            </button>
-          ` : `
-            <button onclick="previewFile('${encodeURIComponent(f.path)}', '${encodeURIComponent(f.name)}')" class="flex-1 py-1.5 px-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-1">
-              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-              <span>${dict.btn_preview}</span>
-            </button>
-            
-            <a href="${f.drive_view_url || 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h'}" target="_blank" rel="noopener noreferrer" title="View on Google Drive" class="py-1.5 px-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-xs font-medium transition-all flex items-center gap-1 border border-emerald-500/30">
-              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-              <span>Drive</span>
-            </a>
-
-            <button onclick="handleFileDownload('${encodeURIComponent(f.path)}', '${encodeURIComponent(f.name)}')" title="Download" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 transition-all">
-              <i data-lucide="download" class="w-3.5 h-3.5"></i>
-            </button>
-          `}
+          ` : ''}
         </div>
       </div>
     `;
@@ -1243,102 +1282,23 @@ function previewFile(encPath, encName) {
   currentPreviewPath = path;
   currentPreviewName = name;
 
-  const dialog = document.getElementById('pdfViewerDialog');
-  if (!dialog) return;
-
-  const title = document.getElementById('pdfViewerTitle');
-  const frame = document.getElementById('pdfViewerFrame');
-  const dl = document.getElementById('viewerDownloadBtn');
-  const localBtn = document.getElementById('viewerOpenLocalBtn');
-  const openDriveBtn = document.getElementById('viewerOpenDriveBtn');
-  const cloudFallback = document.getElementById('viewerCloudFallback');
-  const driveBtn = document.getElementById('viewerDriveBtn');
-  const fallbackDlBtn = document.getElementById('viewerFallbackDlBtn');
-  const fallbackName = document.getElementById('viewerFallbackFilename');
-
-  if (title) title.textContent = name;
-  if (fallbackName) fallbackName.textContent = name;
-
-  // Toggle local desktop app launch button based on localhost presence
-  if (localBtn) localBtn.classList.toggle('hidden', !isLocalHost());
-
-  // Find file object to retrieve Google Drive URLs
-  const allFiles = getAllFlatFiles();
-  const fileObj = allFiles.find(f => f.path === path || f.name === name);
-
-  // Configure Direct Drive Link in viewer header
-  if (openDriveBtn) {
-    const driveLink = fileObj?.drive_view_url || 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h';
-    openDriveBtn.href = driveLink;
-    openDriveBtn.classList.remove('hidden');
-  }
-
-  // 1. If Undergraduate Bulletin:
+  // 1. If Undergraduate Bulletin, open in bulletin/pdf dialog
   if (name.toLowerCase().includes('bulletin') || path.toLowerCase().includes('bulletin')) {
-    if (cloudFallback) cloudFallback.classList.add('hidden');
-    if (frame) {
-      frame.classList.remove('hidden');
-      frame.src = isLocalHost() ? 'Bulletin_UG_ME.pdf' : `https://docs.google.com/viewer?url=${encodeURIComponent(BULLETIN_RELEASE_URL)}&embedded=true`;
-    }
-    if (dl) {
-      dl.onclick = (e) => {
-        e.preventDefault();
-        handleFileDownload(path, name);
-      };
-    }
-    dialog.showModal();
-    lucide.createIcons();
+    openBulletinModal();
     return;
   }
 
-  // 2. If running locally on localhost
+  // 2. Find file in flat list
+  const allFiles = getAllFlatFiles();
+  const fileObj = allFiles.find(f => f.path === path || f.name === name);
+  const driveUrl = fileObj?.drive_view_url || 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h';
+
   if (isLocalHost()) {
-    if (cloudFallback) cloudFallback.classList.add('hidden');
-    if (frame) {
-      frame.classList.remove('hidden');
-      frame.src = `/api/file?path=${encodeURIComponent(path)}`;
-    }
-    if (dl) {
-      dl.onclick = (e) => {
-        e.preventDefault();
-        handleFileDownload(path, name);
-      };
-    }
+    openFileLocally(encodeURIComponent(path));
   } else {
-    // 3. Online mode (GitHub Pages / Mobile): Direct In-App Drive Embed
-    const driveViewUrl = fileObj?.drive_view_url || 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h';
-    const driveDownloadUrl = fileObj?.drive_download_url || driveViewUrl;
-
-    if (fileObj && fileObj.drive_embed_url) {
-      if (cloudFallback) cloudFallback.classList.add('hidden');
-      if (frame) {
-        frame.classList.remove('hidden');
-        frame.src = fileObj.drive_embed_url;
-      }
-    } else {
-      if (frame) {
-        frame.classList.add('hidden');
-        frame.src = 'about:blank';
-      }
-      if (cloudFallback) cloudFallback.classList.remove('hidden');
-    }
-
-    if (driveBtn) {
-      driveBtn.onclick = () => window.open(driveViewUrl, '_blank');
-    }
-    if (fallbackDlBtn) {
-      fallbackDlBtn.onclick = () => window.open(driveDownloadUrl, '_blank');
-    }
-    if (dl) {
-      dl.onclick = (e) => {
-        e.preventDefault();
-        window.open(driveDownloadUrl, '_blank');
-      };
-    }
+    window.open(driveUrl, '_blank');
+    showToast(currentLang === 'en' ? `Opening preview for ${name}...` : `${name} এর প্রিভিউ ওপেন হচ্ছে...`);
   }
-
-  dialog.showModal();
-  lucide.createIcons();
 }
 
 function previewFileByName(filename) {
