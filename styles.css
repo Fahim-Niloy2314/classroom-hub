@@ -1,9 +1,14 @@
-/* Custom styling for Fahim Niloy's Classroom Hub */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* =========================================================================
+   ClassroomHub - Modern Academic UI Stylesheet
+   Design System: Minimalist Slate & Indigo (Linear / MIT OCW / Vercel Aesthetic)
+   Author: Fahim Niloy (CUET ME '20, Roll: 2003063)
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 *, *::before, *::after {
@@ -16,42 +21,41 @@ html, body {
   width: 100%;
   margin: 0;
   padding: 0;
-}
-
-body {
-  font-family: var(--font-sans);
-  background-color: #0b0f19;
+  background-color: #090d16;
   color: #f1f5f9;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 img, video, iframe, canvas, svg {
   max-width: 100%;
+  height: auto;
 }
 
-/* Glassmorphism */
+/* Glassmorphism & Panel Styling */
 .glass-panel {
-  background: rgba(17, 24, 39, 0.75);
+  background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-card {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 1rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: #131d35;
+  border-color: rgba(99, 102, 241, 0.4);
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.1);
 }
 
-/* Dialog and Backdrop */
+/* Dialog & Modal */
 dialog {
   border: none;
   background: transparent;
@@ -64,82 +68,106 @@ dialog {
 }
 
 dialog::backdrop {
-  background-color: rgba(3, 7, 18, 0.75);
+  background-color: rgba(3, 7, 18, 0.8);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 dialog[open] {
-  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Custom Scrollbar */
+/* Custom Clean Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.4);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
-  border-radius: 4px;
+  background: rgba(71, 85, 105, 0.5);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.6);
-}
-
-/* Gradients */
-.text-gradient-primary {
-  background: linear-gradient(135deg, #60a5fa 0%, #a855f7 50%, #ec4899 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.text-gradient-emerald {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.badge-pro {
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
-}
-
-/* Mobile Responsiveness & Bottom Navigation */
-.pb-safe {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 4.5rem);
+  background: rgba(100, 116, 139, 0.8);
 }
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* Accordion Smooth Transitions */
+/* Typography & Accent Badges */
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* AI Chat Prose */
+.ai-prose p {
+  margin-bottom: 0.5rem;
+}
+.ai-prose p:last-child {
+  margin-bottom: 0;
+}
+.ai-prose ul {
+  list-style-type: disc;
+  margin-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.ai-prose ol {
+  list-style-type: decimal;
+  margin-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.ai-prose h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #a5b4fc;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+.ai-prose code {
+  background: rgba(15, 23, 42, 0.9);
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: #38bdf8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ai-prose pre {
+  background: #0b0f19;
+  border: 1px solid #1e293b;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: #e2e8f0;
+}
+
+/* Branch content animation */
 .branch-content {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-/* Chat bubble styling */
-.ai-prose p { margin-bottom: 0.5rem; }
-.ai-prose p:last-child { margin-bottom: 0; }
-.ai-prose ul { list-style-type: disc; margin-left: 1.25rem; margin-bottom: 0.5rem; }
-.ai-prose ol { list-style-type: decimal; margin-left: 1.25rem; margin-bottom: 0.5rem; }
-.ai-prose h3 { font-size: 0.95rem; font-weight: 700; color: #a5b4fc; margin-top: 0.5rem; margin-bottom: 0.25rem; }
-.ai-prose code { background: rgba(15, 23, 42, 0.8); padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-family: var(--font-mono); font-size: 0.8em; color: #38bdf8; }
-.ai-prose pre { background: rgba(15, 23, 42, 0.9); padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.5rem; }
-
