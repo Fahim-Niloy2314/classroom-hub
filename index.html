@@ -36,71 +36,74 @@
 
   <!-- ==================== TOP NAVIGATION BAR ==================== -->
   <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 min-w-0">
       
       <!-- Brand Logo -->
-      <div class="flex items-center space-x-3 cursor-pointer flex-shrink-0" onclick="switchTab('home')">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-          <i data-lucide="graduation-cap" class="w-6 h-6 text-white"></i>
+      <div class="flex items-center space-x-2.5 sm:space-x-3 cursor-pointer flex-shrink-0" onclick="switchTab('home')">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
+          <i data-lucide="graduation-cap" class="w-5 h-5 sm:w-6 sm:h-6 text-white"></i>
         </div>
-        <div>
-          <span class="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+        <div class="min-w-0">
+          <span class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-1.5 whitespace-nowrap">
             Classroom<span class="text-indigo-400">Hub</span>
-            <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">CUET ME '20</span>
+            <span class="hidden md:inline-flex text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50">CUET ME '20</span>
           </span>
-          <p class="text-xs text-slate-400 hidden sm:block" data-i18n="nav_sub">CUET Mechanical Engineering Archive</p>
+          <p class="text-[11px] sm:text-xs text-slate-400 hidden lg:block truncate" data-i18n="nav_sub">CUET Mechanical Engineering Archive</p>
         </div>
       </div>
 
-      <!-- Navigation Tabs (Desktop) -->
-      <nav class="hidden lg:flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
-        <button id="nav-tab-home" onclick="switchTab('home')" class="nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-white bg-indigo-600 shadow-sm">
+      <!-- Navigation Tabs (Desktop: responsive for laptops and large monitors) -->
+      <nav class="hidden lg:flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800 flex-shrink-0">
+        <button id="nav-tab-home" onclick="switchTab('home')" class="nav-tab px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 text-white bg-indigo-600 shadow-sm">
           <i data-lucide="home" class="w-4 h-4"></i>
           <span data-i18n="tab_home">Home</span>
         </button>
-        <button id="nav-tab-resources" onclick="switchTab('resources')" class="nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+        <button id="nav-tab-resources" onclick="switchTab('resources')" class="nav-tab px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
           <i data-lucide="folder" class="w-4 h-4"></i>
-          <span data-i18n="tab_resources">Course Explorer</span>
+          <span data-i18n="tab_resources">Courses</span>
         </button>
-        <button id="nav-tab-ai" onclick="switchTab('ai')" class="nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+        <button id="nav-tab-ai" onclick="switchTab('ai')" class="nav-tab px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
           <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
           <span data-i18n="tab_ai">AI Assistant</span>
         </button>
-        <button id="nav-tab-tracker" onclick="switchTab('tracker')" class="nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+        <button id="nav-tab-tracker" onclick="switchTab('tracker')" class="nav-tab px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
           <i data-lucide="check-square" class="w-4 h-4"></i>
-          <span data-i18n="tab_tracker">Progress Tracker</span>
+          <span data-i18n="tab_tracker">Tracker</span>
         </button>
+        <!-- 5 TB Drive Vault Direct Link in Nav -->
+        <a href="https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h" target="_blank" rel="noopener noreferrer" class="hidden xl:flex px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all items-center gap-1.5 text-teal-300 hover:bg-teal-500/10">
+          <i data-lucide="hard-drive" class="w-4 h-4 text-teal-400"></i>
+          <span>5 TB Vault</span>
+        </a>
         <!-- Admin Moderation Tab (Shown only to Fahim Niloy's Admin accounts) -->
-        <button id="nav-tab-admin" onclick="switchTab('admin')" class="hidden nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-amber-300 hover:bg-amber-500/10 border border-amber-500/30">
+        <button id="nav-tab-admin" onclick="switchTab('admin')" class="hidden nav-tab px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all flex items-center gap-1.5 text-amber-300 hover:bg-amber-500/10 border border-amber-500/30">
           <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400"></i>
-          <span data-i18n="tab_admin">Admin Review</span>
+          <span data-i18n="tab_admin">Admin</span>
           <span id="adminPendingBadge" class="bg-amber-500 text-slate-950 px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
         </button>
       </nav>
 
       <!-- Right Header Actions -->
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
         
         <!-- Language Switcher Toggle (EN | BN) -->
-        <button id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language / ভাষা পরিবর্তন করুন" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+        <button id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language / ভাষা পরিবর্তন করুন" class="px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 text-xs font-semibold flex items-center gap-1 transition-all shadow-sm">
           <i data-lucide="languages" class="w-3.5 h-3.5 text-indigo-400"></i>
           <span id="langLabel">EN / বাং</span>
         </button>
 
-        <!-- Pro / Premium Badge (Complimentary free for everyone) -->
-        <button id="proBadgeBtn" onclick="openUpgradeModal()" class="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 shadow-sm">
+        <!-- Pro / Premium Badge (Shown on md+ screens to save mobile space) -->
+        <button id="proBadgeBtn" onclick="openUpgradeModal()" class="hidden md:flex px-2.5 py-1.5 rounded-xl text-xs font-semibold items-center gap-1 transition-all transform hover:scale-105 active:scale-95 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 shadow-sm">
           <i data-lucide="crown" class="w-3.5 h-3.5 text-amber-400"></i>
-          <span id="proBadgeText" data-i18n="pro_badge_free">Pro (Free Access)</span>
+          <span id="proBadgeText" data-i18n="pro_badge_free">Pro (Free)</span>
         </button>
 
         <!-- User Authentication & Sign Out Section -->
-        <div id="authHeaderContainer" class="flex items-center gap-2">
+        <div id="authHeaderContainer" class="flex items-center gap-1.5">
           <!-- Populated dynamically via JS: Login button OR Profile pill with Logout -->
         </div>
 
       </div>
-
-    </div>
 
     </div>
   </header>
@@ -140,9 +143,16 @@
                 <span data-i18n="btn_explore_courses">Browse Course Folders</span>
               </button>
               
+              <!-- Direct 5 TB Google Drive Vault Link -->
+              <a id="homeDriveVaultLink" href="https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 font-medium text-sm flex items-center gap-2 transition-all shadow-sm">
+                <i data-lucide="hard-drive" class="w-4 h-4 text-teal-400"></i>
+                <span>5 TB Drive Vault</span>
+                <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-70"></i>
+              </a>
+
               <!-- Direct Personal Website Link -->
-              <a id="homeNetlifyLink" href="https://mohammad-fahim-ahmed.netlify.app/" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 font-medium text-sm flex items-center gap-2 transition-all">
-                <i data-lucide="globe" class="w-4 h-4"></i>
+              <a id="homeNetlifyLink" href="https://mohammad-fahim-ahmed.netlify.app/" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm flex items-center gap-2 transition-all">
+                <i data-lucide="globe" class="w-4 h-4 text-emerald-400"></i>
                 <span data-i18n="btn_portfolio">My Personal Website</span>
                 <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-70"></i>
               </a>
@@ -158,15 +168,15 @@
 
             <!-- Contact Information Bar -->
             <div class="pt-4 flex flex-wrap items-center gap-4 text-xs text-slate-400 border-t border-slate-800/80">
-              <div class="flex items-center gap-2">
-                <i data-lucide="mail" class="w-4 h-4 text-indigo-400"></i>
+              <div class="flex flex-wrap items-center gap-1.5 break-all max-w-full">
+                <i data-lucide="mail" class="w-4 h-4 text-indigo-400 flex-shrink-0"></i>
                 <span data-i18n="label_email">Email:</span>
                 <a id="homeEmailLink" href="mailto:fahim.cuet.me20@gmail.com" class="text-slate-200 hover:text-indigo-400 underline">fahim.cuet.me20@gmail.com</a>
                 <span class="text-slate-600">|</span>
                 <a id="homeEmailSecondaryLink" href="mailto:fahimniloy2314@gmail.com" class="text-slate-200 hover:text-indigo-400 underline">fahimniloy2314@gmail.com</a>
               </div>
               <div class="flex items-center gap-2">
-                <i data-lucide="phone" class="w-4 h-4 text-emerald-400"></i>
+                <i data-lucide="phone" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
                 <span data-i18n="label_phone">Phone:</span>
                 <a id="homePhoneLink" href="tel:+8801850162261" class="text-slate-200 hover:text-emerald-400 font-mono">+880 1850-162261</a>
                 <button id="editContactBtn" onclick="openEditContactModal()" title="Edit Contact (Admin Only)" class="hidden text-slate-500 hover:text-indigo-400 p-0.5 transition-colors">
@@ -220,6 +230,95 @@
               </span>
             </div>
 
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ==================== INTERACTIVE FEATURE HUB SHOWCASE ==================== -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+              <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+              <span>Classroom Hub Core Capabilities</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+              <span>Platform Feature Showcase</span>
+              <span class="text-xs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-medium">100% Live & Functional</span>
+            </h2>
+          </div>
+          <span class="hidden sm:inline-block text-xs text-slate-400">Click any card to launch feature</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Feature 1: Course Explorer -->
+          <div onclick="switchTab('resources')" class="p-5 rounded-2xl glass-card border border-indigo-500/30 hover:border-indigo-400 cursor-pointer group flex flex-col justify-between space-y-4">
+            <div class="space-y-2">
+              <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all flex items-center justify-center">
+                <i data-lucide="folder-tree" class="w-5 h-5"></i>
+              </div>
+              <h3 class="text-base font-bold text-white group-hover:text-indigo-300 transition-colors">Course Explorer & Vault</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Browse all 8 semesters (L1-T1 to L4-T2) with 50+ course folders, lecture slides, lab manuals, and previous year question banks.
+              </p>
+            </div>
+            <div class="flex items-center justify-between pt-3 border-t border-slate-800 text-xs font-semibold text-indigo-400 group-hover:text-indigo-300">
+              <span>Open Courses</span>
+              <i data-lucide="arrow-right" class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"></i>
+            </div>
+          </div>
+
+          <!-- Feature 2: In-App Drive PDF Viewer -->
+          <div onclick="openBulletinModal()" class="p-5 rounded-2xl glass-card border border-teal-500/30 hover:border-teal-400 cursor-pointer group flex flex-col justify-between space-y-4">
+            <div class="space-y-2">
+              <div class="w-10 h-10 rounded-xl bg-teal-600/20 text-teal-400 group-hover:bg-teal-600 group-hover:text-white transition-all flex items-center justify-center">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
+              </div>
+              <h3 class="text-base font-bold text-white group-hover:text-teal-300 transition-colors">1-Click Drive & PDF Reader</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Stream and preview any of the 3,893+ files directly inside the browser or open directly in the 5 TB Google Drive cloud vault.
+              </p>
+            </div>
+            <div class="flex items-center justify-between pt-3 border-t border-slate-800 text-xs font-semibold text-teal-400 group-hover:text-teal-300">
+              <span>Read Bulletin & Slides</span>
+              <i data-lucide="arrow-right" class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"></i>
+            </div>
+          </div>
+
+          <!-- Feature 3: Gemini AI Study Companion -->
+          <div onclick="switchTab('ai')" class="p-5 rounded-2xl glass-card border border-purple-500/30 hover:border-purple-400 cursor-pointer group flex flex-col justify-between space-y-4">
+            <div class="space-y-2">
+              <div class="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition-all flex items-center justify-center">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+              </div>
+              <h3 class="text-base font-bold text-white group-hover:text-purple-300 transition-colors">Gemini AI Study Companion</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Instant answers to CUET ME course topics, formula explanations (Bernoulli, Thermodynamics), lathe viva prep, and exam tips.
+              </p>
+            </div>
+            <div class="flex items-center justify-between pt-3 border-t border-slate-800 text-xs font-semibold text-purple-400 group-hover:text-purple-300">
+              <span>Launch AI Hub</span>
+              <i data-lucide="arrow-right" class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"></i>
+            </div>
+          </div>
+
+          <!-- Feature 4: Exam & Progress Tracker -->
+          <div onclick="switchTab('tracker')" class="p-5 rounded-2xl glass-card border border-emerald-500/30 hover:border-emerald-400 cursor-pointer group flex flex-col justify-between space-y-4">
+            <div class="space-y-2">
+              <div class="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-all flex items-center justify-center">
+                <i data-lucide="check-square" class="w-5 h-5"></i>
+              </div>
+              <h3 class="text-base font-bold text-white group-hover:text-emerald-300 transition-colors">Progress Tracker & Bookmarks</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Track your syllabus completion, bookmark important question banks, and maintain your Term Final preparation checklist.
+              </p>
+            </div>
+            <div class="flex items-center justify-between pt-3 border-t border-slate-800 text-xs font-semibold text-emerald-400 group-hover:text-emerald-300">
+              <span>Check Progress</span>
+              <i data-lucide="arrow-right" class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"></i>
+            </div>
           </div>
 
         </div>
@@ -927,21 +1026,29 @@
     <div class="glass-panel bg-slate-900 border border-slate-700 rounded-3xl w-full h-full flex flex-col overflow-hidden">
       
       <!-- Viewer Header -->
-      <div class="px-5 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
-        <div class="flex items-center gap-3 overflow-hidden">
-          <i data-lucide="file-text" class="w-5 h-5 text-indigo-400 flex-shrink-0"></i>
-          <span id="pdfViewerTitle" class="text-sm font-semibold text-white truncate max-w-md sm:max-w-xl">Document Viewer</span>
+      <div class="px-3 sm:px-5 py-2 sm:py-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/80 gap-2">
+        <div class="flex items-center gap-2 overflow-hidden min-w-0">
+          <i data-lucide="file-text" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400 flex-shrink-0"></i>
+          <span id="pdfViewerTitle" class="text-xs sm:text-sm font-semibold text-white truncate max-w-[140px] sm:max-w-md">Document Viewer</span>
         </div>
         
-        <div class="flex items-center gap-2">
-          <button id="viewerOpenLocalBtn" onclick="openCurrentFileLocally()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium flex items-center gap-1.5 shadow transition-all">
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          <!-- Direct Google Drive View Button -->
+          <a id="viewerOpenDriveBtn" href="#" target="_blank" rel="noopener noreferrer" title="Open on Google Drive" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white text-xs font-medium flex items-center gap-1 transition-all border border-emerald-500/40">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            <span>Drive</span>
+          </a>
+          <!-- Localhost-only Open in Windows Button -->
+          <button id="viewerOpenLocalBtn" onclick="openCurrentFileLocally()" class="hidden px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium flex items-center gap-1 shadow transition-all">
             <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
             <span class="hidden sm:inline" data-i18n="btn_open_system">Open in Windows</span>
           </button>
-          <a id="viewerDownloadBtn" href="#" download class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition-all">
+          <!-- Download Button -->
+          <a id="viewerDownloadBtn" href="#" download class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1 transition-all">
             <i data-lucide="download" class="w-3.5 h-3.5"></i>
-            <span data-i18n="btn_download">Download</span>
+            <span class="hidden sm:inline" data-i18n="btn_download">Download</span>
           </a>
+          <!-- Close Modal -->
           <button onclick="closePdfViewer()" class="text-slate-400 hover:text-white p-1.5 rounded-lg">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
