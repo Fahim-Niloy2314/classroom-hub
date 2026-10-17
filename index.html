@@ -221,25 +221,139 @@
         </div>
       </div>
 
-      <!-- SEMESTERS OVERVIEW FOLDER GRID (L1-T1 to L4-T2) -->
-      <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-xl font-bold text-white flex items-center gap-2">
-              <i data-lucide="folder" class="w-5 h-5 text-indigo-400"></i>
-              <span data-i18n="semesters_header">Semester Archives (L1-T1 to L4-T2)</span>
-            </h2>
-            <p class="text-xs text-slate-400 mt-0.5" data-i18n="semesters_sub">Select any semester folder to browse its courses, lecture notes, and question banks</p>
+      <!-- CORE VAULT ACTION CARDS -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        
+        <!-- Action Card 1: Course Explorer -->
+        <div onclick="switchTab('resources')" class="p-6 rounded-2xl glass-card border border-slate-800 hover:border-indigo-500/50 cursor-pointer group transition-all duration-300 flex flex-col justify-between space-y-4 shadow-lg hover:shadow-indigo-500/10">
+          <div class="space-y-3">
+            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20 group-hover:scale-105 transition-transform">
+              <i data-lucide="folder-search" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors">Course Vault Explorer</h3>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                Browse 3,893+ lecture notes, question banks, and lab manuals organized from Level 1 Term 1 through Level 4 Term 2.
+              </p>
+            </div>
           </div>
-          <button onclick="switchTab('resources')" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 transition-colors">
-            <span>View All</span>
-            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 pt-2 border-t border-slate-800/80">
+            <span>Explore All 8 Semesters</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+        <!-- Action Card 2: Undergraduate Bulletin -->
+        <div onclick="openBulletinModal()" class="p-6 rounded-2xl glass-card border border-slate-800 hover:border-emerald-500/50 cursor-pointer group transition-all duration-300 flex flex-col justify-between space-y-4 shadow-lg hover:shadow-emerald-500/10">
+          <div class="space-y-3">
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 group-hover:scale-105 transition-transform">
+              <i data-lucide="book-open" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">Official Syllabus & Ordinance</h3>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                CUET 160-credit degree requirements, mark distributions (CT, Attendance, Final), GPA grading scale, and course outlines.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 group-hover:text-emerald-300 pt-2 border-t border-slate-800/80">
+            <span>Open Academic Bulletin (46.7 MB)</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+        <!-- Action Card 3: AI Assistant & Smart Search -->
+        <div onclick="switchTab('ai')" class="p-6 rounded-2xl glass-card border border-slate-800 hover:border-purple-500/50 cursor-pointer group transition-all duration-300 flex flex-col justify-between space-y-4 shadow-lg hover:shadow-purple-500/10">
+          <div class="space-y-3">
+            <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20 group-hover:scale-105 transition-transform">
+              <i data-lucide="sparkles" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-white group-hover:text-purple-300 transition-colors">AI Study Assistant & Bot</h3>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                Instant smart search across all vault files, viva voce question solver, thermodynamics formulas, and exam prep tips.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-purple-400 group-hover:text-purple-300 pt-2 border-t border-slate-800/80">
+            <span>Launch AI Companion</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- STUDENT FEEDBACK & COURSE NOTES REQUEST SECTION -->
+      <div class="p-6 sm:p-8 rounded-3xl glass-card border border-slate-800 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+          <div class="space-y-1">
+            <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-400 uppercase tracking-wider">
+              <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+              <span>Community Voice & Requests</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-bold text-white">Student Feedback & Course Notes Request</h2>
+            <p class="text-xs sm:text-sm text-slate-400">
+              Need lecture notes or question banks for a specific course? Found a broken link or want to suggest improvements? Send your feedback directly to Fahim Niloy.
+            </p>
+          </div>
+          <button onclick="openSubmitResourceModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all self-start sm:self-auto">
+            <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+            <span>Or Share a File</span>
           </button>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="homeSemestersGrid">
-          <!-- Populated via JS with 8 clean semester cards -->
-        </div>
+        <form id="studentFeedbackForm" onsubmit="handleFeedbackSubmit(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1.5">Your Name (Optional)</label>
+              <input id="fbName" type="text" placeholder="e.g., Fahim or Anonymous" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-all">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1.5">CUET Student ID / Batch (Optional)</label>
+              <input id="fbRoll" type="text" placeholder="e.g., 20030XX or '20 Batch" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-all">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1.5">Category</label>
+              <select id="fbCategory" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:border-indigo-500 outline-none transition-all">
+                <option value="Request Course Notes">Request Course Notes / Question Bank</option>
+                <option value="Report Broken File">Report Broken File or Link</option>
+                <option value="Platform Suggestion">Platform Feature Suggestion</option>
+                <option value="Appreciation & Feedback">Appreciation & General Feedback</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5">Rating & Experience</label>
+            <div class="flex items-center gap-2">
+              <label class="flex items-center gap-1 text-xs text-slate-300 cursor-pointer bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700">
+                <input type="radio" name="fbRating" value="5" checked class="accent-indigo-500">
+                <span>⭐⭐⭐⭐⭐ Excellent</span>
+              </label>
+              <label class="flex items-center gap-1 text-xs text-slate-300 cursor-pointer bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700">
+                <input type="radio" name="fbRating" value="4" class="accent-indigo-500">
+                <span>⭐⭐⭐⭐ Good</span>
+              </label>
+              <label class="flex items-center gap-1 text-xs text-slate-300 cursor-pointer bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700">
+                <input type="radio" name="fbRating" value="3" class="accent-indigo-500">
+                <span>⭐⭐⭐ Average</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5">Your Message / Course Request Details *</label>
+            <textarea id="fbMessage" rows="3" required placeholder="Write which course material you are looking for, or any suggestions you have for Fahim Niloy..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-all resize-none"></textarea>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-[11px] text-slate-500">Submissions go straight to the administrator inbox for review.</span>
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md flex items-center gap-2">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>
+              <span>Send Feedback</span>
+            </button>
+          </div>
+        </form>
       </div>
 
     </section>
@@ -461,27 +575,230 @@
 
     </section>
 
-    <!-- ==================== 5. ADMIN REVIEW QUEUE VIEW ==================== -->
+    <!-- ==================== 5. ADMIN REVIEW QUEUE & WORKSPACE VIEW ==================== -->
     <section id="view-admin" class="hidden space-y-6">
       
-      <div class="glass-panel p-6 rounded-2xl border border-amber-500/30 space-y-6">
-        <div class="flex items-center justify-between">
+      <!-- Admin Workspace Header & Metric Cards -->
+      <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-amber-500/30 space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
           <div class="space-y-1">
             <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 uppercase tracking-wider">
-              <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+              <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
               <span>Fahim Niloy Administrator Workspace</span>
             </div>
-            <h2 class="text-2xl font-bold text-white">Community Resource Review Queue</h2>
-            <p class="text-xs text-slate-400">Review and approve lecture notes and question banks shared by CUET students.</p>
+            <h2 class="text-2xl font-bold text-white">ClassroomHub Management Dashboard</h2>
+            <p class="text-xs text-slate-400">
+              Manage academic files, review student community submissions, view website visits, and inspect incoming feedback.
+            </p>
           </div>
-          <span id="adminQueueCount" class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/40 font-mono">
-            0 Pending
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium border border-emerald-500/30">
+              ● Admin Session Active
+            </span>
+            <button onclick="handleLogout()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-red-900/40 text-slate-300 hover:text-red-300 text-xs font-medium border border-slate-700 transition-colors flex items-center gap-1.5">
+              <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
 
-        <div id="adminQueueList" class="space-y-3">
-          <!-- Populated via JS -->
+        <!-- 4 Key Admin Stat Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+            <div class="text-xs text-slate-400 flex items-center justify-between">
+              <span>Website Visits</span>
+              <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
+            </div>
+            <div id="adminVisitsCount" class="text-2xl font-bold text-white font-mono">1,420+</div>
+            <div class="text-[10px] text-emerald-400">Total Page Hits</div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+            <div class="text-xs text-slate-400 flex items-center justify-between">
+              <span>Vault Academic Files</span>
+              <i data-lucide="file-check" class="w-4 h-4 text-indigo-400"></i>
+            </div>
+            <div id="adminTotalFiles" class="text-2xl font-bold text-indigo-400 font-mono">3,893</div>
+            <div class="text-[10px] text-slate-400">Across 8 Semesters</div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+            <div class="text-xs text-slate-400 flex items-center justify-between">
+              <span>Pending Submissions</span>
+              <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
+            </div>
+            <div id="adminPendingCount" class="text-2xl font-bold text-amber-400 font-mono">0</div>
+            <div class="text-[10px] text-amber-300/80">Awaiting Your Approval</div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+            <div class="text-xs text-slate-400 flex items-center justify-between">
+              <span>Student Feedback</span>
+              <i data-lucide="message-square" class="w-4 h-4 text-teal-400"></i>
+            </div>
+            <div id="adminFeedbackCount" class="text-2xl font-bold text-teal-400 font-mono">0</div>
+            <div class="text-[10px] text-slate-400">Community Requests</div>
+          </div>
         </div>
+
+        <!-- Admin Workspace Sub-Tabs Navigation -->
+        <div class="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto no-scrollbar text-xs font-semibold">
+          <button id="adminTabBtn-queue" onclick="switchAdminSubTab('queue')" class="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 transition-all">
+            <i data-lucide="inbox" class="w-3.5 h-3.5"></i>
+            <span>Submissions Queue</span>
+            <span id="adminPendingBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-amber-500/30 text-[10px] font-mono">0</span>
+          </button>
+
+          <button id="adminTabBtn-add" onclick="switchAdminSubTab('add')" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+            <span>Manual Add Resource</span>
+          </button>
+
+          <button id="adminTabBtn-feedbacks" onclick="switchAdminSubTab('feedbacks')" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all">
+            <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+            <span>Student Feedback Inbox</span>
+            <span id="adminFeedbackBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-teal-500/20 text-teal-300 text-[10px] font-mono">0</span>
+          </button>
+
+          <button id="adminTabBtn-contact" onclick="switchAdminSubTab('contact')" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all">
+            <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+            <span>Contact & Settings</span>
+          </button>
+        </div>
+
+        <!-- SUB-TAB 1: COMMUNITY SUBMISSIONS QUEUE -->
+        <div id="adminPanel-queue" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="list-checks" class="w-4 h-4 text-amber-400"></i>
+              <span>Shared Materials Awaiting Verification</span>
+            </h3>
+          </div>
+          <div id="adminPendingList" class="space-y-3">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- SUB-TAB 2: MANUAL ADD RESOURCE FORM -->
+        <div id="adminPanel-add" class="hidden space-y-4">
+          <div class="space-y-1">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="plus" class="w-4 h-4 text-indigo-400"></i>
+              <span>Manually Add New Resource to Academic Vault</span>
+            </h3>
+            <p class="text-xs text-slate-400">
+              Instantly publish a course folder, lecture note, question bank, or PDF directly to the Course Explorer.
+            </p>
+          </div>
+
+          <form id="adminManualAddForm" onsubmit="handleAdminAddResource(event)" class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Target Semester *</label>
+                <select id="adminManualTerm" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:border-indigo-500 outline-none">
+                  <option value="L1-T1">Level 1 Term 1</option>
+                  <option value="L1-T2">Level 1 Term 2</option>
+                  <option value="L2-T1">Level 2 Term 1</option>
+                  <option value="L2-T2">Level 2 Term 2</option>
+                  <option value="L3-T1">Level 3 Term 1</option>
+                  <option value="L3-T2">Level 3 Term 2</option>
+                  <option value="L4-T1">Level 4 Term 1</option>
+                  <option value="L4-T2">Level 4 Term 2</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Course Code & Name *</label>
+                <input id="adminManualCourse" type="text" required placeholder="e.g., ME 311 Heat Transfer" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Resource Title / Topic *</label>
+                <input id="adminManualTitle" type="text" required placeholder="e.g., Heat Exchanger Solved Question Bank (2018-2024)" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Category *</label>
+                <select id="adminManualCategory" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:border-indigo-500 outline-none">
+                  <option value="Questions & Viva">Questions & Viva (Question Bank)</option>
+                  <option value="Lecture Notes & Books">Lecture Notes & Books</option>
+                  <option value="Lab & Sessional">Lab & Sessional Reports</option>
+                  <option value="Lecture Slides">Lecture Slides</option>
+                  <option value="Codes & CAD Models">CAD & MATLAB Code</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-medium text-slate-300 mb-1">Google Drive or Cloud URL *</label>
+                <input id="adminManualUrl" type="url" required placeholder="https://drive.google.com/file/d/... or folder URL" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">File Size (Optional)</label>
+                <input id="adminManualSize" type="text" placeholder="e.g., 4.5 MB" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md flex items-center gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                <span>Publish to Vault Live</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- SUB-TAB 3: STUDENT FEEDBACK INBOX -->
+        <div id="adminPanel-feedbacks" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="message-square" class="w-4 h-4 text-teal-400"></i>
+              <span>Incoming Student Messages & Requests</span>
+            </h3>
+            <button onclick="clearAllFeedbacks()" class="text-xs text-slate-400 hover:text-red-400 transition-colors">
+              Clear All Feedbacks
+            </button>
+          </div>
+          <div id="adminFeedbackList" class="space-y-3">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- SUB-TAB 4: CONTACT & SETTINGS -->
+        <div id="adminPanel-contact" class="hidden space-y-4">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i data-lucide="user-check" class="w-4 h-4 text-indigo-400"></i>
+            <span>Creator Profile & Contact Information</span>
+          </h3>
+
+          <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 max-w-2xl">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Primary Email (Display on Homepage)</label>
+              <input id="adminSettingsEmail" type="email" value="fahimniloy2314@gmail.com" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Mobile Contact Number</label>
+              <input id="adminSettingsPhone" type="text" value="+880 1850-162261" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Personal Portfolio Website</label>
+              <input id="adminSettingsPortfolio" type="url" value="https://mohammad-fahim-ahmed.netlify.app/" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">GitHub Repository Link</label>
+              <input id="adminSettingsGithub" type="url" value="https://github.com/Fahim-Niloy2314/classroom-hub" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+            </div>
+            <button onclick="saveAdminSettings()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md flex items-center gap-2">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>
+              <span>Save Contact Details</span>
+            </button>
+          </div>
+        </div>
+
       </div>
 
     </section>
@@ -931,8 +1248,13 @@
   <!-- ==================== FOOTER ==================== -->
   <footer class="border-t border-slate-800/80 bg-slate-950 mt-12 py-6 text-xs text-slate-500">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div>
-        © 2026 <strong>Fahim Niloy</strong> (CUET ME '20, Roll: 2003063). All academic materials preserved for education.
+      <div class="flex flex-wrap items-center gap-2">
+        <span>© 2026 <strong>Fahim Niloy</strong> (CUET ME '20, Roll: 2003063). All academic materials preserved for education.</span>
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 font-mono text-[11px]">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Visits:</span>
+          <strong id="footerVisitsCount" class="text-emerald-400">1,420+</strong>
+        </span>
       </div>
       <div class="flex items-center gap-4">
         <a id="footerNetlifyLink" href="https://mohammad-fahim-ahmed.netlify.app/" target="_blank" rel="noopener noreferrer" class="hover:text-teal-400 transition-colors">Portfolio</a>
