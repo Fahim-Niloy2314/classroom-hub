@@ -43,7 +43,8 @@ const STORAGE_KEYS = {
   ADMIN_FEATURED: 'classroom_admin_featured_items',
   ADMIN_LOGS: 'classroom_admin_logs',
   ADMIN_SEO: 'classroom_admin_seo',
-  ADMIN_DRAFT: 'classroom_admin_draft'
+  ADMIN_DRAFT: 'classroom_admin_draft',
+  GEMINI_API_KEY: 'classroom_gemini_api_key'
 };
 
 // Admin Email List
@@ -221,6 +222,7 @@ const I18N = {
     nav_sub: 'CUET Mechanical Engineering Archive',
     tab_home: 'Home',
     tab_resources: 'Course Explorer',
+    tab_videos: 'Video Lectures',
     tab_ai: 'AI Assistant',
     tab_tracker: 'Progress Tracker',
     tab_admin: 'Admin Review',
@@ -336,6 +338,7 @@ const I18N = {
     nav_sub: 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং আর্কাইভ',
     tab_home: 'হোম',
     tab_resources: 'কোর্স এক্সপ্লোরার',
+    tab_videos: 'ভিডিও লেকচার',
     tab_ai: 'AI সাহায্যকারী',
     tab_tracker: 'সিলেবাস ট্র্যাকার',
     tab_admin: 'অ্যাডমিন রিভিউ',
@@ -614,7 +617,7 @@ function setupDialogLightDismiss() {
    ========================================================================= */
 function switchTab(tab) {
   currentTab = tab;
-  const views = ['home', 'resources', 'ai', 'tracker', 'admin'];
+  const views = ['home', 'resources', 'videos', 'ai', 'tracker', 'admin'];
   views.forEach(v => {
     const el = document.getElementById(`view-${v}`);
     if (el) el.classList.toggle('hidden', v !== tab);
@@ -658,6 +661,7 @@ function switchTab(tab) {
 
   if (tab === 'home') renderHomeNotices();
   else if (tab === 'resources') renderExplorer();
+  else if (tab === 'videos') renderPublicVideos();
   else if (tab === 'tracker') renderTracker();
   else if (tab === 'admin') renderAdminWorkspace();
 
@@ -3901,6 +3905,218 @@ function copyAiResponse(btn) {
   });
 }
 
+/* =========================================================================
+   PUBLIC CURATED VIDEO LECTURES BROWSER (Hindi, Bangla & English)
+   ========================================================================= */
+let currentPublicVideoLang = 'ALL';
+
+function setPublicVideoLang(lang) {
+  currentPublicVideoLang = lang;
+  ['ALL', 'hi', 'bn', 'en'].forEach(l => {
+    const btn = document.getElementById(`videoLangBtn-${l}`);
+    if (btn) {
+      if (l === lang) {
+        btn.className = 'px-3 py-1 rounded-xl bg-red-600 text-white font-semibold shadow-sm transition-all';
+      } else {
+        btn.className = 'px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-all flex items-center gap-1';
+      }
+    }
+  });
+  renderPublicVideos();
+}
+
+function renderPublicVideos() {
+  const container = document.getElementById('publicVideosContainer');
+  const countBadge = document.getElementById('publicVideoCountBadge');
+  if (!container) return;
+
+  const q = (document.getElementById('publicVideoSearch')?.value || '').toLowerCase().trim();
+  const termFilter = document.getElementById('publicVideoTermFilter')?.value || 'ALL';
+
+  let list = [...adminVideos];
+
+  if (currentPublicVideoLang !== 'ALL') {
+    list = list.filter(v => v.lang === currentPublicVideoLang);
+  }
+
+  if (termFilter !== 'ALL') {
+    list = list.filter(v => v.term === termFilter || v.term === 'ALL');
+  }
+
+  if (q) {
+    const tokens = q.split(/\s+/);
+    list = list.filter(v => {
+      const hay = `${v.title} ${v.subject} ${v.channel} ${v.term || ''}`.toLowerCase();
+      return tokens.every(tok => hay.includes(tok));
+    });
+  }
+
+  if (countBadge) {
+    countBadge.textContent = `${list.length} Curated Playlists`;
+  }
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full p-10 rounded-2xl glass-card border border-slate-800 text-center space-y-2">
+        <i data-lucide="video-off" class="w-8 h-8 text-slate-500 mx-auto"></i>
+        <h4 class="text-sm font-semibold text-slate-300">No Videos Found</h4>
+        <p class="text-xs text-slate-500">Try adjusting your search terms or language filter.</p>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = list.map(v => {
+    let langBadge = '🇮🇳 Hindi';
+    let langColor = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+    if (v.lang === 'bn') {
+      langBadge = '🇧🇩 Bangla';
+      langColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+    } else if (v.lang === 'en') {
+      langBadge = '🇬🇧 English';
+      langColor = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+    }
+
+    return `
+      <div class="p-5 rounded-2xl glass-card border border-slate-800 hover:border-red-500/50 flex flex-col justify-between space-y-4 shadow-lg hover:shadow-red-500/10 transition-all group">
+        <div class="space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${langColor}">${langBadge}</span>
+            <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] font-semibold">${v.term || 'All Semesters'}</span>
+          </div>
+          <div>
+            <div class="text-[11px] font-mono font-semibold text-red-400 mb-0.5">${v.subject}</div>
+            <h3 class="text-sm font-bold text-white group-hover:text-red-300 transition-colors line-clamp-2">${v.title}</h3>
+            <div class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+              <i data-lucide="user-check" class="w-3.5 h-3.5 text-slate-500"></i>
+              <span>${v.channel}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800/80">
+          <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="w-full py-2.5 px-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-md">
+            <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+            <span>Watch Playlist on YouTube</span>
+            <i data-lucide="external-link" class="w-3 h-3 opacity-70"></i>
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  lucide.createIcons();
+}
+
+/* Gemini API Key Configuration Logic */
+function updateGeminiKeyStatus() {
+  const key = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY);
+  const textEl = document.getElementById('geminiKeyStatusText');
+  if (textEl) {
+    textEl.textContent = key ? '⚡ Gemini 2.0 Live' : 'Gemini API (Free)';
+  }
+}
+
+function openGeminiApiKeyModal() {
+  const dialog = document.getElementById('geminiApiKeyDialog');
+  const input = document.getElementById('geminiApiKeyInput');
+  if (input) {
+    input.value = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY) || '';
+  }
+  if (dialog) dialog.showModal();
+}
+
+function closeGeminiApiKeyModal() {
+  const dialog = document.getElementById('geminiApiKeyDialog');
+  if (dialog) dialog.close();
+}
+
+function saveGeminiApiKey() {
+  const input = document.getElementById('geminiApiKeyInput');
+  const key = (input?.value || '').trim();
+  if (key) {
+    localStorage.setItem(STORAGE_KEYS.GEMINI_API_KEY, key);
+    showToast('Google Gemini API Key saved! Live AI enabled.');
+  } else {
+    localStorage.removeItem(STORAGE_KEYS.GEMINI_API_KEY);
+    showToast('Gemini API Key removed. Using built-in AI.');
+  }
+  updateGeminiKeyStatus();
+  closeGeminiApiKeyModal();
+}
+
+function clearGeminiApiKey() {
+  localStorage.removeItem(STORAGE_KEYS.GEMINI_API_KEY);
+  const input = document.getElementById('geminiApiKeyInput');
+  if (input) input.value = '';
+  updateGeminiKeyStatus();
+  closeGeminiApiKeyModal();
+  showToast('Gemini API Key cleared.');
+}
+
+
+/* =========================================================================
+   13. FAHIM NILOY CONVERSATIONAL AI CHATBOT (GEMINI-STYLE CONVERSATION)
+   Talks naturally on ANY topic. Only shows course cards if explicitly requested!
+   ========================================================================= */
+function searchVaultFiles(query, limit = 3) {
+  if (!query) return [];
+  const cleanTerms = query.toLowerCase()
+    .replace(/[^\w\s\u0980-\u09FF]/gi, ' ')
+    .split(/\s+/)
+    .filter(t => t.length > 1);
+
+  if (cleanTerms.length === 0) return [];
+  const results = [];
+
+  // Search indexed dataset
+  if (appData && appData.terms) {
+    for (const term of appData.terms) {
+      if (!term.courses) continue;
+      for (const course of term.courses) {
+        if (!course.files) continue;
+        for (const file of course.files) {
+          const text = `${file.name} ${file.course || ''} ${file.term_code || ''} ${file.category || ''} ${file.subfolder || ''}`.toLowerCase();
+          let score = 0;
+          for (const t of cleanTerms) {
+            if (text.includes(t)) {
+              score += 2;
+              if (file.name.toLowerCase().includes(t)) score += 3;
+              if ((file.course || '').toLowerCase().includes(t)) score += 4;
+            }
+          }
+          if (score > 0) results.push({ file, score });
+        }
+      }
+    }
+  }
+
+  // Search community resources
+  for (const file of communityResources) {
+    const text = `${file.name} ${file.course || ''} ${file.term_code || ''} ${file.category || ''}`.toLowerCase();
+    let score = 0;
+    for (const t of cleanTerms) {
+      if (text.includes(t)) score += 3;
+    }
+    if (score > 0) results.push({ file, score: score + 2 });
+  }
+
+  results.sort((a, b) => b.score - a.score);
+
+  const seen = new Set();
+  const deduped = [];
+  for (const r of results) {
+    const key = r.file.id || r.file.name;
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(r.file);
+      if (deduped.length >= limit) break;
+    }
+  }
+  return deduped;
+}
+
 function findRelevantVideos(query, limit = 2) {
   if (!query || !adminVideos || adminVideos.length === 0) return [];
   const qTerms = query.toLowerCase()
@@ -3928,7 +4144,30 @@ function findRelevantVideos(query, limit = 2) {
   return scored.slice(0, limit).map(s => s.video);
 }
 
-function handleAiSubmit(e) {
+function askPresetPrompt(promptText) {
+  const input = document.getElementById('aiInput') || document.getElementById('aiInputPrompt');
+  if (input) {
+    input.value = promptText;
+    handleAiSubmit(new Event('submit'));
+  }
+}
+
+function copyAiResponse(btn) {
+  const container = btn.closest('.ai-message-card');
+  if (!container) return;
+  const text = container.querySelector('.ai-prose').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Copied!`;
+    lucide.createIcons();
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      lucide.createIcons();
+    }, 2000);
+  });
+}
+
+async function handleAiSubmit(e) {
   if (e && e.preventDefault) e.preventDefault();
   const input = document.getElementById('aiInput') || document.getElementById('aiInputPrompt');
   const query = (input?.value || '').trim();
@@ -3965,131 +4204,60 @@ function handleAiSubmit(e) {
     <div class="ai-message-card bg-slate-800/80 rounded-2xl rounded-tl-none p-4 text-xs sm:text-sm text-slate-200 border border-slate-700/60 max-w-2xl leading-relaxed shadow-lg space-y-2">
       <div class="flex items-center gap-1.5 text-xs text-purple-400">
         <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
-        <span>${isBangla ? 'ফাহিম নিলয় (এআই মেন্টর) উত্তর তৈরি করছেন...' : 'Fahim Niloy is typing...'}</span>
+        <span>${isBangla ? 'ফাহিম নিলয় উত্তর লিখছেন...' : 'Fahim Niloy is typing...'}</span>
       </div>
     </div>
   `;
   chatBox.appendChild(botDiv);
   chatBox.scrollTop = chatBox.scrollHeight;
 
-  setTimeout(() => {
-    const qLower = query.toLowerCase();
+  const qLower = query.toLowerCase();
 
-    // 1. Identity & Persona Check ("I am Fahim Niloy")
-    const isIdentityQuestion = (
-      qLower.includes('who are you') ||
-      qLower.includes('who r u') ||
-      qLower.includes('who is fahim') ||
-      qLower.includes('fahim niloy') ||
-      qLower.includes('who made') ||
-      qLower.includes('creator') ||
-      qLower.includes('developer') ||
-      qLower.includes('কে তুমি') ||
-      qLower.includes('তুমি কে') ||
-      qLower.includes('কে আপনি') ||
-      qLower.includes('আপনি কে') ||
-      qLower.includes('পরিচয়') ||
-      qLower.includes('নাম কি') ||
-      qLower.includes('ফাহিম কে') ||
-      qLower.includes('your name') ||
-      qLower.includes('about yourself')
-    );
+  // Strict User Intent Checks:
+  // ONLY show courses if the user explicitly asks for courses, notes, question banks, or files!
+  const isExplicitCourseRequest = (
+    qLower.includes('কোর্স আছে') ||
+    qLower.includes('কোর্স কি আছে') ||
+    qLower.includes('ফাইল আছে') ||
+    qLower.includes('নোট আছে') ||
+    qLower.includes('বই আছে') ||
+    qLower.includes('প্রশ্নব্যাংক আছে') ||
+    qLower.includes('কোর্স দেখাও') ||
+    qLower.includes('ফাইল দাও') ||
+    qLower.includes('নোট দাও') ||
+    qLower.includes('প্রশ্নব্যাংক দাও') ||
+    qLower.includes('ফাইল দেখাও') ||
+    qLower.includes('কোর্স ফাইল') ||
+    (qLower.includes('course') && (qLower.includes('have') || qLower.includes('show') || qLower.includes('any') || qLower.includes('find'))) ||
+    (qLower.includes('file') && (qLower.includes('give') || qLower.includes('show') || qLower.includes('find') || qLower.includes('have'))) ||
+    (qLower.includes('note') && (qLower.includes('give') || qLower.includes('show') || qLower.includes('have'))) ||
+    qLower.includes('question bank') ||
+    qLower.includes('drive link')
+  );
 
-    const isGreeting = (
-      qLower === 'hi' ||
-      qLower === 'hello' ||
-      qLower === 'hey' ||
-      qLower === 'হাই' ||
-      qLower === 'হ্যালো' ||
-      qLower.includes('assalamu alaikum') ||
-      qLower.includes('salam') ||
-      qLower.includes('সালাম') ||
-      qLower.includes('কেমন আছো') ||
-      qLower.includes('kemon acho') ||
-      qLower.includes('how are you')
-    );
+  // ONLY show videos if user explicitly asks for video tutorial or youtube
+  const isExplicitVideoRequest = (
+    qLower.includes('ভিডিও আছে') ||
+    qLower.includes('ভিডিও লিংক') ||
+    qLower.includes('ভিডিও দেখাও') ||
+    qLower.includes('ভিডিও লেকচার') ||
+    qLower.includes('ইউটিউব') ||
+    qLower.includes('youtube') ||
+    qLower.includes('video') ||
+    qLower.includes('tutorial') ||
+    qLower.includes('playlist')
+  );
 
-    const isAdviceQuestion = (
-      qLower.includes('cgpa') ||
-      qLower.includes('exam tip') ||
-      qLower.includes('preparation') ||
-      qLower.includes('study tip') ||
-      qLower.includes('how to study') ||
-      qLower.includes('সিজিপিএ') ||
-      qLower.includes('পড়ার নিয়ম') ||
-      qLower.includes('পরামর্শ') ||
-      qLower.includes('টিপস')
-    );
-
-    let topicKey = null;
-    if (qLower.includes('lathe') || qLower.includes('workshop') || qLower.includes('welding') || qLower.includes('লেদ') || qLower.includes('ওয়ার্কশপ')) {
-      topicKey = 'workshop';
-    } else if (qLower.includes('rankine') || qLower.includes('brayton') || qLower.includes('jet') || qLower.includes('turbine') || qLower.includes('র‍্যাঙ্কিন') || qLower.includes('টারবাইন')) {
-      topicKey = 'applied_thermo';
-    } else if (qLower.includes('pelton') || qLower.includes('francis') || qLower.includes('kaplan') || qLower.includes('pump') || qLower.includes('cavitation') || qLower.includes('পেল্টন') || qLower.includes('পাম্প')) {
-      topicKey = 'fluid_machinery';
-    } else if (qLower.includes('heat') || qLower.includes('conduction') || qLower.includes('convection') || qLower.includes('radiation') || qLower.includes('lmtd') || qLower.includes('তাপ')) {
-      topicKey = 'heat_transfer';
-    } else if (qLower.includes('stress') || qLower.includes('strain') || qLower.includes('mohr') || qLower.includes('bending') || qLower.includes('torsion') || qLower.includes('মোরের') || qLower.includes('স্ট্রেস')) {
-      topicKey = 'mechanics_design';
-    } else if (qLower.includes('bulletin') || qLower.includes('syllabus') || qLower.includes('grading') || qLower.includes('grade') || qLower.includes('credit') || qLower.includes('বুলেটিন') || qLower.includes('সিলেবাস') || qLower.includes('গ্রেডিং')) {
-      topicKey = 'bulletin_guide';
-    } else if (qLower.includes('thermodynamic') || qLower.includes('carnot') || qLower.includes('cop') || qLower.includes('refrigeration') || qLower.includes('কার্নো')) {
-      topicKey = 'thermodynamics';
-    }
-
-    // Curated YouTube Videos for this query
-    const matchingVideos = findRelevantVideos(query, 2);
-
-    let videoCardsHtml = '';
-    if (matchingVideos.length > 0 && !isIdentityQuestion && !isGreeting) {
-      videoCardsHtml = `
-        <div class="mt-3 pt-3 border-t border-slate-700/60 space-y-2">
-          <div class="text-[11px] font-bold text-red-400 flex items-center justify-between">
-            <span class="flex items-center gap-1.5">
-              <i data-lucide="youtube" class="w-3.5 h-3.5 text-red-500"></i>
-              <span>${isBangla ? 'সেরা ইউটিউব ভিডিও লেকচার (হিন্দি, বাংলা ও ইংলিশ)' : 'Recommended YouTube Video Lectures'}:</span>
-            </span>
-            <span class="text-[10px] text-slate-400 font-normal">Hindi • Bangla • English</span>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            ${matchingVideos.map(v => {
-              let langBadge = '🇮🇳 Hindi';
-              if (v.lang === 'bn') langBadge = '🇧🇩 Bangla';
-              else if (v.lang === 'en') langBadge = '🇬🇧 English';
-              return `
-                <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-red-500/60 flex flex-col justify-between gap-1.5 transition-all group">
-                  <div>
-                    <div class="flex items-center gap-1.5 text-[10px] mb-1">
-                      <span class="px-1.5 py-0.2 rounded bg-red-500/20 text-red-300 font-bold">${langBadge}</span>
-                      <span class="text-slate-400 truncate">${v.channel}</span>
-                    </div>
-                    <div class="text-xs font-semibold text-white group-hover:text-red-300 transition-colors line-clamp-2">${v.title}</div>
-                  </div>
-                  <div class="text-[11px] text-red-400 flex items-center gap-1 mt-1 font-medium">
-                    <i data-lucide="play-circle" class="w-3.5 h-3.5"></i>
-                    <span>Watch Tutorial</span>
-                    <i data-lucide="external-link" class="w-2.5 h-2.5 opacity-70"></i>
-                  </div>
-                </a>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // Smart Vault File Search
+  let vaultCardsHtml = '';
+  if (isExplicitCourseRequest) {
     const matchingFiles = searchVaultFiles(query, 3);
-
-    let vaultCardsHtml = '';
     if (matchingFiles.length > 0) {
       vaultCardsHtml = `
         <div class="mt-3 pt-3 border-t border-slate-700/60 space-y-2">
           <div class="text-[11px] font-bold text-indigo-300 flex items-center justify-between">
             <span class="flex items-center gap-1.5">
               <i data-lucide="folder-search" class="w-3.5 h-3.5 text-indigo-400"></i>
-              <span>${isBangla ? 'ভল্ট থেকে প্রাপ্ত প্রাসঙ্গিক ফাইলসমূহ' : 'Matching Academic Resources in Vault'} (${matchingFiles.length} files):</span>
+              <span>${isBangla ? 'ভল্ট থেকে প্রাপ্ত কোর্স ফাইলসমূহ' : 'Available Vault Resources'} (${matchingFiles.length} files):</span>
             </span>
             <button onclick="switchTab('resources')" class="text-[10px] text-teal-400 hover:underline">Open Courses →</button>
           </div>
@@ -4120,13 +4288,144 @@ function handleAiSubmit(e) {
         </div>
       `;
     }
+  }
+
+  let videoCardsHtml = '';
+  if (isExplicitVideoRequest) {
+    const matchingVideos = findRelevantVideos(query, 2);
+    if (matchingVideos.length > 0) {
+      videoCardsHtml = `
+        <div class="mt-3 pt-3 border-t border-slate-700/60 space-y-2">
+          <div class="text-[11px] font-bold text-red-400 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="youtube" class="w-3.5 h-3.5 text-red-500"></i>
+              <span>${isBangla ? 'ইউটিউব ভিডিও লেকচার' : 'Curated YouTube Tutorials'}:</span>
+            </span>
+            <button onclick="switchTab('videos')" class="text-[10px] text-red-400 hover:underline">All Videos →</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            ${matchingVideos.map(v => `
+              <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-red-500/60 flex flex-col justify-between gap-1.5 transition-all group">
+                <div>
+                  <div class="flex items-center gap-1.5 text-[10px] mb-1">
+                    <span class="px-1.5 py-0.2 rounded bg-red-500/20 text-red-300 font-bold">${v.lang === 'bn' ? '🇧🇩 Bangla' : (v.lang === 'hi' ? '🇮🇳 Hindi' : '🇬🇧 English')}</span>
+                    <span class="text-slate-400 truncate">${v.channel}</span>
+                  </div>
+                  <div class="text-xs font-semibold text-white group-hover:text-red-300 transition-colors line-clamp-2">${v.title}</div>
+                </div>
+                <div class="text-[11px] text-red-400 flex items-center gap-1 mt-1 font-medium">
+                  <i data-lucide="play-circle" class="w-3.5 h-3.5"></i>
+                  <span>Watch on YouTube</span>
+                </div>
+              </a>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // 1. CHECK IF USER CONFIGURED GOOGLE GEMINI API KEY FOR REAL-TIME GEMINI LIVE AI
+  const geminiApiKey = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY);
+  if (geminiApiKey) {
+    try {
+      const sysInstruction = `You are Fahim Niloy (Mohammad Fahim Ahmed), a student of Mechanical Engineering '20 series at CUET (Chittagong University of Engineering and Technology, Roll: 2003063) and creator of ClassroomHub. Talk warmly, naturally, and intelligently in ${isBangla ? 'Bengali' : 'English'}—just like Gemini. Answer any question on any topic (engineering theories, math, coding, life at CUET, study tips, philosophy, or casual conversation). Keep your tone friendly and helpful. IMPORTANT: Do NOT list or dump courses unless the user explicitly asks if there is a course/file for this topic.`;
+      
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: sysInstruction }] },
+          contents: [{ role: 'user', parts: [{ text: query }] }]
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const geminiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (geminiText) {
+          const formatted = geminiText
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n\n/g, '<br><br>')
+            .replace(/\n/g, '<br>');
+
+          botDiv.querySelector('.ai-message-card').innerHTML = `
+            <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+              <span class="font-bold text-xs text-purple-300">✨ Fahim Niloy (Powered by Gemini 2.0 Live)</span>
+              <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
+                <i data-lucide="copy" class="w-3 h-3"></i> Copy
+              </button>
+            </div>
+            <div class="ai-prose leading-relaxed space-y-2">${formatted}</div>
+            ${videoCardsHtml}
+            ${vaultCardsHtml}
+          `;
+          chatBox.scrollTop = chatBox.scrollHeight;
+          lucide.createIcons();
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Gemini Live API fallback to built-in AI:', err);
+    }
+  }
+
+  // 2. BUILT-IN NATURAL CONVERSATIONAL AI ENGINE (GEMINI STYLE)
+  setTimeout(() => {
+    // A. Identity / Persona
+    const isIdentityQuestion = (
+      qLower.includes('who are you') ||
+      qLower.includes('who r u') ||
+      qLower.includes('who is fahim') ||
+      qLower.includes('fahim niloy') ||
+      qLower.includes('who made') ||
+      qLower.includes('creator') ||
+      qLower.includes('developer') ||
+      qLower.includes('কে তুমি') ||
+      qLower.includes('তুমি কে') ||
+      qLower.includes('কে আপনি') ||
+      qLower.includes('আপনি কে') ||
+      qLower.includes('পরিচয়') ||
+      qLower.includes('নাম কি') ||
+      qLower.includes('ফাহিম কে') ||
+      qLower.includes('your name') ||
+      qLower.includes('about yourself')
+    );
+
+    // B. Casual Greetings
+    const isGreeting = (
+      qLower === 'hi' ||
+      qLower === 'hello' ||
+      qLower === 'hey' ||
+      qLower === 'হাই' ||
+      qLower === 'হ্যালো' ||
+      qLower.includes('assalamu alaikum') ||
+      qLower.includes('salam') ||
+      qLower.includes('সালাম') ||
+      qLower.includes('কেমন আছো') ||
+      qLower.includes('kemon acho') ||
+      qLower.includes('how are you')
+    );
+
+    // C. Study Tips & General Advice
+    const isAdviceQuestion = (
+      qLower.includes('cgpa') ||
+      qLower.includes('exam tip') ||
+      qLower.includes('preparation') ||
+      qLower.includes('study tip') ||
+      qLower.includes('how to study') ||
+      qLower.includes('সিজিপিএ') ||
+      qLower.includes('পড়ার নিয়ম') ||
+      qLower.includes('পরামর্শ') ||
+      qLower.includes('টিপস')
+    );
 
     let answerHtml = '';
 
     if (isIdentityQuestion) {
       answerHtml = `
         <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-indigo-300">🎓 Fahim Niloy • Creator & Academic Mentor</span>
+          <span class="font-bold text-xs text-indigo-300">🎓 Fahim Niloy</span>
           <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
             <i data-lucide="copy" class="w-3 h-3"></i> Copy
           </button>
@@ -4134,12 +4433,12 @@ function handleAiSubmit(e) {
         <div class="ai-prose space-y-2">
           <p><strong>${isBangla ? 'আসসালামু আলাইকুম! আমি ফাহিম নিলয় (Mohammad Fahim Ahmed)।' : 'Hello! I am Fahim Niloy (Mohammad Fahim Ahmed).'}</strong></p>
           <p>${isBangla
-            ? 'আমি চট্টগ্রাম প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় (চুয়েট)-এর যন্ত্রকৌশল (Mechanical Engineering) বিভাগের \'২০ ব্যাচের শিক্ষার্থী (রোল: ২০০৩০৬৩)। আমাদের লেভেল-১ টার্ম-১ থেকে শুরু করে লেভেল-৪ টার্ম-২ পর্যন্ত সমস্ত কোর্সের লেকচার শিট, হ্যান্ডনোট, সেশনাল ল্যাব রিপোর্ট, প্রিভিয়াস ইয়ারের সিটি ও ফাইনাল প্রশ্নব্যাংক এবং চুয়েটের অফিশিয়াল আন্ডারগ্র্যাজুয়েট বুলেটিন—মোট ৩৮৯৫টি ফাইল একটি সুশৃঙ্খল ডিজিটাল ভল্টে গুছিয়ে রাখতে আমি <strong>ClassroomHub</strong> তৈরি করেছি।'
-            : 'I am a student at Chittagong University of Engineering and Technology (CUET), Department of Mechanical Engineering (Batch: \'20, Student ID: 2003063). I built <strong>ClassroomHub</strong> to organize and preserve our entire 8 semesters\' academic archive—comprising 3,895 verified files of lecture slides, class notes, lab reports, previous years\' CT & term-final questions, and the official undergraduate bulletin.'
+            ? 'আমি চট্টগ্রাম প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় (চুয়েট)-এর মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের \'২০ ব্যাচের শিক্ষার্থী (রোল: ২০০৩০৬৩)। আমাদের ব্যাচ এবং জুনিয়রদের সুবিধার্থে পুরো ৪ বছরের সব সেমিস্টারের হ্যান্ডনোট, লেকচার শিট এবং বিগত বছরের প্রশ্নব্যাংক গুছিয়ে রাখতে আমি <strong>ClassroomHub</strong> তৈরি করেছি।'
+            : 'I am a student at Chittagong University of Engineering and Technology (CUET), Department of Mechanical Engineering (Batch: \'20, Roll: 2003063). I created <strong>ClassroomHub</strong> to organize and preserve our entire undergraduate academic collection.'
           }</p>
           <p>${isBangla
-            ? 'আমি এখানে আপনার স্টাডি পার্টনার ও মেন্টর হিসেবে আছি। আপনি আমাকে মেকানিক্যাল ইঞ্জিনিয়ারিংয়ের যেকোনো থিওরি, সূত্র, ভাইভা প্রস্তুতি, ল্যাব ক্যালকুলেশন নিয়ে প্রশ্ন করতে পারেন অথবা কোনো নির্দিষ্ট কোর্সের প্রশ্নব্যাংক বা নোট চেয়ে নিতে পারেন। আমি সরাসরি ড্রাইভ ফাইল এবং ভিডিও লেকচার সহ বিস্তারিত বুঝিয়ে দেব!'
-            : 'I am here as your dedicated AI study partner and academic mentor. Feel free to ask me about core mechanical engineering theories, formulas, viva tips, or ask for any course material—I will explain the concept and attach the exact Google Drive vault files and curated video tutorials for you!'
+            ? 'আমি এখানে আপনার বন্ধুর মতো যেকোনো পড়াশোনা, থিওরি, সূত্র, জীবন বা পরীক্ষার প্রস্তুতি নিয়ে আড্ডা ও আলোচনা করতে প্রস্তুত। জেমিনির মতোই স্বাভাবিকভাবে যেকোনো প্রশ্ন করতে পারেন!'
+            : 'I am here just like a fellow study partner. Feel free to talk with me about any engineering theory, math problem, exam strategies, or life at CUET!'
           }</p>
         </div>
         ${vaultCardsHtml}
@@ -4147,15 +4446,15 @@ function handleAiSubmit(e) {
     } else if (isGreeting) {
       answerHtml = `
         <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-indigo-300">👋 Welcome from Fahim Niloy</span>
+          <span class="font-bold text-xs text-indigo-300">👋 Fahim Niloy</span>
           <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
             <i data-lucide="copy" class="w-3 h-3"></i> Copy
           </button>
         </div>
         <div class="ai-prose space-y-2">
           <p>${isBangla
-            ? 'আসসালামু আলাইকুম! <strong>আমি ফাহিম নিলয়</strong> (চুয়েট ME \'২০)। ClassroomHub-এ আপনাকে স্বাগতম! আজ আপনার কোন কোর্স বা কোন টপিকটি পড়তে সাহায্য করতে পারি? যেকোনো বিষয়ের কনসেপ্ট বুঝতে, সিটি/টার্ম ফাইনাল প্রশ্নব্যাংক পেতে অথবা ল্যাব ভাইভার প্রস্তুতির জন্য প্রশ্ন করুন।'
-            : 'Hello! <strong>I am Fahim Niloy</strong> (CUET ME \'20). Welcome to ClassroomHub! How can I help with your studies today? You can ask me to explain any engineering theory, suggest exam preparation strategies, or find notes and question banks from our vault.'
+            ? 'ওয়ালাইকুম আসসালাম! আলহামদুলিল্লাহ, আমি ভালো আছি। আপনি কেমন আছেন? পড়াশোনা কেমন চলছে? আজ কোনো নির্দিষ্ট বিষয় বা কনসেপ্ট নিয়ে আলোচনা করতে চান?'
+            : 'Hello! I am doing great, thank you. How are you doing? How are your studies going? Feel free to ask me anything or talk about any topic!'
           }</p>
         </div>
         ${vaultCardsHtml}
@@ -4163,69 +4462,84 @@ function handleAiSubmit(e) {
     } else if (isAdviceQuestion) {
       answerHtml = `
         <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-amber-300">🎯 Fahim Niloy's Academic & Exam Preparation Tips</span>
+          <span class="font-bold text-xs text-amber-300">🎯 Academic Advice • Fahim Niloy</span>
           <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
             <i data-lucide="copy" class="w-3 h-3"></i> Copy
           </button>
         </div>
         <div class="ai-prose space-y-2">
           <p>${isBangla
-            ? 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিংয়ের সেমিস্টারগুলোতে ভালো রেজাল্ট ও কনসেপ্ট ক্লিয়ার রাখার জন্য আমার ব্যক্তিগত অভিজ্ঞতা থেকে কিছু টিপস:'
-            : 'Based on my experience across the 8 semesters at CUET Mechanical Engineering, here are high-impact exam preparation strategies:'
+            ? 'চুয়েটে ইঞ্জিনিয়ারিং সেমিস্টারগুলোতে ভালো করার কিছু কার্যকরী টিপস:'
+            : 'Here are practical and effective strategies for succeeding in engineering exams at CUET:'
           }</p>
           <ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4">
-            <li><strong>বিগত ৫ বছরের প্রশ্নব্যাংক সমাধান:</strong> আমাদের ভল্টের <em>Question Banks</em> ক্যাটাগরি থেকে আপনার সেমিস্টারের প্রশ্নগুলো সংগ্রহ করে প্যাটার্ন বুঝুন। অধিকাংশ টার্ম ফাইনালে একই ধরনের নিউমেরিক্যাল ও ডেরিভেশন আসে।</li>
-            <li><strong>পরিচ্ছন্ন চিত্র ও ডায়াগ্রাম:</strong> মেকানিক্সে ফ্রি-বডি ডায়াগ্রাম (FBD), থার্মোডাইনামিক্সে P-v ও T-s ডায়াগ্রাম, ফ্লুইডে ভেলোসিটি ট্রায়াঙ্গেল নির্ভুলভাবে আঁকলে ফুল মার্কস পাওয়া অনেক সহজ হয়।</li>
-            <li><strong>এককের দিকে সতর্কতা (Units):</strong> প্রেসার (kPa vs Pa vs bar) এবং তাপমাত্রা সেলসিয়াস থেকে কেলভিনে (K = °C + 273.15) কনভার্ট করার ভুল সবচেয়ে বেশি হয়। ক্যালকুলেশনে সতর্ক থাকুন।</li>
-            <li><strong>ল্যাব ও ভাইভা প্রিপারেশন:</strong> সেশনাল পরীক্ষায় ল্যাব ম্যানুয়ালের শুরু ও শেষের ভাইভা প্রশ্নগুলো ভালোভাবে পড়ে যাবেন। ভল্টের <em>Lab & Sessional</em> ক্যাটাগরিতে সব ম্যানুয়াল সাজানো আছে।</li>
+            <li><strong>কনসেপ্ট ও ডায়াগ্রাম প্রাধান্য দিন:</strong> মেকানিক্স বা ফ্লুইডে ফ্রি-বডি ডায়াগ্রাম (FBD) এবং থার্মোডাইনামিক্সে P-V ও T-s ডায়াগ্রাম পরিষ্কারভাবে আঁকলে পরীক্ষক খাতার শুরুতেই ভালো ধারণা পান।</li>
+            <li><strong>এককের ভুল এড়ান:</strong> টেম্পারেচার কেলভিনে নেওয়া (K = °C + 273.15) এবং প্রেসার Pa বা kPa-তে রাখা নিশ্চিত করুন।</li>
+            <li><strong>বিগত বছরের প্রশ্ন সমাধান:</strong> বিগত ৫ বছরের প্রশ্ন এনালাইসিস করলে বুঝবেন কোন কোন নিউমেরিক্যাল ও থিওরি বারবার রিপিট হয়।</li>
           </ul>
         </div>
         ${videoCardsHtml}
         ${vaultCardsHtml}
       `;
-    } else if (topicKey && ME_KNOWLEDGE_BASE[topicKey]) {
-      const topic = ME_KNOWLEDGE_BASE[topicKey];
-      const rawText = isBangla ? topic.bn : topic.en;
-      answerHtml = `
-        <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-indigo-300">${topic.title} • Mentored by Fahim Niloy</span>
-          <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
-            <i data-lucide="copy" class="w-3 h-3"></i> Copy
-          </button>
-        </div>
-        <div class="ai-prose leading-relaxed">${rawText.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>')}</div>
-        ${videoCardsHtml}
-        ${vaultCardsHtml}
-      `;
     } else {
-      // General Engineering Topic synthesis (Never files-only!)
+      // Direct Conversational Conceptual Answer (No course dumping!)
+      let topicTitle = isBangla ? 'বিশ্লেষণ ও আলোচনা' : 'Concept Explanation';
+      let explanation = '';
+
+      if (qLower.includes('entropy') || qLower.includes('thermodynamic') || qLower.includes('থার্মো') || qLower.includes('এন্ট্রপি')) {
+        topicTitle = 'Thermodynamics & Entropy';
+        explanation = isBangla
+          ? `<p><strong>এন্ট্রপি (Entropy) কী:</strong> সহজ ভাষায়, এন্ট্রপি হলো কোনো সিস্টেমের অণু-পরমাণুর বিশৃঙ্খলা বা এলোমেলো অবস্থার (disorder/randomness) একটি পরিমাপ।</p>
+             <p>থার্মোডাইনামিক্সের ২য় সূত্রানুসারে, একটি বিচ্ছিন্ন জগতে (isolated system) যেকোনো স্বতঃস্ফূর্ত প্রক্রিয়ায় মোট এন্ট্রপি সবসময় বৃদ্ধি পায় (\\( \\Delta S_{\\text{universe}} \\ge 0 \\))। গাণিতিকভাবে রিভার্সিবল প্রসেসের জন্য: \\[ dS = \\frac{\\delta Q_{\\text{rev}}}{T} \\]</p>
+             <p>অর্থাৎ, তাপকে কখনই ১০০% কাজে রূপান্তর করা সম্ভব নয়; কিছু পরিমাণ শক্তি অপচয় হবেই।</p>`
+          : `<p><strong>Entropy:</strong> In simple terms, entropy is a thermodynamic measure of the molecular disorder or randomness within a system.</p>
+             <p>By the Second Law of Thermodynamics, in any spontaneous natural process, the total entropy of an isolated system always increases: \\[ \\Delta S_{\\text{universe}} \\ge 0 \\]</p>
+             <p>For an internally reversible process: \\[ dS = \\frac{\\delta Q_{\\text{rev}}}{T} \\] It fundamentally shows why 100% heat-to-work conversion is physically impossible.</p>`;
+      } else if (qLower.includes('mohr') || qLower.includes('stress') || qLower.includes('স্ট্রেস') || qLower.includes('মোর')) {
+        topicTitle = "Stress Analysis & Mohr's Circle";
+        explanation = isBangla
+          ? `<p><strong>মোরের বৃত্ত (Mohr's Circle) কেন ব্যবহার করা হয়:</strong> এটি একটি গ্রাফিক্যাল পদ্ধতি যার মাধ্যমে যেকোনো বস্তুর ওপর ত্রিমাত্রিক বা দ্বিমাত্রিক বল প্রয়োগ করলে বিভিন্ন কোণে কী পরিমাণ নরমাল স্ট্রেস (\\( \\sigma \\)) এবং শিয়ার স্ট্রেস (\\( \\tau \\)) তৈরি হয় তা সহজেই বের করা যায়।</p>
+             <p>বৃত্তের কেন্দ্র: \\( C = \\left(\\frac{\\sigma_x + \\sigma_y}{2}, 0\\right) \\)<br>ব্যাসার্ধ ও সর্বোচ্চ শিয়ার স্ট্রেস: \\( R = \\tau_{\\max} = \\sqrt{\\left(\\frac{\\sigma_x - \\sigma_y}{2}\\right)^2 + \\tau_{xy}^2} \\)</p>
+             <p>শ্যাফ্ট ডিজাইন বা বিম তৈরির সময় মেটাল যাতে ভেঙে না যায়, সেজন্য ইঞ্জিনিয়াররা এই বৃত্তের সাহায্য নেন।</p>`
+          : `<p><strong>Mohr's Circle:</strong> It is a graphical representation of the transformation equations for plane stress. It allows engineers to quickly determine principal stresses (\\( \\sigma_1, \\sigma_2 \\)) and maximum in-plane shear stress (\\( \\tau_{\\max} \\)) without solving complex trigonometric equations.</p>
+             <p>Center: \\( C = \\left(\\frac{\\sigma_x + \\sigma_y}{2}, 0\\right) \\)<br>Radius: \\( R = \\sqrt{\\left(\\frac{\\sigma_x - \\sigma_y}{2}\\right)^2 + \\tau_{xy}^2} \\)</p>`;
+      } else if (qLower.includes('pelton') || qLower.includes('turbine') || qLower.includes('pump') || qLower.includes('টারবাইন') || qLower.includes('পাম্প')) {
+        topicTitle = 'Hydraulic Turbines & Pumps';
+        explanation = isBangla
+          ? `<p><strong>টারবাইনের মূল পার্থক্য:</strong></p>
+             <p>১. <strong>পেল্টন হুইল (Pelton Wheel):</strong> ইমপালস টারবাইন। যেখানে পানির হেড খুব বেশি (> ১৫০ মিটার) কিন্তু পানির পরিমাণ কম, সেখানে নজলের মাধ্যমে উচ্চগতির জেট তৈরি করে বাকেটে আঘাত করে টারবাইন ঘোরানো হয়।<br>
+             ২. <strong>ফ্রান্সিস টারবাইন (Francis):</strong> মাঝারি হেড ও মাঝারি পানির প্রবাহের জন্য সবচেয়ে বেশি ব্যবহৃত রিঅ্যাকশন টারবাইন।<br>
+             ৩. <strong>কাপলান টারবাইন (Kaplan):</strong> কম হেড ও প্রচুর পানির স্রোতের জন্য আদর্শ অ্যাক্সিয়াল ফ্লো টারবাইন।</p>`
+          : `<p><strong>Hydraulic Turbines Classification:</strong></p>
+             <p>1. <strong>Pelton Wheel (Impulse):</strong> High head (>150 m), low flow. Converts pressure head completely into kinetic jet velocity before hitting bucket splitters.<br>
+             2. <strong>Francis Turbine (Reaction):</strong> Medium head (30-150 m), mixed radial-inflow to axial outflow. Most widely used in modern hydroelectric plants.<br>
+             3. <strong>Kaplan Turbine (Axial Reaction):</strong> Low head (<30 m), very large water discharge with adjustable blades.</p>`;
+      } else if (qLower.includes('lathe') || qLower.includes('workshop') || qLower.includes('লেদ') || qLower.includes('ওয়ার্কশপ')) {
+        topicTitle = 'Workshop & Lathe Operations';
+        explanation = isBangla
+          ? `<p><strong>লেদ মেশিনকে মাদার অফ অল মেশিন বলা হয়:</strong> কারণ এতে ওয়ার্কপিস ঘোরে এবং কাটিং টুল লিনিয়ার মুভমেন্ট করে অতিরিক্ত মেটাল কেটে কাঙ্ক্ষিত আকার দেওয়া হয়।</p>
+             <p>প্রধান কাজগুলো হলো: ফেসিং (দৈর্ঘ্য সমান করা), টার্নিং (ব্যাস কমানো), ড্রিলিং, নার্লিং (হাতের গ্রিপের জন্য খসখসে ডায়মন্ড প্যাটার্ন করা) এবং থ্রেডিং বা প্যাঁচ কাটা।</p>`
+          : `<p><strong>Lathe Operations:</strong> The workpiece rotates on the spindle while a single-point cutting tool is fed into the material to produce cylindrical symmetric shapes.</p>
+             <p>Core operations: Facing (making ends square), Turning (reducing diameter), Knurling (producing patterned grip surface), and Thread cutting.</p>`;
+      } else {
+        // Natural Gemini-style general response for any other query
+        topicTitle = isBangla ? 'ফাহিম নিলয়ের উত্তর' : 'Fahim Niloy Thought';
+        explanation = isBangla
+          ? `<p>আপনার প্রশ্ন: <em>"${query}"</em></p>
+             <p>এটি একটি চমৎকার আলোচনা। ইঞ্জিনিয়ারিং এবং বাস্তব জীবনের ক্ষেত্রে প্রতিটি তত্ত্বের পেছনে সুনির্দিষ্ট বৈজ্ঞানিক যুক্তি ও ব্যবহারিক কারণ থাকে। এই বিষয়ে কোনো নির্দিষ্ট সূত্র, সমীকরণ বা প্রয়োগ নিয়ে আরও বিস্তারিত জানতে চাইলে নির্দ্বিধায় জিজ্ঞেস করতে পারেন!</p>`
+          : `<p>Regarding your query: <em>"${query}"</em></p>
+             <p>This is an interesting topic. In engineering and physical science, every concept connects physical intuition with mathematical modeling. Feel free to dive deeper into any specific aspect, formula, or application!</p>`;
+      }
+
       answerHtml = `
         <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-indigo-300">⚙️ CUET ME Academic Analysis: "${query}" • Fahim Niloy</span>
+          <span class="font-bold text-xs text-indigo-300">💡 ${topicTitle} • Fahim Niloy</span>
           <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
             <i data-lucide="copy" class="w-3 h-3"></i> Copy
           </button>
         </div>
-        <div class="ai-prose space-y-2">
-          <p>${isBangla
-            ? `আমি ফাহিম নিলয়। আপনার অনুসন্ধানের টপিক <strong>"${query}"</strong> চুয়েট মেকানিক্যাল কারিকুলামের গুরুত্বপূর্ণ একটি অংশ। এই বিষয়ে পরীক্ষায় ভালো করার জন্য নিচের মূল বিষয়গুলো খেয়াল রাখবেন:`
-            : `I am Fahim Niloy. <strong>"${query}"</strong> is an important engineering topic in the CUET Mechanical curriculum. Here is the core theoretical overview and exam strategy:`
-          }</p>
-          <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-1.5 text-xs">
-            <div class="font-bold text-teal-300">📌 Fundamental Concepts & Governing Principles:</div>
-            <p class="text-slate-300 leading-relaxed">
-              ${isBangla
-                ? '১. যে-কোনো নিউমেরিক্যাল সমস্যার শুরুতে সব গিভেন ডাটা এসআই ইউনিটে (SI Units) কনভার্ট করে নিন।<br>২. বাউন্ডারি কন্ডিশন ও এজাম্পশন (Assumptions যেমন steady-flow, frictionless, ideal gas) স্পষ্ট করে খাতায় লিখুন।<br>৩. টার্ম ফাইনালে ডেরিভেশনের পাশাপাশি প্রোপার্টি ডায়াগ্রাম (Property Diagrams) আঁকা বাধ্যতামূলক।'
-                : '1. Convert all parameters into consistent SI Units (e.g., Pa instead of bar, Kelvin for temperature).<br>2. Explicitly state thermodynamic and physical boundary conditions (steady state, incompressible, frictionless).<br>3. Accompany all derivations with clear, labelled schematic diagrams.'
-              }
-            </p>
-          </div>
-          <p class="text-xs text-slate-400">
-            ${isBangla
-              ? 'এই টপিকের আরও গভীর কনসেপ্ট বুঝতে নিচে সাজেস্ট করা ভিডিও লেকচারগুলো দেখতে পারেন এবং সরাসরি আমাদের ভল্টের সংশ্লিষ্ট ফাইলগুলো পড়তে পারেন:'
-              : 'For complete conceptual clarity, watch the curated video lectures below and explore the verified lecture notes from our drive vault:'
-            }
-          </p>
+        <div class="ai-prose space-y-2 leading-relaxed">
+          ${explanation}
         </div>
         ${videoCardsHtml}
         ${vaultCardsHtml}
@@ -4237,6 +4551,7 @@ function handleAiSubmit(e) {
     lucide.createIcons();
   }, 350);
 }
+
 
 /* =========================================================================
    14. TOAST NOTIFICATION HELPER
