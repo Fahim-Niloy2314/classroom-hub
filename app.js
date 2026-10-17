@@ -290,6 +290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadCustomContacts();
   updateAuthUI();
   renderHome();
+  setupSemesterPills();
   setupCategoryPills();
   renderExplorer();
   renderTracker();
@@ -433,12 +434,15 @@ function switchTab(tab) {
 }
 
 /* =========================================================================
-   6. USER AUTHENTICATION, ADMIN IDENTIFICATION & SIGN OUT
+   6. USER AUTHENTICATION & ACCESS CONTROL (Clean, Modern, Reliable)
    ========================================================================= */
+const ADMIN_ROLLS = ['2003063'];
+
 function isAdmin(user) {
   if (!user) return false;
   if (user.role === 'admin') return true;
   if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim())) return true;
+  if (user.roll && ADMIN_ROLLS.includes(user.roll.trim())) return true;
   if (user.phone && ['01850162261', '+8801850162261', '1850162261'].includes(user.phone.replace(/[\s\-]/g, ''))) return true;
   return false;
 }
@@ -449,18 +453,16 @@ function updateAuthUI() {
   const mobileAdminBtn = document.getElementById('mobileNavAdminBtn');
   const mobileNavAdmin = document.getElementById('mobileNav-admin');
   const editContactBtn = document.getElementById('editContactBtn');
-  const dict = I18N[currentLang];
+  const dict = I18N[currentLang] || I18N.en;
 
   if (!container) return;
 
   const isUserAdmin = currentUser && isAdmin(currentUser);
 
-  // Strictly guard contact editing button - only visible if Admin
   if (editContactBtn) {
     editContactBtn.classList.toggle('hidden', !isUserAdmin);
   }
 
-  // Show/hide admin tabs
   if (adminTab) adminTab.classList.toggle('hidden', !isUserAdmin);
   if (mobileAdminBtn) mobileAdminBtn.classList.toggle('hidden', !isUserAdmin);
   if (mobileNavAdmin) mobileNavAdmin.classList.toggle('hidden', !isUserAdmin);
@@ -472,7 +474,7 @@ function updateAuthUI() {
           ${isUserAdmin ? '👑' : (currentUser.name || 'U').charAt(0).toUpperCase()}
         </div>
         <div class="hidden sm:block text-left leading-tight">
-          <div class="font-bold text-white max-w-[110px] truncate">${currentUser.name || 'Student'}</div>
+          <div class="font-bold text-white max-w-[120px] truncate">${currentUser.name || 'Student'}</div>
           <div class="text-[10px] ${isUserAdmin ? 'text-amber-400 font-semibold' : 'text-slate-400'}">
             ${isUserAdmin ? dict.role_admin : dict.role_student}
           </div>
@@ -486,13 +488,85 @@ function updateAuthUI() {
   } else {
     container.innerHTML = `
       <button onclick="openAuthModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 text-xs font-semibold transition-all shadow-sm">
-        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+        <i data-lucide="user" class="w-3.5 h-3.5 text-indigo-400"></i>
         <span>${dict.btn_signin_nav}</span>
       </button>
     `;
   }
 
   lucide.createIcons();
+}
+
+function openAuthModal() {
+  const dialog = document.getElementById('authDialog');
+  if (dialog) {
+    dialog.showModal();
+    lucide.createIcons();
+  }
+}
+
+function closeAuthModal() {
+  const dialog = document.getElementById('authDialog');
+  if (dialog) dialog.close();
+}
+
+// 1-Click Google Sign-in as Fahim Niloy (Founder & Admin)
+function handleQuickGoogleLogin() {
+  currentUser = {
+    name: 'Fahim Niloy',
+    email: 'fahim.cuet.me20@gmail.com',
+    role: 'admin',
+    roll: '2003063',
+    batch: 'ME 20',
+    method: 'google'
+  };
+  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+  updateAuthUI();
+  closeAuthModal();
+  showToast(currentLang === 'en' 
+    ? 'Signed in as Fahim Niloy (Admin Access Granted)' 
+    : 'ফাহিম নিলয় হিসেবে সাইন ইন সম্পন্ন (অ্যাডমিন সুবিধা চালু)');
+}
+
+// Sign-in with CUET Roll or Email
+function handleStudentRollLogin(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const input = document.getElementById('loginIdentifier');
+  const val = (input ? input.value : '').trim();
+
+  if (!val) {
+    showToast(currentLang === 'en' ? 'Please enter your CUET Roll or Email' : 'আপনার কুয়েট রোল বা ইমেইল লিখুন');
+    return;
+  }
+
+  // Check if roll or email matches Admin
+  const isOwner = val === '2003063' || ADMIN_EMAILS.includes(val.toLowerCase()) || val.toLowerCase().includes('fahim');
+
+  if (isOwner) {
+    currentUser = {
+      name: 'Fahim Niloy (Admin)',
+      email: 'fahim.cuet.me20@gmail.com',
+      roll: '2003063',
+      role: 'admin',
+      batch: 'ME 20',
+      method: 'cuet_id'
+    };
+    showToast(currentLang === 'en' ? 'Welcome back, Fahim Niloy! Admin mode unlocked.' : 'স্বাগতম ফাহিম নিলয়! অ্যাডমিন মোড চালু হয়েছে।');
+  } else {
+    const isRollOnly = /^\d+$/.test(val);
+    currentUser = {
+      name: isRollOnly ? `CUETian (${val})` : val.split('@')[0],
+      email: isRollOnly ? `u${val}@student.cuet.ac.bd` : val,
+      roll: isRollOnly ? val : '',
+      role: 'student',
+      method: 'cuet_id'
+    };
+    showToast(currentLang === 'en' ? `Signed in successfully as ${currentUser.name}` : `${currentUser.name} হিসেবে সাইন ইন সম্পন্ন`);
+  }
+
+  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+  updateAuthUI();
+  closeAuthModal();
 }
 
 function handleLogout() {
@@ -503,453 +577,12 @@ function handleLogout() {
   showToast(currentLang === 'en' ? 'Signed out successfully' : 'সফলভাবে লগআউট করা হয়েছে');
 }
 
-function openAuthModal() {
-  const dialog = document.getElementById('authDialog');
-  switchAuthTab('login');
-  dialog.showModal();
-  lucide.createIcons();
-}
-
-function closeAuthModal() {
-  document.getElementById('authDialog').close();
-}
-
-function switchAuthTab(tab) {
-  const tabs = ['login', 'register', 'forgot'];
-  tabs.forEach(t => {
-    const btn = document.getElementById(`authTabBtn-${t}`);
-    const panel = document.getElementById(`authPanel-${t}`);
-    if (btn && panel) {
-      if (t === tab) {
-        btn.className = 'flex-1 py-1.5 rounded-lg text-white bg-indigo-600 transition-all';
-        panel.classList.remove('hidden');
-      } else {
-        btn.className = 'flex-1 py-1.5 rounded-lg hover:text-white transition-all';
-        panel.classList.add('hidden');
-      }
-    }
-  });
-}
-
-/* =========================================================================
-   6.B MOBILE OTP AUTHENTICATION (DIRECT SIGN-IN)
-   ========================================================================= */
-let directOtpTimer = null;
-let directOtpSecondsLeft = 60;
-let currentDirectPhone = '';
-let currentDirectName = '';
-
-function requestDirectMobileOtp() {
-  const phoneInput = document.getElementById('directOtpPhone');
-  const nameInput = document.getElementById('directOtpName');
-  let rawPhone = (phoneInput?.value || '').trim().replace(/[\s-]/g, '');
-
-  if (!rawPhone) {
-    showToast(currentLang === 'en' ? 'Please enter your mobile number' : 'আপনার মোবাইল নাম্বারটি লিখুন');
-    if (phoneInput) phoneInput.focus();
-    return;
-  }
-
-  // Normalize BD phone number
-  if (rawPhone.startsWith('+880')) rawPhone = rawPhone.substring(4);
-  else if (rawPhone.startsWith('880')) rawPhone = rawPhone.substring(3);
-  if (rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1);
-
-  if (rawPhone.length < 10) {
-    showToast(currentLang === 'en' ? 'Please enter a valid 11-digit mobile number' : 'সঠিক ১১ ডিজিটের মোবাইল নাম্বার দিন');
-    return;
-  }
-
-  const fullPhone = '0' + rawPhone;
-  currentDirectPhone = fullPhone;
-  currentDirectName = (nameInput?.value || '').trim();
-
-  // Generate 6-digit OTP
-  currentGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  otpTarget = 'direct';
-
-  // Switch to Step 2
-  const step1 = document.getElementById('directOtpStep1');
-  const step2 = document.getElementById('directOtpStep2');
-  const dispPhone = document.getElementById('displayDirectPhone');
-  const codeInput = document.getElementById('directOtpCodeInput');
-
-  if (step1) step1.classList.add('hidden');
-  if (step2) step2.classList.remove('hidden');
-  if (dispPhone) dispPhone.textContent = `+880 ${fullPhone}`;
-  if (codeInput) {
-    codeInput.value = '';
-    setTimeout(() => codeInput.focus(), 100);
-  }
-
-  // Start 60s countdown
-  startDirectOtpCountdown();
-
-  // Show simulated SMS toast with auto-fill option
-  showOtpToast(currentGeneratedOtp);
-  showToast(currentLang === 'en' 
-    ? `OTP sent to +880 ${fullPhone}` 
-    : `+880 ${fullPhone} নাম্বারে ৬ ডিজিটের ওটিপি পাঠানো হয়েছে`);
-}
-
-function startDirectOtpCountdown() {
-  clearInterval(directOtpTimer);
-  directOtpSecondsLeft = 60;
-  const countEl = document.getElementById('directOtpCountdown');
-  const resendBtn = document.getElementById('directOtpResendBtn');
-  if (resendBtn) resendBtn.disabled = true;
-
-  directOtpTimer = setInterval(() => {
-    directOtpSecondsLeft--;
-    if (countEl) countEl.textContent = `Resend code in ${directOtpSecondsLeft}s`;
-    if (directOtpSecondsLeft <= 0) {
-      clearInterval(directOtpTimer);
-      if (countEl) countEl.textContent = "Didn't receive code?";
-      if (resendBtn) resendBtn.disabled = false;
-    }
-  }, 1000);
-}
-
-function resetDirectOtpStep() {
-  clearInterval(directOtpTimer);
-  const step1 = document.getElementById('directOtpStep1');
-  const step2 = document.getElementById('directOtpStep2');
-  if (step1) step1.classList.remove('hidden');
-  if (step2) step2.classList.add('hidden');
-}
-
-function verifyDirectMobileOtp() {
-  const codeInput = document.getElementById('directOtpCodeInput');
-  const enteredCode = (codeInput?.value || '').trim();
-
-  if (!enteredCode || enteredCode !== currentGeneratedOtp) {
-    showToast(currentLang === 'en' ? 'Invalid verification code. Please check SMS OTP.' : 'ভুল ওটিপি কোড। অনুগ্রহ করে সঠিক কোডটি লিখুন।');
-    if (codeInput) codeInput.focus();
-    return;
-  }
-
-  clearInterval(directOtpTimer);
-
-  // Check if owner phone (Fahim Niloy: 01850162261)
-  const isOwnerPhone = currentDirectPhone.endsWith('1850162261') || currentDirectPhone === '01850162261';
-
-  if (isOwnerPhone) {
-    currentUser = {
-      name: currentDirectName || 'Fahim Niloy (Founder)',
-      email: 'fahim.cuet.me20@gmail.com',
-      phone: currentDirectPhone,
-      method: 'mobile_otp',
-      role: 'admin'
-    };
-    showToast(currentLang === 'en' 
-      ? 'Welcome Owner & Admin (Fahim Niloy)! Signed in via Mobile OTP.' 
-      : 'স্বাগতম অ্যাডমিন ফাহিম নিলয়! মোবাইল ওটিপি দিয়ে সফলভাবে সাইন ইন হয়েছে।');
-  } else {
-    currentUser = {
-      name: currentDirectName || `Student (${currentDirectPhone.slice(-4)})`,
-      email: `${currentDirectPhone}@classroom.hub`,
-      phone: currentDirectPhone,
-      method: 'mobile_otp',
-      role: 'student'
-    };
-    showToast(currentLang === 'en' 
-      ? `Signed in as ${currentUser.name}` 
-      : `${currentUser.name} হিসেবে সফলভাবে সাইন ইন হয়েছে`);
-  }
-
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-  updateAuthUI();
-  closeAuthModal();
-  hideOtpToast();
-}
-
-/* =========================================================================
-   6.C GOOGLE ACCOUNT SELECTION & AUTHENTICATION
-   ========================================================================= */
-const VALID_ADMIN_PINS = ['2003063', 'cuetme20', 'me20', '01850162261', '+8801850162261', '1850162261', 'admin', 'fahimniloy'];
-let selectedGoogleEmail = '';
-let selectedGoogleName = '';
-
-function openGoogleSignInPortal() {
-  const gDialog = document.getElementById('googleAccountDialog');
-  if (gDialog) {
-    showGoogleAccountPickerView();
-    gDialog.showModal();
-    lucide.createIcons();
-  }
-}
-
-function closeGoogleSignInPortal() {
-  const gDialog = document.getElementById('googleAccountDialog');
-  if (gDialog) gDialog.close();
-}
-
-function showGoogleAccountPickerView() {
-  const pickerView = document.getElementById('googleAccountPickerView');
-  const passwordView = document.getElementById('googlePasswordPromptView');
-  const customView = document.getElementById('googleCustomAccountView');
-  const title = document.getElementById('googleDialogTitle');
-
-  if (pickerView) pickerView.classList.remove('hidden');
-  if (passwordView) passwordView.classList.add('hidden');
-  if (customView) customView.classList.add('hidden');
-  if (title) title.textContent = 'Choose an account';
-  lucide.createIcons();
-}
-
-function selectGoogleAccount(email, name) {
-  selectedGoogleEmail = email.toLowerCase().trim();
-  selectedGoogleName = name || email.split('@')[0];
-
-  const pickerView = document.getElementById('googleAccountPickerView');
-  const passwordView = document.getElementById('googlePasswordPromptView');
-  const nameEl = document.getElementById('googleSelectedName');
-  const emailEl = document.getElementById('googleSelectedEmail');
-  const avatarEl = document.getElementById('googleSelectedAvatar');
-  const passInput = document.getElementById('googleAccountPasswordInput');
-  const title = document.getElementById('googleDialogTitle');
-
-  if (pickerView) pickerView.classList.add('hidden');
-  if (passwordView) passwordView.classList.remove('hidden');
-  if (title) title.textContent = 'Verify your account';
-
-  if (nameEl) nameEl.textContent = selectedGoogleName;
-  if (emailEl) emailEl.textContent = selectedGoogleEmail;
-  if (avatarEl) avatarEl.textContent = selectedGoogleName.charAt(0).toUpperCase();
-  if (passInput) {
-    passInput.value = '';
-    setTimeout(() => passInput.focus(), 100);
-  }
-  lucide.createIcons();
-}
-
-function handleGooglePasswordSubmit(e) {
-  e.preventDefault();
-  const passInput = document.getElementById('googleAccountPasswordInput');
-  const enteredPass = (passInput?.value || '').trim().toLowerCase();
-
-  const isAdm = ADMIN_EMAILS.includes(selectedGoogleEmail);
-
-  if (isAdm) {
-    if (!enteredPass || !VALID_ADMIN_PINS.includes(enteredPass)) {
-      showToast(currentLang === 'en' ? 'Wrong password. Try again.' : 'ভুল পাসওয়ার্ড। আবার চেষ্টা করুন।');
-      if (passInput) passInput.focus();
-      return;
-    }
-    currentUser = {
-      name: selectedGoogleName || 'Fahim Niloy',
-      email: selectedGoogleEmail,
-      method: 'google',
-      role: 'admin'
-    };
-    showToast(currentLang === 'en' 
-      ? `Welcome back, ${currentUser.name}!` 
-      : `স্বাগতম ${currentUser.name}! আপনার অ্যাকাউন্টে সফলভাবে সাইন ইন হয়েছে।`);
-  } else {
-    currentUser = {
-      name: selectedGoogleName,
-      email: selectedGoogleEmail,
-      method: 'google',
-      role: 'student'
-    };
-    showToast(currentLang === 'en' 
-      ? `Signed in as ${currentUser.name}` 
-      : `${currentUser.name} হিসেবে সফলভাবে সাইন ইন হয়েছে`);
-  }
-
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-  updateAuthUI();
-  closeGoogleSignInPortal();
-  closeAuthModal();
-}
-
-function showGoogleCustomAccountView() {
-  const pickerView = document.getElementById('googleAccountPickerView');
-  const customView = document.getElementById('googleCustomAccountView');
-  const title = document.getElementById('googleDialogTitle');
-
-  if (pickerView) pickerView.classList.add('hidden');
-  if (customView) customView.classList.remove('hidden');
-  if (title) title.textContent = 'Sign in with Google';
-  lucide.createIcons();
-}
-
-function handleGoogleCustomSubmit(e) {
-  e.preventDefault();
-  const emailInput = document.getElementById('googleCustomEmail');
-  const nameInput = document.getElementById('googleCustomName');
-  const passInput = document.getElementById('googleCustomPassword');
-
-  const email = (emailInput?.value || '').toLowerCase().trim();
-  const name = (nameInput?.value || '').trim() || email.split('@')[0];
-  const pass = (passInput?.value || '').trim().toLowerCase();
-
-  if (!email) return;
-
-  const isAdm = ADMIN_EMAILS.includes(email);
-  if (isAdm) {
-    if (!pass || !VALID_ADMIN_PINS.includes(pass)) {
-      showToast(currentLang === 'en' ? 'Wrong password for Admin account.' : 'ভুল পাসওয়ার্ড। আবার চেষ্টা করুন।');
-      return;
-    }
-    currentUser = {
-      name: name || 'Fahim Niloy',
-      email: email,
-      method: 'google',
-      role: 'admin'
-    };
-  } else {
-    currentUser = {
-      name: name,
-      email: email,
-      method: 'google',
-      role: 'student'
-    };
-  }
-
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-  updateAuthUI();
-  closeGoogleSignInPortal();
-  closeAuthModal();
-  showToast(currentLang === 'en' ? `Signed in as ${currentUser.name}` : `${currentUser.name} হিসেবে সফলভাবে সাইন ইন হয়েছে`);
-}
-
-function handleGoogleSignIn() {
-  openGoogleSignInPortal();
-}
-
-function handleEmailLogin(e) {
-  e.preventDefault();
-  const id = document.getElementById('loginIdentifier').value.trim();
-  const pass = document.getElementById('loginPassword').value.trim();
-  if (!id || !pass) return;
-
-  const isAdm = ADMIN_EMAILS.includes(id.toLowerCase());
-  currentUser = {
-    name: isAdm ? 'Fahim Niloy' : (id.includes('@') ? id.split('@')[0] : `User-${id.slice(-4)}`),
-    email: id,
-    role: isAdm ? 'admin' : 'student',
-    method: 'password'
-  };
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-  updateAuthUI();
-  closeAuthModal();
-  showToast(isAdm ? 'Welcome Owner / Admin!' : 'Signed in successfully!');
-}
-
-function sendRegisterOtp() {
-  const name = document.getElementById('regName').value.trim();
-  const phone = document.getElementById('regPhone').value.trim();
-  if (!phone || phone.length < 10) {
-    showToast(currentLang === 'en' ? 'Please enter a valid mobile number' : 'সঠিক মোবাইল নাম্বার দিন');
-    return;
-  }
-  currentGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  otpTarget = 'register';
-  document.getElementById('displayRegPhone').textContent = phone;
-  document.getElementById('registerStep1').classList.add('hidden');
-  document.getElementById('registerStep2').classList.remove('hidden');
-  showOtpToast(currentGeneratedOtp);
-}
-
-function verifyOtpAndRegister() {
-  const enteredOtp = document.getElementById('regOtpInput').value.trim();
-  const newPass = document.getElementById('regNewPassword').value.trim();
-  const name = document.getElementById('regName').value.trim() || 'Classroom User';
-  const phone = document.getElementById('regPhone').value.trim();
-
-  if (enteredOtp !== currentGeneratedOtp) {
-    showToast(currentLang === 'en' ? 'Invalid OTP code' : 'ভুল OTP কোড');
-    return;
-  }
-  if (!newPass || newPass.length < 6) {
-    showToast(currentLang === 'en' ? 'Password must be at least 6 characters' : 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে');
-    return;
-  }
-
-  currentUser = {
-    name: name,
-    phone: phone,
-    email: `${phone}@classroom.hub`,
-    role: 'student',
-    method: 'phone_otp'
-  };
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-  updateAuthUI();
-  closeAuthModal();
-  hideOtpToast();
-  showToast(currentLang === 'en' ? 'Account created and signed in!' : 'অ্যাকাউন্ট তৈরি ও লগইন সম্পন্ন হয়েছে!');
-}
-
-function sendForgotOtp() {
-  const id = document.getElementById('forgotIdentifier').value.trim();
-  if (!id) {
-    showToast(currentLang === 'en' ? 'Enter your mobile or email' : 'মোবাইল বা ইমেইল লিখুন');
-    return;
-  }
-  currentGeneratedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  otpTarget = 'forgot';
-  document.getElementById('forgotStep1').classList.add('hidden');
-  document.getElementById('forgotStep2').classList.remove('hidden');
-  showOtpToast(currentGeneratedOtp);
-}
-
-function resetPasswordWithOtp() {
-  const enteredOtp = document.getElementById('forgotOtpInput').value.trim();
-  const newPass = document.getElementById('forgotNewPassword').value.trim();
-  if (enteredOtp !== currentGeneratedOtp) {
-    showToast(currentLang === 'en' ? 'Invalid OTP' : 'ভুল OTP কোড');
-    return;
-  }
-  currentUser = {
-    name: 'Verified User',
-    email: document.getElementById('forgotIdentifier').value.trim(),
-    role: 'student',
-    method: 'password_reset'
-  };
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-  updateAuthUI();
-  closeAuthModal();
-  hideOtpToast();
-  showToast(currentLang === 'en' ? 'Password updated & signed in!' : 'পাসওয়ার্ড পরিবর্তন ও লগইন সফল হয়েছে!');
-}
-
-function showOtpToast(code) {
-  const toast = document.getElementById('otpToast');
-  document.getElementById('otpToastCode').textContent = code;
-  toast.classList.remove('hidden');
-  setTimeout(() => toast.classList.remove('translate-y-4', 'opacity-0'), 50);
-}
-
-function hideOtpToast() {
-  const toast = document.getElementById('otpToast');
-  toast.classList.add('translate-y-4', 'opacity-0');
-  setTimeout(() => toast.classList.add('hidden'), 300);
-}
-
-function autoFillOtp() {
-  if (otpTarget === 'direct') {
-    const el = document.getElementById('directOtpCodeInput');
-    if (el) el.value = currentGeneratedOtp;
-  } else if (otpTarget === 'register') {
-    const el = document.getElementById('regOtpInput');
-    if (el) el.value = currentGeneratedOtp;
-  } else if (otpTarget === 'forgot') {
-    const el = document.getElementById('forgotOtpInput');
-    if (el) el.value = currentGeneratedOtp;
-  }
-  showToast(currentLang === 'en' ? 'OTP auto-filled!' : 'OTP অটো-ফিল করা হয়েছে!');
-}
-
-/* =========================================================================
-   7. PRO / COMPLIMENTARY MODAL
-   ========================================================================= */
 function openUpgradeModal() {
-  document.getElementById('upgradeDialog').showModal();
-  lucide.createIcons();
+  openAuthModal();
 }
+
 function closeUpgradeModal() {
-  document.getElementById('upgradeDialog').close();
+  closeAuthModal();
 }
 
 /* =========================================================================
@@ -1133,6 +766,51 @@ function switchBulletinTab(tab) {
    9. HIERARCHICAL FOLDER EXPLORER (Exact Google Drive Structure)
    Level 1: Semesters -> Level 2: Course Folders -> Level 3: Files inside Course
    ========================================================================= */
+function setupSemesterPills() {
+  const container = document.getElementById('semesterFilterPills');
+  if (!container || !appData || !appData.terms) return;
+
+  const currentTerm = explorerState.selectedTerm;
+  const isAll = !currentTerm;
+
+  let html = `
+    <button onclick="selectSemesterFilter(null)" class="whitespace-nowrap px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+      isAll ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-900 text-slate-400 hover:text-slate-200'
+    }">
+      ${currentLang === 'en' ? 'All Semesters' : 'সব সেমিস্টার'}
+    </button>
+  `;
+
+  appData.terms.forEach(term => {
+    const active = currentTerm === term.code;
+    html += `
+      <button onclick="selectSemesterFilter('${term.code}')" class="whitespace-nowrap px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+        active ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-900 text-slate-400 hover:text-slate-200'
+      }">
+        ${term.code}
+      </button>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function selectSemesterFilter(termCode) {
+  if (!termCode) {
+    explorerState.level = 'semesters';
+    explorerState.selectedTerm = null;
+    explorerState.selectedCourse = null;
+    explorerState.selectedSubfolder = null;
+  } else {
+    explorerState.level = 'courses';
+    explorerState.selectedTerm = termCode;
+    explorerState.selectedCourse = null;
+    explorerState.selectedSubfolder = null;
+  }
+  setupSemesterPills();
+  renderExplorer();
+}
+
 function setupCategoryPills() {
   const container = document.getElementById('categoryFilterPills');
   if (!container) return;
@@ -1189,6 +867,7 @@ function navigateExplorerUp() {
     explorerState.level = 'semesters';
     explorerState.selectedTerm = null;
   }
+  setupSemesterPills();
   renderExplorer();
 }
 
@@ -1198,6 +877,7 @@ function openSemesterFolder(termCode) {
   explorerState.selectedTerm = termCode;
   explorerState.selectedCourse = null;
   explorerState.selectedSubfolder = null;
+  setupSemesterPills();
   renderExplorer();
 }
 
@@ -1283,6 +963,7 @@ function renderExplorer() {
   if (!grid) return;
 
   renderBreadcrumbs();
+  setupSemesterPills();
 
   // CASE 1: SEARCH ACTIVE -> Global search across all 3,896 files
   if (searchQuery) {
@@ -1826,7 +1507,7 @@ function toggleBookmark(fileId) {
     showToast(currentLang === 'en' 
       ? 'Please sign in to save bookmarks to your account.' 
       : 'রিসোর্স বুকমার্ক করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
-    openGoogleSignInPortal();
+    openAuthModal();
     return;
   }
   if (bookmarks.includes(fileId)) {
@@ -1917,7 +1598,7 @@ function toggleMilestone(courseName, milestoneKey, isDone) {
     showToast(currentLang === 'en' 
       ? 'Please sign in to save your progression and track your study milestones.' 
       : 'স্টাডি মাইলস্টোন ও প্রোগ্রেস সেভ করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
-    openGoogleSignInPortal();
+    openAuthModal();
     renderTracker();
     return;
   }
@@ -1938,7 +1619,7 @@ function markCourseAllDone(courseName) {
     showToast(currentLang === 'en' 
       ? 'Please sign in to update course progression.' 
       : 'কোর্সের প্রোগ্রেস পরিবর্তন করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
-    openGoogleSignInPortal();
+    openAuthModal();
     return;
   }
   if (!courseProgress[courseName] || typeof courseProgress[courseName] !== 'object') {
@@ -1957,7 +1638,7 @@ function resetCourseProgress(courseName) {
     showToast(currentLang === 'en' 
       ? 'Please sign in to manage course progression.' 
       : 'কোর্সের প্রোগ্রেস রিসেট করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
-    openGoogleSignInPortal();
+    openAuthModal();
     return;
   }
   delete courseProgress[courseName];
@@ -1972,8 +1653,8 @@ function renderTracker() {
   if (!container) return;
 
   // Render Bookmarks
-  const bmList = document.getElementById('bookmarkedList');
-  const bmCount = document.getElementById('bookmarkedCount');
+  const bmList = document.getElementById('bookmarksList') || document.getElementById('bookmarkedList');
+  const bmCount = document.getElementById('bookmarkCountBadge') || document.getElementById('bookmarkedCount');
   if (bmCount) bmCount.textContent = bookmarks.length;
 
   if (bmList) {
