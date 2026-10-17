@@ -707,10 +707,9 @@ function loadCustomContacts() {
     saved.netlify = 'https://mohammad-fahim-ahmed.netlify.app/';
     localStorage.setItem(STORAGE_KEYS.CONTACT, JSON.stringify(saved));
   }
-  const email = saved.email || appData?.student?.email || 'fahim.cuet.me20@gmail.com';
-  const secEmail = saved.secondary_email || appData?.student?.secondary_email || 'fahimniloy2314@gmail.com';
+  const email = saved.email || 'fahimniloy2314@gmail.com';
   const phone = saved.phone || appData?.student?.phone || '+880 1850-162261';
-  const netlify = saved.netlify || 'https://mohammad-fahim-ahmed.netlify.app/';
+  const netlify = (saved.netlify && !saved.netlify.includes('fahim-classroom-archive')) ? saved.netlify : (appData?.student?.portfolio || 'https://mohammad-fahim-ahmed.netlify.app/');
   const github = saved.github || appData?.student?.github_link || 'https://github.com/Fahim-Niloy2314/classroom-hub';
 
   const emailEl = document.getElementById('homeEmailLink');
@@ -722,7 +721,7 @@ function loadCustomContacts() {
   const footerGithubEl = document.getElementById('footerGithubLink');
 
   if (emailEl) { emailEl.href = `mailto:${email}`; emailEl.textContent = email; }
-  if (secEmailEl) { secEmailEl.href = `mailto:${secEmail}`; secEmailEl.textContent = secEmail; }
+  if (secEmailEl) { secEmailEl.remove(); }
   if (phoneEl) { phoneEl.href = `tel:${phone.replace(/\s+/g, '')}`; phoneEl.textContent = phone; }
   if (netlifyEl) netlifyEl.href = netlify;
   if (githubEl) githubEl.href = github;
