@@ -1450,13 +1450,13 @@ function renderFileList(files, container) {
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-1.5 sm:gap-2">
           ${f.url ? `
             <a href="${f.url}" target="_blank" rel="noopener noreferrer" class="flex-1 py-1.5 px-2 rounded-lg bg-teal-600/20 hover:bg-teal-600 text-teal-300 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-1">
               <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
               <span>${dict.btn_preview} (Drive)</span>
             </a>
-          ` : `
+          ` : isLocalHost() ? `
             <button onclick="previewFile('${encodeURIComponent(f.path)}', '${encodeURIComponent(f.name)}')" class="flex-1 py-1.5 px-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-1">
               <i data-lucide="eye" class="w-3.5 h-3.5"></i>
               <span>${dict.btn_preview}</span>
@@ -1466,6 +1466,20 @@ function renderFileList(files, container) {
               <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">${dict.btn_open_system}</span>
             </button>
+
+            <button onclick="handleFileDownload('${encodeURIComponent(f.path)}', '${encodeURIComponent(f.name)}')" title="Download" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 transition-all">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            </button>
+          ` : `
+            <button onclick="previewFile('${encodeURIComponent(f.path)}', '${encodeURIComponent(f.name)}')" class="flex-1 py-1.5 px-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-1">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              <span>${dict.btn_preview}</span>
+            </button>
+            
+            <a href="${f.drive_view_url || 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h'}" target="_blank" rel="noopener noreferrer" title="View on Google Drive" class="py-1.5 px-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-xs font-medium transition-all flex items-center gap-1 border border-emerald-500/30">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>Drive</span>
+            </a>
 
             <button onclick="handleFileDownload('${encodeURIComponent(f.path)}', '${encodeURIComponent(f.name)}')" title="Download" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 transition-all">
               <i data-lucide="download" class="w-3.5 h-3.5"></i>
@@ -1527,10 +1541,19 @@ function handleFileDownload(encPath, encName) {
   }
 
   // 3. Online mode (GitHub Pages / Netlify / Mobile):
-  // Search query on Google Drive vault
-  const driveSearchUrl = `https://drive.google.com/drive/u/0/search?q=${encodeURIComponent(name)}`;
-  window.open(driveSearchUrl, '_blank');
-  showToast(currentLang === 'en' ? `Opening ${name} on Google Drive Vault...` : `গুগল ড্রাইভে ${name} ওপেন হচ্ছে...`);
+  const allFiles = getAllFlatFiles();
+  const fileObj = allFiles.find(f => f.path === path || f.name === name);
+  if (fileObj && fileObj.drive_download_url) {
+    window.open(fileObj.drive_download_url, '_blank');
+    showToast(currentLang === 'en' ? `Downloading ${name} via Google Drive...` : `গুগল ড্রাইভ থেকে ${name} ডাউনলোড হচ্ছে...`);
+  } else if (fileObj && fileObj.drive_view_url) {
+    window.open(fileObj.drive_view_url, '_blank');
+    showToast(currentLang === 'en' ? `Opening ${name} on Google Drive...` : `গুগল ড্রাইভে ${name} ওপেন হচ্ছে...`);
+  } else {
+    const driveFolderUrl = 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h';
+    window.open(driveFolderUrl, '_blank');
+    showToast(currentLang === 'en' ? `Opening Google Drive 5 TB Vault...` : `গুগল ড্রাইভ ৫ টিবি ভল্ট ওপেন করা হচ্ছে...`);
+  }
 }
 
 function previewFile(encPath, encName) {
@@ -1546,6 +1569,7 @@ function previewFile(encPath, encName) {
   const frame = document.getElementById('pdfViewerFrame');
   const dl = document.getElementById('viewerDownloadBtn');
   const localBtn = document.getElementById('viewerOpenLocalBtn');
+  const openDriveBtn = document.getElementById('viewerOpenDriveBtn');
   const cloudFallback = document.getElementById('viewerCloudFallback');
   const driveBtn = document.getElementById('viewerDriveBtn');
   const fallbackDlBtn = document.getElementById('viewerFallbackDlBtn');
@@ -1556,6 +1580,17 @@ function previewFile(encPath, encName) {
 
   // Toggle local desktop app launch button based on localhost presence
   if (localBtn) localBtn.classList.toggle('hidden', !isLocalHost());
+
+  // Find file object to retrieve Google Drive URLs
+  const allFiles = getAllFlatFiles();
+  const fileObj = allFiles.find(f => f.path === path || f.name === name);
+
+  // Configure Direct Drive Link in viewer header
+  if (openDriveBtn) {
+    const driveLink = fileObj?.drive_view_url || 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h';
+    openDriveBtn.href = driveLink;
+    openDriveBtn.classList.remove('hidden');
+  }
 
   // 1. If Undergraduate Bulletin:
   if (name.toLowerCase().includes('bulletin') || path.toLowerCase().includes('bulletin')) {
@@ -1589,23 +1624,34 @@ function previewFile(encPath, encName) {
       };
     }
   } else {
-    // 3. Online mode (GitHub Pages / Mobile)
-    const driveSearchUrl = `https://drive.google.com/drive/u/0/search?q=${encodeURIComponent(name)}`;
-    if (frame) {
-      frame.classList.add('hidden');
-      frame.src = 'about:blank';
+    // 3. Online mode (GitHub Pages / Mobile): Direct In-App Drive Embed
+    const driveViewUrl = fileObj?.drive_view_url || 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h';
+    const driveDownloadUrl = fileObj?.drive_download_url || driveViewUrl;
+
+    if (fileObj && fileObj.drive_embed_url) {
+      if (cloudFallback) cloudFallback.classList.add('hidden');
+      if (frame) {
+        frame.classList.remove('hidden');
+        frame.src = fileObj.drive_embed_url;
+      }
+    } else {
+      if (frame) {
+        frame.classList.add('hidden');
+        frame.src = 'about:blank';
+      }
+      if (cloudFallback) cloudFallback.classList.remove('hidden');
     }
-    if (cloudFallback) cloudFallback.classList.remove('hidden');
+
     if (driveBtn) {
-      driveBtn.onclick = () => window.open(driveSearchUrl, '_blank');
+      driveBtn.onclick = () => window.open(driveViewUrl, '_blank');
     }
     if (fallbackDlBtn) {
-      fallbackDlBtn.onclick = () => window.open(driveSearchUrl, '_blank');
+      fallbackDlBtn.onclick = () => window.open(driveDownloadUrl, '_blank');
     }
     if (dl) {
       dl.onclick = (e) => {
         e.preventDefault();
-        window.open(driveSearchUrl, '_blank');
+        window.open(driveDownloadUrl, '_blank');
       };
     }
   }
@@ -1632,6 +1678,10 @@ function closePdfViewer() {
 }
 
 async function openFileLocally(encPath) {
+  if (!isLocalHost()) {
+    showToast(currentLang === 'en' ? 'Local desktop app launch is only available on PC localhost. Use Drive preview.' : 'লোকাল পিসিতে ওপেন করার অপশনটি শুধুমাত্র লোকালহোস্টে প্রযোজ্য। অনলাইনে ড্রাইভ ভিউয়ার ব্যবহার করুন।');
+    return;
+  }
   const path = decodeURIComponent(encPath);
   try {
     const res = await fetch(`/api/open-local?path=${encodeURIComponent(path)}`);
