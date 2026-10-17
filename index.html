@@ -109,7 +109,10 @@
   <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-12">
 
     <!-- ==================== 1. HOME VIEW ==================== -->
-    <section id="view-home" class="space-y-8">
+    <section id="view-home" class="space-y-6">
+      
+      <!-- Live Academic Notice & Announcement Banner (Managed by Fahim Niloy via Admin CMS) -->
+      <div id="homeNoticeContainer" class="hidden"></div>
       
       <!-- HERO BANNER: Academic Credentials & Repository Overview -->
       <div class="relative overflow-hidden rounded-3xl glass-card border border-slate-800 p-6 sm:p-10 bg-slate-900/90 shadow-2xl">
@@ -172,7 +175,7 @@
               <div class="flex items-center gap-1.5 break-all max-w-full">
                 <i data-lucide="mail" class="w-4 h-4 text-indigo-400 flex-shrink-0"></i>
                 <span class="font-medium text-slate-400">Email:</span>
-                <a id="homeEmailLink" href="mailto:fahimniloy2314@gmail.com" class="text-slate-200 hover:text-indigo-400 underline font-mono">fahimniloy2314@gmail.com</a>
+                <a id="homeEmailLink" href="mailto:fahimcuet63@gmail.com" class="text-slate-200 hover:text-indigo-400 underline font-mono">fahimcuet63@gmail.com</a>
               </div>
               <div class="flex items-center gap-2">
                 <i data-lucide="phone" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
@@ -563,13 +566,17 @@
           </div>
           
           <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-400 font-medium">Filter Level:</span>
-            <select id="trackerLevelSelect" onchange="filterTrackerLevel(this.value)" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200 outline-none">
-              <option value="ALL">All Levels (L1 - L4)</option>
-              <option value="L1">Level 1</option>
-              <option value="L2">Level 2</option>
-              <option value="L3">Level 3</option>
-              <option value="L4">Level 4</option>
+            <span class="text-xs text-slate-400 font-medium">Filter Level / Term:</span>
+            <select id="trackerLevelSelect" onchange="filterTrackerLevel(this.value)" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 outline-none font-medium cursor-pointer">
+              <option value="ALL">All Semesters (L1-T1 to L4-T2)</option>
+              <option value="L1-T1">Level 1 Term 1 (L1-T1)</option>
+              <option value="L1-T2">Level 1 Term 2 (L1-T2)</option>
+              <option value="L2-T1">Level 2 Term 1 (L2-T1)</option>
+              <option value="L2-T2">Level 2 Term 2 (L2-T2)</option>
+              <option value="L3-T1">Level 3 Term 1 (L3-T1)</option>
+              <option value="L3-T2">Level 3 Term 2 (L3-T2)</option>
+              <option value="L4-T1">Level 4 Term 1 (L4-T1)</option>
+              <option value="L4-T2">Level 4 Term 2 (L4-T2)</option>
             </select>
           </div>
         </div>
@@ -673,32 +680,75 @@
           </div>
         </div>
 
-        <!-- Admin Workspace Sub-Tabs Navigation -->
-        <div class="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto no-scrollbar text-xs font-semibold">
-          <button id="adminTabBtn-queue" onclick="switchAdminSubTab('queue')" class="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 transition-all">
+        <!-- Admin Workspace Sub-Tabs Navigation (18-Point CMS Control Suite) -->
+        <div class="flex items-center gap-1.5 border-b border-slate-800 pb-3 overflow-x-auto no-scrollbar text-xs font-semibold">
+          <button id="adminTabBtn-queue" onclick="switchAdminSubTab('queue')" class="px-3.5 py-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 transition-all whitespace-nowrap">
             <i data-lucide="inbox" class="w-3.5 h-3.5"></i>
-            <span>Submissions Queue</span>
+            <span>Queue</span>
             <span id="adminPendingBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-amber-500/30 text-[10px] font-mono">0</span>
           </button>
 
-          <button id="adminTabBtn-add" onclick="switchAdminSubTab('add')" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all">
-            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-            <span>Manual Add Resource</span>
+          <button id="adminTabBtn-resources" onclick="switchAdminSubTab('resources')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="folder-cog" class="w-3.5 h-3.5"></i>
+            <span>Resource Manager</span>
           </button>
 
-          <button id="adminTabBtn-feedbacks" onclick="switchAdminSubTab('feedbacks')" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all">
+          <button id="adminTabBtn-add" onclick="switchAdminSubTab('add')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+            <span>Add File</span>
+          </button>
+
+          <button id="adminTabBtn-notices" onclick="switchAdminSubTab('notices')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="megaphone" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span>Notice Board</span>
+            <span id="adminNoticesBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-mono">0</span>
+          </button>
+
+          <button id="adminTabBtn-videos" onclick="switchAdminSubTab('videos')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="video" class="w-3.5 h-3.5 text-red-400"></i>
+            <span>Video Lectures</span>
+            <span id="adminVideosBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-red-500/20 text-red-300 text-[10px] font-mono">0</span>
+          </button>
+
+          <button id="adminTabBtn-timeline" onclick="switchAdminSubTab('timeline')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Exam & CT Timeline</span>
+          </button>
+
+          <button id="adminTabBtn-trash" onclick="switchAdminSubTab('trash')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>Recycle Bin</span>
+            <span id="adminTrashBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300 text-[10px] font-mono">0</span>
+          </button>
+
+          <button id="adminTabBtn-revisions" onclick="switchAdminSubTab('revisions')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="history" class="w-3.5 h-3.5 text-cyan-400"></i>
+            <span>History & Revisions</span>
+          </button>
+
+          <button id="adminTabBtn-audit" onclick="switchAdminSubTab('audit')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="check-check" class="w-3.5 h-3.5 text-teal-400"></i>
+            <span>Quality Audit</span>
+          </button>
+
+          <button id="adminTabBtn-backup" onclick="switchAdminSubTab('backup')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="hard-drive-download" class="w-3.5 h-3.5 text-purple-400"></i>
+            <span>Backup & Restore</span>
+          </button>
+
+          <button id="adminTabBtn-feedbacks" onclick="switchAdminSubTab('feedbacks')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
             <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
-            <span>Student Feedback Inbox</span>
+            <span>Feedback</span>
             <span id="adminFeedbackBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-teal-500/20 text-teal-300 text-[10px] font-mono">0</span>
           </button>
 
-          <button id="adminTabBtn-contact" onclick="switchAdminSubTab('contact')" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all">
+          <button id="adminTabBtn-contact" onclick="switchAdminSubTab('contact')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
             <i data-lucide="settings" class="w-3.5 h-3.5"></i>
-            <span>Contact & Settings</span>
+            <span>SEO & Settings</span>
           </button>
         </div>
 
-        <!-- SUB-TAB 1: COMMUNITY SUBMISSIONS QUEUE -->
+        <!-- 1. SUB-TAB: COMMUNITY SUBMISSIONS QUEUE -->
         <div id="adminPanel-queue" class="space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
@@ -711,23 +761,76 @@
           </div>
         </div>
 
-        <!-- SUB-TAB 2: MANUAL ADD RESOURCE FORM -->
+        <!-- 2. SUB-TAB: RESOURCE & VAULT MANAGER -->
+        <div id="adminPanel-resources" class="hidden space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-800">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="folder-cog" class="w-4 h-4 text-indigo-400"></i>
+                <span>Academic Vault Resources & Files CMS</span>
+              </h3>
+              <p class="text-xs text-slate-400">Search, edit Drive links, duplicate, hide/show, feature on home, or trash any file.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="switchAdminSubTab('add')" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>New File</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Search & Filter Controls inside Admin -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2 relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-3"></i>
+              <input 
+                id="adminResourceSearch" 
+                type="text" 
+                oninput="renderAdminResources()" 
+                placeholder="Search resources by title, course, or category..." 
+                class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none"
+              >
+            </div>
+            <div>
+              <select id="adminResourceTermFilter" onchange="renderAdminResources()" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 outline-none">
+                <option value="ALL">All Semesters (L1 - L4)</option>
+                <option value="L1-T1">Level 1 Term 1</option>
+                <option value="L1-T2">Level 1 Term 2</option>
+                <option value="L2-T1">Level 2 Term 1</option>
+                <option value="L2-T2">Level 2 Term 2</option>
+                <option value="L3-T1">Level 3 Term 1</option>
+                <option value="L3-T2">Level 3 Term 2</option>
+                <option value="L4-T1">Level 4 Term 1</option>
+                <option value="L4-T2">Level 4 Term 2</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="adminResourcesList" class="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- 3. SUB-TAB: MANUAL ADD RESOURCE FORM (With Auto-Save) -->
         <div id="adminPanel-add" class="hidden space-y-4">
-          <div class="space-y-1">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i data-lucide="plus" class="w-4 h-4 text-indigo-400"></i>
-              <span>Manually Add New Resource to Academic Vault</span>
-            </h3>
-            <p class="text-xs text-slate-400">
-              Instantly publish a course folder, lecture note, question bank, or PDF directly to the Course Explorer.
-            </p>
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-400"></i>
+                <span>Add New Resource to Academic Vault</span>
+              </h3>
+              <p class="text-xs text-slate-400">Changes are automatically drafted as you type.</p>
+            </div>
+            <span id="adminAddDraftStatus" class="text-[11px] text-emerald-400 font-mono flex items-center gap-1">
+              <i data-lucide="check" class="w-3 h-3"></i> Draft Auto-Saved
+            </span>
           </div>
 
           <form id="adminManualAddForm" onsubmit="handleAdminAddResource(event)" class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-medium text-slate-300 mb-1">Target Semester *</label>
-                <select id="adminManualTerm" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:border-indigo-500 outline-none">
+                <select id="adminManualTerm" onchange="autoSaveAdminDraft()" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:border-indigo-500 outline-none">
                   <option value="L1-T1">Level 1 Term 1</option>
                   <option value="L1-T2">Level 1 Term 2</option>
                   <option value="L2-T1">Level 2 Term 1</option>
@@ -741,40 +844,44 @@
 
               <div>
                 <label class="block text-xs font-medium text-slate-300 mb-1">Course Code & Name *</label>
-                <input id="adminManualCourse" type="text" required placeholder="e.g., ME 311 Heat Transfer" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
+                <input id="adminManualCourse" oninput="autoSaveAdminDraft()" type="text" required placeholder="e.g., ME 411 Power Plant Engineering" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
               </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-medium text-slate-300 mb-1">Resource Title / Topic *</label>
-                <input id="adminManualTitle" type="text" required placeholder="e.g., Heat Exchanger Solved Question Bank (2018-2024)" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
+                <input id="adminManualTitle" oninput="autoSaveAdminDraft()" type="text" required placeholder="e.g., Rankine Cycle & Reheat Solved Question Bank" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
               </div>
 
               <div>
                 <label class="block text-xs font-medium text-slate-300 mb-1">Category *</label>
-                <select id="adminManualCategory" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:border-indigo-500 outline-none">
-                  <option value="Questions & Viva">Questions & Viva (Question Bank)</option>
-                  <option value="Lecture Notes & Books">Lecture Notes & Books</option>
-                  <option value="Lab & Sessional">Lab & Sessional Reports</option>
-                  <option value="Lecture Slides">Lecture Slides</option>
-                  <option value="Codes & CAD Models">CAD & MATLAB Code</option>
+                <select id="adminManualCategory" onchange="autoSaveAdminDraft()" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:border-indigo-500 outline-none">
+                  <option value="QUESTION_BANKS">Question Banks (প্রশ্নব্যাংক)</option>
+                  <option value="NOTES">Lecture Notes (লেকচার নোটস)</option>
+                  <option value="BOOKS">Reference Books (রেফারেন্স বুকস)</option>
+                  <option value="LAB_SESSIONAL">Lab & Sessional (ল্যাব ও ভাইভা)</option>
+                  <option value="SLIDES">Lecture Slides (স্লাইডস)</option>
+                  <option value="SOFTWARE_CAD">Software & CAD (সফটওয়্যার ও ক্যাড)</option>
                 </select>
               </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div class="sm:col-span-2">
-                <label class="block text-xs font-medium text-slate-300 mb-1">Google Drive or Cloud URL *</label>
-                <input id="adminManualUrl" type="url" required placeholder="https://drive.google.com/file/d/... or folder URL" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
+                <label class="block text-xs font-medium text-slate-300 mb-1">Google Drive View Link *</label>
+                <input id="adminManualUrl" oninput="autoSaveAdminDraft()" type="url" required placeholder="https://drive.google.com/file/d/.../view" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
               </div>
               <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1">File Size (Optional)</label>
-                <input id="adminManualSize" type="text" placeholder="e.g., 4.5 MB" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
+                <label class="block text-xs font-medium text-slate-300 mb-1">File Size / Label</label>
+                <input id="adminManualSize" oninput="autoSaveAdminDraft()" type="text" placeholder="e.g., 5.2 MB" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none">
               </div>
             </div>
 
-            <div class="flex items-center justify-end gap-3 pt-2">
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
+              <button type="button" onclick="clearAdminDraftForm()" class="text-xs text-slate-400 hover:text-white transition-colors">
+                Clear Draft Form
+              </button>
               <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md flex items-center gap-2">
                 <i data-lucide="check-circle-2" class="w-4 h-4"></i>
                 <span>Publish to Vault Live</span>
@@ -783,7 +890,180 @@
           </form>
         </div>
 
-        <!-- SUB-TAB 3: STUDENT FEEDBACK INBOX -->
+        <!-- 4. SUB-TAB: LIVE NOTICE BOARD & URGENT ANNOUNCEMENTS -->
+        <div id="adminPanel-notices" class="hidden space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="megaphone" class="w-4 h-4 text-indigo-400"></i>
+                <span>Live Homepage Notice Board Manager</span>
+              </h3>
+              <p class="text-xs text-slate-400">Post urgent exam alerts, routine updates, or syllabus notices for students.</p>
+            </div>
+            <button onclick="openNoticeModal()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Post New Notice</span>
+            </button>
+          </div>
+
+          <div id="adminNoticesList" class="space-y-3">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- 5. SUB-TAB: CURATED YOUTUBE VIDEO LECTURES MANAGER -->
+        <div id="adminPanel-videos" class="hidden space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-800">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="video" class="w-4 h-4 text-red-400"></i>
+                <span>Curated YouTube Video Lectures (Hindi, Bangla & English)</span>
+              </h3>
+              <p class="text-xs text-slate-400">Add and manage verified topic playlists and video tutorials for each course.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openVideoModal()" class="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add Video / Playlist</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="adminVideosList" class="space-y-3">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- 6. SUB-TAB: EXAM & CT TIMELINE MANAGER -->
+        <div id="adminPanel-timeline" class="hidden space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="calendar" class="w-4 h-4 text-emerald-400"></i>
+                <span>Semester Exam & CT Timeline Planner</span>
+              </h3>
+              <p class="text-xs text-slate-400">Keep students informed about CT dates, term final routines, and lab viva schedules.</p>
+            </div>
+            <button onclick="openTimelineModal()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add Event / Milestone</span>
+            </button>
+          </div>
+
+          <div id="adminTimelineList" class="space-y-3">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- 7. SUB-TAB: RECYCLE BIN / TRASH -->
+        <div id="adminPanel-trash" class="hidden space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="trash-2" class="w-4 h-4 text-amber-400"></i>
+                <span>Recycle Bin & Trash Recovery</span>
+              </h3>
+              <p class="text-xs text-slate-400">Soft-deleted resources, notices, and milestones can be restored anytime.</p>
+            </div>
+            <button onclick="confirmEmptyTrash()" class="px-3 py-1.5 rounded-xl bg-red-950/60 hover:bg-red-900 border border-red-500/30 text-red-300 text-xs font-semibold flex items-center gap-1.5 transition-colors">
+              <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+              <span>Empty Recycle Bin</span>
+            </button>
+          </div>
+
+          <div id="adminTrashList" class="space-y-3">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- 8. SUB-TAB: CONTENT HISTORY & REVISIONS -->
+        <div id="adminPanel-revisions" class="hidden space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="history" class="w-4 h-4 text-cyan-400"></i>
+                <span>Content Version History & Rollback</span>
+              </h3>
+              <p class="text-xs text-slate-400">Review past changes and 1-click restore to any previous snapshot.</p>
+            </div>
+            <button onclick="createManualSnapshot()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5">
+              <i data-lucide="camera" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Create Snapshot Now</span>
+            </button>
+          </div>
+
+          <div id="adminRevisionsList" class="space-y-3">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- 9. SUB-TAB: QUALITY & COMPLETENESS CHECKER -->
+        <div id="adminPanel-audit" class="hidden space-y-4">
+          <div class="pb-2 border-b border-slate-800">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="check-check" class="w-4 h-4 text-teal-400"></i>
+              <span>Portal Content Completeness & Quality Audit</span>
+            </h3>
+            <p class="text-xs text-slate-400">Automated diagnostics to ensure all files have valid links, titles, and bilingual descriptions.</p>
+          </div>
+
+          <div id="adminAuditDashboard" class="space-y-4">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- 10. SUB-TAB: BACKUP & RESTORE -->
+        <div id="adminPanel-backup" class="hidden space-y-4">
+          <div class="pb-2 border-b border-slate-800">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="hard-drive-download" class="w-4 h-4 text-purple-400"></i>
+              <span>Complete Data Backup & Restoration (JSON)</span>
+            </h3>
+            <p class="text-xs text-slate-400">Export your custom resources, notices, videos, and settings to a JSON file or restore from a backup.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Export Card -->
+            <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                <i data-lucide="download-cloud" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-sm font-bold text-white">Download Portal Backup</h4>
+              <p class="text-xs text-slate-400">Save a complete timestamped JSON copy of all custom resources, notices, videos, milestones, and settings.</p>
+              <button onclick="exportJsonBackup()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-all flex items-center gap-2 shadow-sm">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Download Backup (.json)</span>
+              </button>
+            </div>
+
+            <!-- Import Card -->
+            <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-sm font-bold text-white">Restore from Backup</h4>
+              <p class="text-xs text-slate-400">Upload a previously saved ClassroomHub JSON file to restore all materials and configurations.</p>
+              <input type="file" id="adminBackupFileInput" accept=".json" class="hidden" onchange="handleBackupFileSelected(event)">
+              <button onclick="document.getElementById('adminBackupFileInput').click()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 font-semibold text-xs transition-all flex items-center gap-2">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                <span>Choose Backup JSON File</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Activity Audit Log -->
+          <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 mt-4">
+            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="activity" class="w-4 h-4 text-indigo-400"></i>
+              <span>Admin Activity Audit Trail</span>
+            </h4>
+            <div id="adminActivityLogList" class="space-y-1.5 max-h-60 overflow-y-auto text-xs font-mono text-slate-300">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 11. SUB-TAB: STUDENT FEEDBACK INBOX -->
         <div id="adminPanel-feedbacks" class="hidden space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
@@ -799,34 +1079,68 @@
           </div>
         </div>
 
-        <!-- SUB-TAB 4: CONTACT & SETTINGS -->
+        <!-- 12. SUB-TAB: SEO, APPEARANCE & CONTACT SETTINGS -->
         <div id="adminPanel-contact" class="hidden space-y-4">
-          <h3 class="text-sm font-bold text-white flex items-center gap-2">
-            <i data-lucide="user-check" class="w-4 h-4 text-indigo-400"></i>
-            <span>Creator Profile & Contact Information</span>
-          </h3>
+          <div class="pb-2 border-b border-slate-800">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="settings" class="w-4 h-4 text-indigo-400"></i>
+              <span>SEO, Appearance & Creator Profile Settings</span>
+            </h3>
+            <p class="text-xs text-slate-400">Configure global metadata, search engine tags, social sharing, and contact details.</p>
+          </div>
 
-          <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 max-w-2xl">
-            <div>
-              <label class="block text-xs font-medium text-slate-300 mb-1">Primary Email (Display on Homepage)</label>
-              <input id="adminSettingsEmail" type="email" value="fahimniloy2314@gmail.com" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Contact Settings -->
+            <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+              <h4 class="text-sm font-bold text-white flex items-center gap-1.5">
+                <i data-lucide="user-check" class="w-4 h-4 text-indigo-400"></i>
+                <span>Creator Contact Info</span>
+              </h4>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Primary Email</label>
+                <input id="adminSettingsEmail" type="email" value="fahimcuet63@gmail.com" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Mobile Contact Number</label>
+                <input id="adminSettingsPhone" type="text" value="+880 1850-162261" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Personal Portfolio Website</label>
+                <input id="adminSettingsPortfolio" type="url" value="https://mohammad-fahim-ahmed.netlify.app/" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">GitHub Repository Link</label>
+                <input id="adminSettingsGithub" type="url" value="https://github.com/Fahim-Niloy2314/classroom-hub" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+              </div>
+              <button onclick="saveAdminSettings()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md flex items-center gap-2">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                <span>Save Contact Details</span>
+              </button>
             </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-300 mb-1">Mobile Contact Number</label>
-              <input id="adminSettingsPhone" type="text" value="+880 1850-162261" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+
+            <!-- SEO & Open Graph Settings -->
+            <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+              <h4 class="text-sm font-bold text-white flex items-center gap-1.5">
+                <i data-lucide="globe" class="w-4 h-4 text-teal-400"></i>
+                <span>Search Engine & Social Share (SEO)</span>
+              </h4>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Meta Page Title</label>
+                <input id="adminSeoTitle" type="text" value="ClassroomHub - CUET Mechanical Engineering Academic Vault" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Meta Description (Google & Social)</label>
+                <textarea id="adminSeoDesc" rows="3" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none resize-none">3,893+ verified academic files, lecture notes, question banks, and syllabus spanning all 8 semesters (L1-T1 to L4-T2) curated by Fahim Niloy.</textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Social Share Image URL (OG Cover)</label>
+                <input id="adminSeoImage" type="url" placeholder="https://... image banner" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+              </div>
+              <button onclick="saveAdminSeoSettings()" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs transition-all shadow-md flex items-center gap-2">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                <span>Save SEO Metadata</span>
+              </button>
             </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-300 mb-1">Personal Portfolio Website</label>
-              <input id="adminSettingsPortfolio" type="url" value="https://mohammad-fahim-ahmed.netlify.app/" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-300 mb-1">GitHub Repository Link</label>
-              <input id="adminSettingsGithub" type="url" value="https://github.com/Fahim-Niloy2314/classroom-hub" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
-            </div>
-            <button onclick="saveAdminSettings()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md flex items-center gap-2">
-              <i data-lucide="save" class="w-3.5 h-3.5"></i>
-              <span>Save Contact Details</span>
-            </button>
           </div>
         </div>
 
@@ -1248,6 +1562,270 @@
     </div>
   </dialog>
 
+  <!-- 6. ADMIN CMS: EDIT RESOURCE MODAL -->
+  <dialog id="adminEditResourceDialog" closedby="any" class="rounded-2xl shadow-2xl p-0 w-full max-w-lg">
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 sm:p-7 space-y-4 text-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-5 h-5 text-indigo-400"></i>
+          <h3 class="text-base font-bold text-white">Edit Vault Resource</h3>
+        </div>
+        <button onclick="closeAdminEditResourceModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="adminEditResourceForm" onsubmit="saveEditedResource(event)" class="space-y-3">
+        <input type="hidden" id="editResId">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Resource Title *</label>
+          <input id="editResTitle" type="text" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Semester</label>
+            <select id="editResTerm" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+              <option value="L1-T1">Level 1 Term 1</option>
+              <option value="L1-T2">Level 1 Term 2</option>
+              <option value="L2-T1">Level 2 Term 1</option>
+              <option value="L2-T2">Level 2 Term 2</option>
+              <option value="L3-T1">Level 3 Term 1</option>
+              <option value="L3-T2">Level 3 Term 2</option>
+              <option value="L4-T1">Level 4 Term 1</option>
+              <option value="L4-T2">Level 4 Term 2</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Category</label>
+            <select id="editResCategory" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+              <option value="QUESTION_BANKS">Question Banks</option>
+              <option value="NOTES">Lecture Notes</option>
+              <option value="BOOKS">Reference Books</option>
+              <option value="LAB_SESSIONAL">Lab & Sessional</option>
+              <option value="SLIDES">Lecture Slides</option>
+              <option value="SOFTWARE_CAD">Software & CAD</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Course Code & Name</label>
+          <input id="editResCourse" type="text" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Google Drive View URL</label>
+          <input id="editResDriveViewUrl" type="url" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Direct Download Link</label>
+          <input id="editResDriveDownloadUrl" type="url" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+          <button type="button" onclick="closeAdminEditResourceModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 7. ADMIN CMS: NOTICE BOARD MODAL -->
+  <dialog id="adminNoticeDialog" closedby="any" class="rounded-2xl shadow-2xl p-0 w-full max-w-lg">
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 sm:p-7 space-y-4 text-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <i data-lucide="megaphone" class="w-5 h-5 text-indigo-400"></i>
+          <h3 id="adminNoticeModalTitle" class="text-base font-bold text-white">Post Academic Announcement</h3>
+        </div>
+        <button onclick="closeNoticeModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="adminNoticeForm" onsubmit="saveNoticeItem(event)" class="space-y-3">
+        <input type="hidden" id="noticeEditId">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Notice Title *</label>
+          <input id="noticeTitleInput" type="text" required placeholder="e.g. L4-T1 Term Final Examination Schedule Announced" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Badge Type</label>
+            <select id="noticeBadgeInput" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+              <option value="URGENT">🚨 Urgent Notice</option>
+              <option value="EXAM">📝 Exam & Routine</option>
+              <option value="UPDATE">💡 Academic Update</option>
+              <option value="GENERAL">📌 General Notice</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Target Semester</label>
+            <select id="noticeTermInput" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+              <option value="ALL">All Semesters (L1-T1 to L4-T2)</option>
+              <option value="L4-T1">Level 4 Term 1</option>
+              <option value="L4-T2">Level 4 Term 2</option>
+              <option value="L3-T1">Level 3 Term 1</option>
+              <option value="L3-T2">Level 3 Term 2</option>
+              <option value="L2-T1">Level 2 Term 1</option>
+              <option value="L2-T2">Level 2 Term 2</option>
+              <option value="L1-T1">Level 1 Term 1</option>
+              <option value="L1-T2">Level 1 Term 2</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Announcement Message *</label>
+          <textarea id="noticeMessageInput" rows="3" required placeholder="Detailed message for students..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500 resize-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Optional Action Link / PDF URL</label>
+          <input id="noticeLinkInput" type="url" placeholder="https://drive.google.com/... or routine link" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+          <button type="button" onclick="closeNoticeModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i> Publish Notice Live
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 8. ADMIN CMS: YOUTUBE VIDEO LECTURES MODAL -->
+  <dialog id="adminVideoDialog" closedby="any" class="rounded-2xl shadow-2xl p-0 w-full max-w-lg">
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 sm:p-7 space-y-4 text-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <i data-lucide="youtube" class="w-5 h-5 text-red-500"></i>
+          <h3 id="adminVideoModalTitle" class="text-base font-bold text-white">Add Curated Video Lecture</h3>
+        </div>
+        <button onclick="closeVideoModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="adminVideoForm" onsubmit="saveVideoItem(event)" class="space-y-3">
+        <input type="hidden" id="videoEditId">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Video / Playlist Title *</label>
+          <input id="videoTitleInput" type="text" required placeholder="e.g. Thermodynamics Full Course (Concept & Numericals)" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-red-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Subject / Course *</label>
+            <input id="videoSubjectInput" type="text" required placeholder="e.g. ME 211 / Thermodynamics" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Language *</label>
+            <select id="videoLangInput" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+              <option value="hi">🇮🇳 Hindi / Urdu (Most Popular)</option>
+              <option value="bn">🇧🇩 Bangla (বাংলা)</option>
+              <option value="en">🇬🇧 English</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Channel / Instructor Name *</label>
+            <input id="videoChannelInput" type="text" required placeholder="e.g. Tikle's Academy / Gate Smashers" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Target Semester</label>
+            <select id="videoTermInput" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+              <option value="ALL">All Semesters</option>
+              <option value="L1-T1">Level 1 Term 1</option>
+              <option value="L1-T2">Level 1 Term 2</option>
+              <option value="L2-T1">Level 2 Term 1</option>
+              <option value="L2-T2">Level 2 Term 2</option>
+              <option value="L3-T1">Level 3 Term 1</option>
+              <option value="L3-T2">Level 3 Term 2</option>
+              <option value="L4-T1">Level 4 Term 1</option>
+              <option value="L4-T2">Level 4 Term 2</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">YouTube Video or Playlist URL *</label>
+          <input id="videoUrlInput" type="url" required placeholder="https://www.youtube.com/watch?v=... or playlist" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-red-500">
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+          <button type="button" onclick="closeVideoModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i> Save Video Link
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 9. ADMIN CMS: TIMELINE MODAL -->
+  <dialog id="adminTimelineDialog" closedby="any" class="rounded-2xl shadow-2xl p-0 w-full max-w-lg">
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 sm:p-7 space-y-4 text-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <i data-lucide="calendar" class="w-5 h-5 text-emerald-400"></i>
+          <h3 id="adminTimelineModalTitle" class="text-base font-bold text-white">Add Exam / CT Milestone</h3>
+        </div>
+        <button onclick="closeTimelineModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="adminTimelineForm" onsubmit="saveTimelineItem(event)" class="space-y-3">
+        <input type="hidden" id="timelineEditId">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Event / Milestone Title *</label>
+          <input id="timelineTitleInput" type="text" required placeholder="e.g. ME 411 CT 3 (Heat Exchanger & Radiation)" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Date *</label>
+            <input id="timelineDateInput" type="date" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Semester</label>
+            <select id="timelineTermInput" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+              <option value="L4-T1">Level 4 Term 1</option>
+              <option value="L4-T2">Level 4 Term 2</option>
+              <option value="L3-T1">Level 3 Term 1</option>
+              <option value="L3-T2">Level 3 Term 2</option>
+              <option value="L2-T1">Level 2 Term 1</option>
+              <option value="L2-T2">Level 2 Term 2</option>
+              <option value="L1-T1">Level 1 Term 1</option>
+              <option value="L1-T2">Level 1 Term 2</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Description / Syllabus Topics</label>
+          <textarea id="timelineDescInput" rows="2" placeholder="Topics covered, room number, or time..." class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none resize-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+          <button type="button" onclick="closeTimelineModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i> Save Milestone
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
   <!-- FIXED MOBILE BOTTOM NAVIGATION BAR -->
   <nav id="mobileBottomNav" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-2 py-1.5 flex items-center justify-around text-[10px] shadow-2xl">
     <button onclick="switchTab('home')" id="mobileNav-home" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-indigo-400 font-bold bg-indigo-500/10">
@@ -1294,7 +1872,7 @@
         <span>•</span>
         <a href="https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h" target="_blank" rel="noopener noreferrer" class="hover:text-teal-400 transition-colors">Google Drive</a>
         <span>•</span>
-        <a href="mailto:fahim.cuet.me20@gmail.com" class="hover:text-indigo-400 transition-colors">Contact</a>
+        <a href="mailto:fahimcuet63@gmail.com" class="hover:text-indigo-400 transition-colors">Contact</a>
       </div>
     </div>
   </footer>
