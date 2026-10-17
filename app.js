@@ -133,7 +133,8 @@ const I18N = {
     btn_understood: 'Got it! Continue Learning',
     btn_open_system: 'Open in Windows',
     btn_download: 'Download',
-    btn_preview: 'Preview',
+    btn_preview: 'Read File',
+    btn_read_file: 'Read File',
     btn_open_drive: 'Open Preview in Google Drive',
     btn_download_drive: 'Download File',
     cloud_fallback_desc: 'In online cloud mode, all 33 GB Academic Vault files are hosted directly on Google Drive. Click below to view or download instantly.',
@@ -247,7 +248,8 @@ const I18N = {
     btn_understood: 'বুঝেছি! পড়াশোনা চালিয়ে যান',
     btn_open_system: 'Windows-এ খুলুন',
     btn_download: 'ডাউনলোড',
-    btn_preview: 'প্রিভিউ',
+    btn_preview: 'ফাইল পড়ুন',
+    btn_read_file: 'ফাইল পড়ুন',
     btn_open_drive: 'গুগল ড্রাইভে প্রিভিউ দেখুন',
     btn_download_drive: 'ফাইল ডাউনলোড',
     cloud_fallback_desc: 'অনলাইন ক্লাউড মোডে ক্লাসরুমের সব একাডেমিক ফাইল সরাসরি গুগল ড্রাইভে সংরক্ষিত রয়েছে। নিচের বাটনে ক্লিক করে ফাইলটির প্রিভিউ দেখুন।',
@@ -289,6 +291,7 @@ const I18N = {
    2. INITIALIZATION
    ========================================================================= */
 document.addEventListener('DOMContentLoaded', async () => {
+  initTheme();
   setupDialogLightDismiss();
   await loadClassroomData();
   applyLanguage(currentLang);
@@ -307,14 +310,74 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadClassroomData() {
   if (window.CLASSROOM_DATA) {
     appData = window.CLASSROOM_DATA;
-    return;
+  } else {
+    try {
+      const res = await fetch('classroom_index.json');
+      appData = await res.json();
+    } catch (err) {
+      console.error('Failed to load classroom_index.json:', err);
+    }
   }
-  try {
-    const res = await fetch('classroom_index.json');
-    appData = await res.json();
-  } catch (err) {
-    console.error('Failed to load classroom_index.json:', err);
+  enrichAppDataCategories();
+}
+
+function enrichAppDataCategories() {
+  if (!appData) return;
+  const enrich = (file) => {
+    file.category = getFileCategory(file);
+  };
+  if (appData.root_files) appData.root_files.forEach(enrich);
+  if (appData.terms) {
+    appData.terms.forEach(term => {
+      if (term.courses) {
+        term.courses.forEach(course => {
+          if (course.files) {
+            course.files.forEach(enrich);
+          }
+        });
+      }
+    });
   }
+}
+
+/* =========================================================================
+   2.1 THEME SWITCHER (Dark & Light Mode)
+   ========================================================================= */
+function initTheme() {
+  const savedTheme = localStorage.getItem('classroom_theme') || 'dark';
+  applyTheme(savedTheme);
+}
+
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.classList.add('light');
+    document.body.classList.add('light');
+  } else {
+    document.documentElement.classList.remove('light');
+    document.body.classList.remove('light');
+  }
+  localStorage.setItem('classroom_theme', theme);
+  updateThemeIcon(theme);
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.classList.contains('light') ? 'light' : 'dark';
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  applyTheme(newTheme);
+  showToast(newTheme === 'light' ? 'Light mode enabled ☀️' : 'Dark mode enabled 🌙');
+}
+
+function updateThemeIcon(theme) {
+  const icon = document.getElementById('themeIcon');
+  if (!icon) return;
+  if (theme === 'light') {
+    icon.setAttribute('data-lucide', 'moon');
+    icon.className = 'w-3.5 h-3.5 text-indigo-400';
+  } else {
+    icon.setAttribute('data-lucide', 'sun');
+    icon.className = 'w-3.5 h-3.5 text-amber-400';
+  }
+  if (window.lucide) lucide.createIcons();
 }
 
 /* =========================================================================
@@ -878,27 +941,132 @@ function selectSemesterFilter(termCode) {
   renderExplorer();
 }
 
+/* =========================================================================
+   8. ENHANCED ACADEMIC CATEGORY CLASSIFICATION & FILTERS
+   ========================================================================= */
+const EXPLORER_CATEGORIES = [
+  { id: 'ALL', en: 'All Types', bn: 'সকল রিসোর্স', icon: 'layers' },
+  { id: 'QUESTION_BANKS', en: 'Question Banks', bn: 'প্রশ্নব্যাংক', icon: 'help-circle' },
+  { id: 'NOTES', en: 'Lecture Notes', bn: 'লেকচার নোটস', icon: 'file-text' },
+  { id: 'BOOKS', en: 'Reference Books', bn: 'রেফারেন্স বুকস', icon: 'book' },
+  { id: 'LAB_SESSIONAL', en: 'Lab & Sessional', bn: 'ল্যাব ও ভাইভা', icon: 'flask-conical' },
+  { id: 'SLIDES', en: 'Lecture Slides', bn: 'স্লাইডস', icon: 'presentation' },
+  { id: 'SOFTWARE_CAD', en: 'Software & CAD', bn: 'সফটওয়্যার কোর্স', icon: 'laptop' }
+];
+
+function getFileCategory(file) {
+  if (!file) return 'NOTES';
+  const name = (file.name || '').toLowerCase();
+  const sub = (file.subfolder || '').toLowerCase();
+  const course = (file.course || '').toLowerCase();
+  const path = (file.path || '').toLowerCase();
+  const ext = (file.ext || '').toLowerCase();
+  const full = `${name} ${sub} ${course} ${path}`;
+  const size = file.size || 0;
+
+  // 1. Lab, Sessional, Workshop & Viva
+  if (
+    full.includes('viva') ||
+    full.includes('lab') ||
+    full.includes('sessional') ||
+    full.includes('experiment') ||
+    full.includes('report') ||
+    full.includes('sheet') ||
+    full.includes('workshop') ||
+    full.includes('lathe') ||
+    full.includes('welding') ||
+    full.includes('manual')
+  ) {
+    return 'LAB_SESSIONAL';
+  }
+
+  // 2. Question Banks & Solutions
+  if (
+    full.includes('question') ||
+    full.includes('bank') ||
+    full.includes('quiz') ||
+    full.includes('ct') ||
+    full.includes('term final') ||
+    full.includes('final ques') ||
+    full.includes('board') ||
+    full.includes('solution') ||
+    full.includes('solve')
+  ) {
+    return 'QUESTION_BANKS';
+  }
+
+  // 3. Lecture Slides
+  if (
+    ext === '.ppt' || ext === '.pptx' ||
+    name.includes('slide') ||
+    name.includes('presentation') ||
+    sub.includes('slide')
+  ) {
+    return 'SLIDES';
+  }
+
+  // 4. Software, CAD & Programming
+  if (
+    ext === '.m' || ext === '.cpp' || ext === '.c' || ext === '.py' ||
+    ext === '.sldprt' || ext === '.sldasm' || ext === '.dwg' || ext === '.dxf' ||
+    full.includes('matlab') || full.includes('solidworks') || full.includes('ansys') ||
+    full.includes('autocad') || full.includes('code') || full.includes('cad') ||
+    full.includes('software') || full.includes('programming')
+  ) {
+    return 'SOFTWARE_CAD';
+  }
+
+  // 5. Reference Books
+  if (
+    full.includes('book') ||
+    full.includes('textbook') ||
+    full.includes('handbook') ||
+    full.includes('edition') ||
+    full.includes('author') ||
+    full.includes('vol.') ||
+    full.includes('volume') ||
+    full.includes('khurmi') ||
+    full.includes('theraja') ||
+    full.includes('cengel') ||
+    full.includes('halliday') ||
+    full.includes('resnick') ||
+    full.includes('hibbeler') ||
+    full.includes('moran') ||
+    full.includes('shigley') ||
+    full.includes('bansal') ||
+    full.includes('rajput') ||
+    full.includes('groover') ||
+    full.includes('callister') ||
+    full.includes('holman') ||
+    full.includes('incropera') ||
+    full.includes('p.k nag') ||
+    size > 15 * 1024 * 1024
+  ) {
+    return 'BOOKS';
+  }
+
+  // 6. Lecture Notes (Default for notes and lecture materials)
+  return 'NOTES';
+}
+
 function setupCategoryPills() {
   const container = document.getElementById('categoryFilterPills');
   if (!container) return;
-  const categories = [
-    { id: 'ALL', en: 'All Types', bn: 'সব ফরম্যাট' },
-    { id: 'Lecture Notes & Books', en: 'Notes & Books', bn: 'নোটস ও বুকস' },
-    { id: 'Questions & Viva', en: 'Question Banks & Viva', bn: 'কুইজ ও ভাইভা' },
-    { id: 'Lab & Sessional', en: 'Lab & Sessional', bn: 'ল্যাব ও সেশনাল' },
-    { id: 'Lecture Slides', en: 'Slides', bn: 'স্লাইডস' },
-    { id: 'Codes & CAD Models', en: 'CAD & Code', bn: 'কোড ও CAD' }
-  ];
-  container.innerHTML = categories.map(c => {
+
+  container.innerHTML = EXPLORER_CATEGORIES.map(c => {
     const active = explorerState.selectedCategory === c.id;
     return `
-      <button onclick="setExplorerCategory('${c.id}')" class="whitespace-nowrap px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-        active ? 'bg-indigo-600 text-white shadow' : 'bg-slate-900 text-slate-400 hover:text-slate-200'
+      <button onclick="setExplorerCategory('${c.id}')" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+        active 
+          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
+          : 'bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800'
       }">
-        ${currentLang === 'en' ? c.en : c.bn}
+        <i data-lucide="${c.icon}" class="w-3.5 h-3.5 ${active ? 'text-white' : 'text-slate-400'}"></i>
+        <span>${currentLang === 'en' ? c.en : c.bn}</span>
       </button>
     `;
   }).join('');
+  lucide.createIcons();
 }
 
 function setExplorerCategory(cat) {
@@ -913,7 +1081,8 @@ function handleSearch(q) {
 }
 
 function clearSearch() {
-  document.getElementById('resourceSearchInput').value = '';
+  const input = document.getElementById('resourceSearchInput');
+  if (input) input.value = '';
   searchQuery = '';
   explorerState.level = 'semesters';
   explorerState.selectedTerm = null;
@@ -921,6 +1090,7 @@ function clearSearch() {
   explorerState.selectedSubfolder = null;
   explorerState.selectedCategory = 'ALL';
   setupCategoryPills();
+  setupSemesterPills();
   renderExplorer();
 }
 
@@ -1063,6 +1233,32 @@ function renderExplorer() {
       const target = `${f.name} ${f.course} ${f.term_code} ${f.category}`.toLowerCase();
       return searchQuery.split(/\s+/).every(token => target.includes(token));
     });
+    countBadge.textContent = filtered.length;
+    renderFileList(filtered, grid);
+    lucide.createIcons();
+    return;
+  }
+
+  // CASE 1.5: CATEGORY FILTER ACTIVE -> Filter files directly within current scope (vault, semester, or course)
+  if (explorerState.selectedCategory !== 'ALL') {
+    const catObj = EXPLORER_CATEGORIES.find(c => c.id === explorerState.selectedCategory);
+    const catTitle = catObj ? (currentLang === 'en' ? catObj.en : catObj.bn) : explorerState.selectedCategory;
+    
+    let scopeFiles = getAllFlatFiles();
+    let scopeLabel = currentLang === 'en' ? 'Entire Academic Vault' : 'সম্পূর্ণ একাডেমি আর্কাইভ';
+
+    if (explorerState.selectedTerm) {
+      scopeFiles = scopeFiles.filter(f => f.term_code === explorerState.selectedTerm);
+      scopeLabel = `${explorerState.selectedTerm}`;
+    }
+    if (explorerState.selectedCourse) {
+      const decodedCourse = decodeURIComponent(explorerState.selectedCourse);
+      scopeFiles = scopeFiles.filter(f => f.course === decodedCourse);
+      scopeLabel = `${decodedCourse} (${explorerState.selectedTerm || ''})`;
+    }
+
+    const filtered = scopeFiles.filter(f => f.category === explorerState.selectedCategory);
+    titleEl.textContent = `${catTitle} • ${scopeLabel}`;
     countBadge.textContent = filtered.length;
     renderFileList(filtered, grid);
     lucide.createIcons();
@@ -1286,7 +1482,7 @@ function renderFileList(files, container) {
     return;
   }
 
-  container.innerHTML = files.slice(0, 100).map(f => {
+  container.innerHTML = files.slice(0, 150).map(f => {
     const isBookmarked = bookmarks.includes(f.id);
     const iconName = getFileIcon(f.ext);
     
@@ -1298,9 +1494,14 @@ function renderFileList(files, container) {
               ${f.term_code || 'ME'}
             </span>
             <div class="flex items-center gap-1.5">
-              <span class="text-slate-400 font-mono">${f.size_str}</span>
-              <button onclick="toggleBookmark('${f.id}')" title="Bookmark" class="p-1 text-slate-500 hover:text-amber-400 transition-colors">
-                <i data-lucide="star" class="w-4 h-4 ${isBookmarked ? 'text-amber-400 fill-amber-400' : ''}"></i>
+              <span class="text-slate-400 font-mono text-[11px]">${f.size_str}</span>
+              <button onclick="toggleBookmark('${f.id}')" title="${isBookmarked ? 'Remove Bookmark' : 'Save Bookmark'}" class="px-2 py-0.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
+                isBookmarked 
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm shadow-amber-500/20' 
+                  : 'bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/60'
+              }">
+                <i data-lucide="star" class="w-3.5 h-3.5 ${isBookmarked ? 'text-amber-400 fill-amber-400' : ''}"></i>
+                <span>${isBookmarked ? (currentLang === 'en' ? 'Saved ⭐' : 'সেভড ⭐') : (currentLang === 'en' ? 'Save' : 'সেভ')}</span>
               </button>
             </div>
           </div>
@@ -1322,9 +1523,12 @@ function renderFileList(files, container) {
 
         <div class="pt-3 border-t border-slate-800/80 flex items-center gap-2">
           <a href="${f.drive_view_url || f.url || 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h'}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm">
-            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-            <span>${dict.btn_preview}</span>
+            <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+            <span>${currentLang === 'en' ? 'Read File' : 'ফাইল পড়ুন'}</span>
             <i data-lucide="external-link" class="w-3 h-3 opacity-70"></i>
+          </a>
+          <a href="${f.drive_download_url || f.drive_view_url || '#'}" target="_blank" rel="noopener noreferrer" title="${currentLang === 'en' ? 'Direct Download' : 'ডাউনলোড'}" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all flex items-center gap-1 border border-slate-700">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
           </a>
           ${isLocalHost() ? `
             <button onclick="openFileLocally('${encodeURIComponent(f.path)}')" title="Open in Windows Default App" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all flex items-center gap-1 border border-slate-700">
@@ -1336,6 +1540,13 @@ function renderFileList(files, container) {
       </div>
     `;
   }).join('');
+  if (files.length > 150) {
+    container.innerHTML += `
+      <div class="col-span-full py-4 text-center text-xs text-slate-500 font-mono">
+        Showing top 150 of ${files.length} matching files. Use search above to narrow down further.
+      </div>
+    `;
+  }
 }
 
 function getFileIcon(ext) {
@@ -1813,19 +2024,12 @@ function saveAdminSettings() {
    12. BOOKMARKS & SYLLABUS PROGRESS TRACKER
    ========================================================================= */
 function toggleBookmark(fileId) {
-  if (!currentUser) {
-    showToast(currentLang === 'en' 
-      ? 'Please sign in to save bookmarks to your account.' 
-      : 'রিসোর্স বুকমার্ক করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
-    openAuthModal();
-    return;
-  }
   if (bookmarks.includes(fileId)) {
     bookmarks = bookmarks.filter(id => id !== fileId);
-    showToast(currentLang === 'en' ? 'Removed from bookmarks' : 'বুকমার্ক থেকে সরানো হয়েছে');
+    showToast(currentLang === 'en' ? 'Removed from saved files' : 'বুকমার্ক থেকে সরানো হয়েছে');
   } else {
     bookmarks.push(fileId);
-    showToast(currentLang === 'en' ? 'Bookmarked! ⭐' : 'বুকমার্কে যোগ করা হয়েছে ⭐');
+    showToast(currentLang === 'en' ? 'Saved to bookmarks! ⭐' : 'বুকমার্কে সেভ করা হয়েছে ⭐');
   }
   localStorage.setItem(STORAGE_KEYS.BOOKMARKS, JSON.stringify(bookmarks));
   renderExplorer();
@@ -1846,20 +2050,35 @@ function renderTracker() {
       bmList.innerHTML = `<p class="text-slate-500 italic">${dict.bookmarks_empty}</p>`;
     } else {
       bmList.innerHTML = bookmarkedFiles.map(f => `
-        <div class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 flex items-center gap-2">
-          <span class="text-indigo-300 font-medium truncate max-w-xs">${f.name}</span>
-          <button onclick="previewFile('${encodeURIComponent(f.path)}', '${encodeURIComponent(f.name)}')" class="text-slate-400 hover:text-white">
-            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-          </button>
-          <button onclick="toggleBookmark('${f.id}')" class="text-amber-400 hover:text-red-400">
-            <i data-lucide="x" class="w-3.5 h-3.5"></i>
-          </button>
+        <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between gap-3">
+          <div class="min-w-0 pr-2">
+            <div class="flex items-center gap-1.5 text-[10px] mb-0.5">
+              <span class="px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono font-bold">${f.term_code || 'ME'}</span>
+              <span class="text-slate-400 font-medium truncate">${f.course || ''}</span>
+              <span class="text-slate-500">• ${f.size_str || ''}</span>
+            </div>
+            <div class="text-xs font-semibold text-white truncate max-w-xs sm:max-w-md">${f.name}</div>
+          </div>
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <a href="${f.drive_view_url || f.url || '#'}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold flex items-center gap-1 shadow">
+              <i data-lucide="book-open" class="w-3 h-3"></i>
+              <span>${currentLang === 'en' ? 'Read' : 'পড়ুন'}</span>
+              <i data-lucide="external-link" class="w-2.5 h-2.5 opacity-70"></i>
+            </a>
+            <button onclick="toggleBookmark('${f.id}')" title="Remove" class="p-1 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
         </div>
       `).join('');
     }
   }
 
-  // Progress tracker logic is fully handled by renderTracker()
+  // Also update tree if renderHierarchicalTracker exists
+  if (typeof renderHierarchicalTracker === 'function') {
+    renderHierarchicalTracker();
+  }
+  lucide.createIcons();
 }
 
 /* =========================================================================
@@ -2499,13 +2718,13 @@ function handleAiSubmit(e) {
   const botDiv = document.createElement('div');
   botDiv.className = 'flex items-start gap-3';
   botDiv.innerHTML = `
-    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center flex-shrink-0 text-white shadow">
-      <i data-lucide="sparkles" class="w-4 h-4"></i>
+    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center flex-shrink-0 text-white shadow font-bold text-xs">
+      FN
     </div>
     <div class="ai-message-card bg-slate-800/80 rounded-2xl rounded-tl-none p-4 text-xs sm:text-sm text-slate-200 border border-slate-700/60 max-w-2xl leading-relaxed shadow-lg space-y-2">
       <div class="flex items-center gap-1.5 text-xs text-purple-400">
         <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
-        <span>${isBangla ? 'চুয়েট মেকানিক্যাল ভল্ট ও সিলেবাস বিশ্লেষণ করা হচ্ছে...' : 'Searching CUET ME Vault & Knowledge Base...'}</span>
+        <span>${isBangla ? 'ফাহিম নিলয় (এআই মেন্টর) উত্তর তৈরি করছেন...' : 'Fahim Niloy is typing...'}</span>
       </div>
     </div>
   `;
@@ -2514,8 +2733,54 @@ function handleAiSubmit(e) {
 
   setTimeout(() => {
     const qLower = query.toLowerCase();
-    let topicKey = null;
 
+    // 1. Identity & Persona Check ("I am Fahim Niloy")
+    const isIdentityQuestion = (
+      qLower.includes('who are you') ||
+      qLower.includes('who r u') ||
+      qLower.includes('who is fahim') ||
+      qLower.includes('fahim niloy') ||
+      qLower.includes('who made') ||
+      qLower.includes('creator') ||
+      qLower.includes('developer') ||
+      qLower.includes('কে তুমি') ||
+      qLower.includes('তুমি কে') ||
+      qLower.includes('কে আপনি') ||
+      qLower.includes('আপনি কে') ||
+      qLower.includes('পরিচয়') ||
+      qLower.includes('নাম কি') ||
+      qLower.includes('ফাহিম কে') ||
+      qLower.includes('your name') ||
+      qLower.includes('about yourself')
+    );
+
+    const isGreeting = (
+      qLower === 'hi' ||
+      qLower === 'hello' ||
+      qLower === 'hey' ||
+      qLower === 'হাই' ||
+      qLower === 'হ্যালো' ||
+      qLower.includes('assalamu alaikum') ||
+      qLower.includes('salam') ||
+      qLower.includes('সালাম') ||
+      qLower.includes('কেমন আছো') ||
+      qLower.includes('kemon acho') ||
+      qLower.includes('how are you')
+    );
+
+    const isAdviceQuestion = (
+      qLower.includes('cgpa') ||
+      qLower.includes('exam tip') ||
+      qLower.includes('preparation') ||
+      qLower.includes('study tip') ||
+      qLower.includes('how to study') ||
+      qLower.includes('সিজিপিএ') ||
+      qLower.includes('পড়ার নিয়ম') ||
+      qLower.includes('পরামর্শ') ||
+      qLower.includes('টিপস')
+    );
+
+    let topicKey = null;
     if (qLower.includes('lathe') || qLower.includes('workshop') || qLower.includes('welding') || qLower.includes('লেদ') || qLower.includes('ওয়ার্কশপ')) {
       topicKey = 'workshop';
     } else if (qLower.includes('rankine') || qLower.includes('brayton') || qLower.includes('jet') || qLower.includes('turbine') || qLower.includes('র‍্যাঙ্কিন') || qLower.includes('টারবাইন')) {
@@ -2558,12 +2823,13 @@ function handleAiSubmit(e) {
                   <div class="text-xs font-semibold text-white truncate max-w-xs sm:max-w-md">${f.name}</div>
                 </div>
                 <div class="flex items-center gap-1.5 flex-shrink-0">
-                  <button onclick="previewFile('${f.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold flex items-center gap-1 shadow">
-                    <i data-lucide="eye" class="w-3 h-3"></i>
-                    <span>Preview</span>
-                  </button>
-                  <a href="${f.drive_view_url || f.url || '#'}" target="_blank" rel="noopener noreferrer" title="Open on Google Drive" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 text-xs">
-                    <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-teal-400"></i>
+                  <a href="${f.drive_view_url || f.url || '#'}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold flex items-center gap-1 shadow">
+                    <i data-lucide="book-open" class="w-3 h-3"></i>
+                    <span>${isBangla ? 'পড়ুন' : 'Read'}</span>
+                    <i data-lucide="external-link" class="w-2.5 h-2.5 opacity-70"></i>
+                  </a>
+                  <a href="${f.drive_download_url || f.drive_view_url || '#'}" target="_blank" rel="noopener noreferrer" title="Download" class="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs">
+                    <i data-lucide="download" class="w-3 h-3"></i>
                   </a>
                 </div>
               </div>
@@ -2574,12 +2840,72 @@ function handleAiSubmit(e) {
     }
 
     let answerHtml = '';
-    if (topicKey && ME_KNOWLEDGE_BASE[topicKey]) {
+
+    if (isIdentityQuestion) {
+      answerHtml = `
+        <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+          <span class="font-bold text-xs text-indigo-300">🎓 Fahim Niloy • Creator & Academic Mentor</span>
+          <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
+            <i data-lucide="copy" class="w-3 h-3"></i> Copy
+          </button>
+        </div>
+        <div class="ai-prose space-y-2">
+          <p><strong>${isBangla ? 'আসসালামু আলাইকুম! আমি ফাহিম নিলয় (Mohammad Fahim Ahmed)।' : 'Hello! I am Fahim Niloy (Mohammad Fahim Ahmed).'}</strong></p>
+          <p>${isBangla
+            ? 'আমি চট্টগ্রাম প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় (চুয়েট)-এর যন্ত্রকৌশল (Mechanical Engineering) বিভাগের \'২০ ব্যাচের শিক্ষার্থী (রোল: ২০০৩০৬৩)। আমাদের লেভেল-১ টার্ম-১ থেকে শুরু করে লেভেল-৪ টার্ম-২ পর্যন্ত সমস্ত কোর্সের লেকচার শিট, হ্যান্ডনোট, সেশনাল ল্যাব রিপোর্ট, প্রিভিয়াস ইয়ারের সিটি ও ফাইনাল প্রশ্নব্যাংক এবং চুয়েটের অফিশিয়াল আন্ডারগ্র্যাজুয়েট বুলেটিন—মোট ৩৮৯৫টি ফাইল একটি সুশৃঙ্খল ডিজিটাল ভল্টে গুছিয়ে রাখতে আমি <strong>ClassroomHub</strong> তৈরি করেছি।'
+            : 'I am a student at Chittagong University of Engineering and Technology (CUET), Department of Mechanical Engineering (Batch: \'20, Student ID: 2003063). I built <strong>ClassroomHub</strong> to organize and preserve our entire 8 semesters\' academic archive—comprising 3,895 verified files of lecture slides, class notes, lab reports, previous years\' CT & term-final questions, and the official undergraduate bulletin.'
+          }</p>
+          <p>${isBangla
+            ? 'আমি এখানে আপনার স্টাডি পার্টনার ও মেন্টর হিসেবে আছি। আপনি আমাকে মেকানিক্যাল ইঞ্জিনিয়ারিংয়ের যেকোনো থিওরি, সূত্র, ভাইভা প্রস্তুতি, ল্যাব ক্যালকুলেশন নিয়ে প্রশ্ন করতে পারেন অথবা কোনো নির্দিষ্ট কোর্সের প্রশ্নব্যাংক বা নোট চেয়ে নিতে পারেন। আমি সরাসরি ড্রাইভ ফাইল সহ সাহায্য করব!'
+            : 'I am here as your dedicated AI study partner and academic mentor. Feel free to ask me about core mechanical engineering theories, formulas, viva tips, or ask for any course material—I will explain the concept and attach the exact Google Drive vault files for you to read!'
+          }</p>
+        </div>
+        ${vaultCardsHtml}
+      `;
+    } else if (isGreeting) {
+      answerHtml = `
+        <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+          <span class="font-bold text-xs text-indigo-300">👋 Welcome from Fahim Niloy</span>
+          <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
+            <i data-lucide="copy" class="w-3 h-3"></i> Copy
+          </button>
+        </div>
+        <div class="ai-prose space-y-2">
+          <p>${isBangla
+            ? 'আসসালামু আলাইকুম! <strong>আমি ফাহিম নিলয়</strong> (চুয়েট ME \'২০)। ClassroomHub-এ আপনাকে স্বাগতম! আজ আপনার কোন কোর্স বা কোন টপিকটি পড়তে সাহায্য করতে পারি? যেকোনো বিষয়ের কনসেপ্ট বুঝতে, সিটি/টার্ম ফাইনাল প্রশ্নব্যাংক পেতে অথবা ল্যাব ভাইভার প্রস্তুতির জন্য প্রশ্ন করুন।'
+            : 'Hello! <strong>I am Fahim Niloy</strong> (CUET ME \'20). Welcome to ClassroomHub! How can I help with your studies today? You can ask me to explain any engineering theory, suggest exam preparation strategies, or find notes and question banks from our vault.'
+          }</p>
+        </div>
+        ${vaultCardsHtml}
+      `;
+    } else if (isAdviceQuestion) {
+      answerHtml = `
+        <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+          <span class="font-bold text-xs text-amber-300">🎯 Fahim Niloy's Academic & Exam Preparation Tips</span>
+          <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
+            <i data-lucide="copy" class="w-3 h-3"></i> Copy
+          </button>
+        </div>
+        <div class="ai-prose space-y-2">
+          <p>${isBangla
+            ? 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিংয়ের সেমিস্টারগুলোতে ভালো রেজাল্ট ও কনসেপ্ট ক্লিয়ার রাখার জন্য আমার ব্যক্তিগত অভিজ্ঞতা থেকে কিছু টিপস:'
+            : 'Based on my experience across the 8 semesters at CUET Mechanical Engineering, here are high-impact exam preparation strategies:'
+          }</p>
+          <ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4">
+            <li><strong>বিগত ৫ বছরের প্রশ্নব্যাংক সমাধান:</strong> আমাদের ভল্টের <em>Question Banks</em> ক্যাটাগরি থেকে আপনার সেমিস্টারের প্রশ্নগুলো সংগ্রহ করে প্যাটার্ন বুঝুন। অধিকাংশ টার্ম ফাইনালে একই ধরনের নিউমেরিক্যাল ও ডেরিভেশন আসে।</li>
+            <li><strong>পরিচ্ছন্ন চিত্র ও ডায়াগ্রাম:</strong> মেকানিক্সে ফ্রি-বডি ডায়াগ্রাম (FBD), থার্মোডাইনামিক্সে P-v ও T-s ডায়াগ্রাম, ফ্লুইডে ভেলোসিটি ট্রায়াঙ্গেল নির্ভুলভাবে আঁকলে ফুল মার্কস পাওয়া অনেক সহজ হয়।</li>
+            <li><strong>এককের দিকে সতর্কতা (Units):</strong> প্রেসার (kPa vs Pa vs bar) এবং তাপমাত্রা সেলসিয়াস থেকে কেলভিনে (K = °C + 273.15) কনভার্ট করার ভুল সবচেয়ে বেশি হয়। ক্যালকুলেশনে সতর্ক থাকুন।</li>
+            <li><strong>ল্যাব ও ভাইভা প্রিপারেশন:</strong> সেশনাল পরীক্ষায় ল্যাব ম্যানুয়ালের শুরু ও শেষের ভাইভা প্রশ্নগুলো ভালোভাবে পড়ে যাবেন। ভল্টের <em>Lab & Sessional</em> ক্যাটাগরিতে সব ম্যানুয়াল সাজানো আছে।</li>
+          </ul>
+        </div>
+        ${vaultCardsHtml}
+      `;
+    } else if (topicKey && ME_KNOWLEDGE_BASE[topicKey]) {
       const topic = ME_KNOWLEDGE_BASE[topicKey];
       const rawText = isBangla ? topic.bn : topic.en;
       answerHtml = `
         <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-indigo-300">${topic.title}</span>
+          <span class="font-bold text-xs text-indigo-300">${topic.title} • Mentored by Fahim Niloy</span>
           <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
             <i data-lucide="copy" class="w-3 h-3"></i> Copy
           </button>
@@ -2590,22 +2916,22 @@ function handleAiSubmit(e) {
     } else if (matchingFiles.length > 0) {
       answerHtml = `
         <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-emerald-300">🔍 CUET ME Vault File Search</span>
+          <span class="font-bold text-xs text-emerald-300">🔍 CUET ME Vault File Search • Fahim Niloy</span>
           <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
             <i data-lucide="copy" class="w-3 h-3"></i> Copy
           </button>
         </div>
         <div class="ai-prose space-y-1">
           <p>${isBangla 
-            ? `আপনার খোঁজা <strong>"${query}"</strong> সম্পর্কিত ফাইলগুলো নিচে তালিকাভুক্ত করা হলো। আপনি সরাসরি প্রিভিউ দেখতে বা গুগল ড্রাইভে ফাইলগুলো খুলতে পারেন:` 
-            : `Found verified files matching <strong>"${query}"</strong> from the academic repository. You can preview them directly in-app or view on Google Drive:`}</p>
+            ? `আমি আমাদের ভল্ট ঘেঁটে <strong>"${query}"</strong> সম্পর্কিত সেরা ফাইলগুলো বের করে দিয়েছি। নিচের বোতামে ক্লিক করে সরাসরি গুগল ড্রাইভে ফাইলগুলো পড়তে বা ডাউনলোড করতে পারেন:` 
+            : `I have searched our academic vault and found verified resources matching <strong>"${query}"</strong>. Click the buttons below to read them directly on Google Drive:`}</p>
         </div>
         ${vaultCardsHtml}
       `;
     } else {
       answerHtml = `
         <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-purple-300">💡 CUET ME Academic Guidance</span>
+          <span class="font-bold text-xs text-purple-300">💡 CUET ME Academic Guidance • Fahim Niloy</span>
           <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
             <i data-lucide="copy" class="w-3 h-3"></i> Copy
           </button>
@@ -2613,8 +2939,8 @@ function handleAiSubmit(e) {
         <div class="ai-prose space-y-2">
           <p><strong>Query:</strong> "${query}"</p>
           <p>${isBangla 
-            ? 'এই বিষয়ের সম্পূর্ণ ক্লাস লেকচার নোটস, বিগত বছরের সিটি এবং টার্ম ফাইনাল প্রশ্নব্যাংক দেখতে <strong>Courses</strong> ট্যাবে নির্দিষ্ট সেমিস্টার ফোল্ডারে প্রবেশ করুন।' 
-            : 'For comprehensive lecture slides, CT solutions, and term-final question banks on this topic, check the respective semester folder under the <strong>Courses</strong> tab.'}</p>
+            ? 'আমি ফাহিম নিলয়। এই বিষয়ের সম্পূর্ণ ক্লাস লেকচার নোটস, বিগত বছরের সিটি এবং টার্ম ফাইনাল প্রশ্নব্যাংক দেখতে <strong>Courses</strong> ট্যাবে নির্দিষ্ট সেমিস্টার ফোল্ডারে প্রবেশ করুন।' 
+            : 'I am Fahim Niloy. For comprehensive lecture slides, CT solutions, and term-final question banks on this topic, check the respective semester folder under the <strong>Courses</strong> tab.'}</p>
           <ul class="text-xs text-slate-300 space-y-1">
             <li>📌 <strong>Exam Preparation Tip:</strong> Draw neat schematic diagrams with labelled axes and state boundary assumptions clearly.</li>
             <li>📌 <strong>Formula Mastery:</strong> Ensure all absolute temperature units are converted to Kelvin (K) and pressure to Pascal (Pa/kPa).</li>
