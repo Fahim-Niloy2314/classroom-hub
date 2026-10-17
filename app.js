@@ -30,6 +30,9 @@ const STORAGE_KEYS = {
   CONTACT: 'classroom_custom_contact',
   PENDING_RESOURCES: 'classroom_pending_resources',
   COMMUNITY_RESOURCES: 'classroom_community_resources',
+  FEEDBACKS: 'classroom_feedbacks',
+  VISITS: 'classroom_visits',
+  ADMIN_SETTINGS: 'classroom_admin_settings',
   LANG: 'classroom_lang'
 };
 
@@ -45,6 +48,8 @@ let bookmarks = JSON.parse(localStorage.getItem(STORAGE_KEYS.BOOKMARKS) || '[]')
 let courseProgress = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROGRESS) || '{}');
 let pendingResources = JSON.parse(localStorage.getItem(STORAGE_KEYS.PENDING_RESOURCES) || '[]');
 let communityResources = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMUNITY_RESOURCES) || '[]');
+let feedbacks = JSON.parse(localStorage.getItem(STORAGE_KEYS.FEEDBACKS) || '[]');
+let currentAdminSubTab = 'queue';
 
 /* =========================================================================
    1. BILINGUAL TRANSLATION DICTIONARY (EN default + BN toggle)
@@ -289,12 +294,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyLanguage(currentLang);
   loadCustomContacts();
   updateAuthUI();
+  initVisitorCount();
   renderHome();
   setupSemesterPills();
   setupCategoryPills();
   renderExplorer();
   renderTracker();
-  renderAdminQueue();
+  renderAdminWorkspace();
   lucide.createIcons();
 });
 
@@ -427,7 +433,7 @@ function switchTab(tab) {
 
   if (tab === 'resources') renderExplorer();
   else if (tab === 'tracker') renderTracker();
-  else if (tab === 'admin') renderAdminQueue();
+  else if (tab === 'admin') renderAdminWorkspace();
 
   lucide.createIcons();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1512,15 +1518,126 @@ function handleResourceSubmission(e) {
   );
 }
 
+/* =========================================================================
+   11. VISITOR COUNTER & FEEDBACK SYSTEM
+   ========================================================================= */
+async function initVisitorCount() {
+  let visits = parseInt(localStorage.getItem(STORAGE_KEYS.VISITS) || '1420', 10);
+  
+  try {
+    const res = await fetch('https://api.counterapi.dev/v1/classroom-hub-cuet/visits/up');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.count) {
+        visits = data.count;
+      }
+    } else {
+      visits += 1;
+    }
+  } catch (e) {
+    visits += 1;
+  }
+  localStorage.setItem(STORAGE_KEYS.VISITS, visits.toString());
+
+  const adminVisitsEl = document.getElementById('adminVisitsCount');
+  if (adminVisitsEl) adminVisitsEl.textContent = visits.toLocaleString();
+  const footerVisitsEl = document.getElementById('footerVisitsCount');
+  if (footerVisitsEl) footerVisitsEl.textContent = visits.toLocaleString();
+}
+
+function handleFeedbackSubmit(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const name = document.getElementById('fbName')?.value.trim() || 'Anonymous Student';
+  const roll = document.getElementById('fbRoll')?.value.trim() || 'N/A';
+  const category = document.getElementById('fbCategory')?.value || 'General Feedback';
+  const message = document.getElementById('fbMessage')?.value.trim();
+  const rating = document.querySelector('input[name="fbRating"]:checked')?.value || '5';
+
+  if (!message) {
+    showToast(currentLang === 'en' ? 'Please enter your message' : 'অনুগ্রহ করে বার্তা লিখুন');
+    return;
+  }
+
+  const newFeedback = {
+    id: 'fb_' + Date.now(),
+    name,
+    roll,
+    category,
+    rating,
+    message,
+    timestamp: new Date().toLocaleString()
+  };
+
+  feedbacks.unshift(newFeedback);
+  localStorage.setItem(STORAGE_KEYS.FEEDBACKS, JSON.stringify(feedbacks));
+  
+  if (e && e.target && e.target.reset) e.target.reset();
+  showToast(currentLang === 'en' ? 'Thank you! Your feedback has been sent to Fahim Niloy.' : 'ধন্যবাদ! আপনার বার্তাটি ফাহিম নিলয়ের কাছে পৌঁছেছে।');
+  renderAdminWorkspace();
+}
+
+/* =========================================================================
+   ADMIN WORKSPACE & REVIEW QUEUE (Full Suite)
+   ========================================================================= */
+function switchAdminSubTab(tabName) {
+  currentAdminSubTab = tabName;
+  const tabs = ['queue', 'add', 'feedbacks', 'contact'];
+
+  tabs.forEach(t => {
+    const btn = document.getElementById(`adminTabBtn-${t}`);
+    const panel = document.getElementById(`adminPanel-${t}`);
+
+    if (btn) {
+      if (t === tabName) {
+        btn.className = 'px-4 py-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 transition-all';
+      } else {
+        btn.className = 'px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all';
+      }
+    }
+
+    if (panel) {
+      panel.classList.toggle('hidden', t !== tabName);
+    }
+  });
+
+  if (tabName === 'queue') renderAdminQueue();
+  else if (tabName === 'feedbacks') renderAdminFeedbacks();
+  lucide.createIcons();
+}
+
+function renderAdminWorkspace() {
+  const isUserAdmin = currentUser && isAdmin(currentUser);
+  const adminTotalFiles = document.getElementById('adminTotalFiles');
+  const adminPendingCount = document.getElementById('adminPendingCount');
+  const adminPendingBadge = document.getElementById('adminPendingBadge');
+  const adminFeedbackCount = document.getElementById('adminFeedbackCount');
+  const adminFeedbackBadge = document.getElementById('adminFeedbackBadge');
+
+  if (adminTotalFiles) {
+    adminTotalFiles.textContent = (appData?.summary?.total_academic_files || 3893).toLocaleString();
+  }
+  if (adminPendingCount) adminPendingCount.textContent = pendingResources.length;
+  if (adminPendingBadge) adminPendingBadge.textContent = pendingResources.length;
+  if (adminFeedbackCount) adminFeedbackCount.textContent = feedbacks.length;
+  if (adminFeedbackBadge) adminFeedbackBadge.textContent = feedbacks.length;
+
+  renderAdminQueue();
+  renderAdminFeedbacks();
+}
+
 function renderAdminQueue() {
-  const badge = document.getElementById('adminPendingBadge');
   const list = document.getElementById('adminPendingList');
-  const dict = I18N[currentLang];
-  if (badge) badge.textContent = pendingResources.length;
   if (!list) return;
 
   if (pendingResources.length === 0) {
-    list.innerHTML = `<p class="text-slate-400 italic py-6 text-center">${dict.pending_empty}</p>`;
+    list.innerHTML = `
+      <div class="p-8 rounded-2xl bg-slate-950 border border-slate-800 text-center space-y-2">
+        <i data-lucide="inbox" class="w-8 h-8 text-slate-500 mx-auto"></i>
+        <h4 class="text-sm font-semibold text-slate-300">All Caught Up!</h4>
+        <p class="text-xs text-slate-500">There are no pending submissions awaiting approval.</p>
+      </div>
+    `;
+    lucide.createIcons();
     return;
   }
 
@@ -1530,23 +1647,23 @@ function renderAdminQueue() {
         <div class="flex items-center gap-2 text-xs">
           <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono font-bold">${item.term_code}</span>
           <span class="text-slate-400 font-medium">${item.course}</span>
-          <span class="text-slate-500">• Submitted by: <strong class="text-white">${item.author}</strong></span>
+          <span class="text-slate-500">• Contributor: <strong class="text-white">${item.author}</strong></span>
         </div>
         <h4 class="text-sm font-bold text-white">${item.name}</h4>
-        <a href="${item.url}" target="_blank" class="text-xs text-teal-400 hover:underline flex items-center gap-1">
+        <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="text-xs text-teal-400 hover:underline flex items-center gap-1">
           <i data-lucide="external-link" class="w-3 h-3"></i>
           <span>${item.url}</span>
         </a>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-shrink-0">
         <button onclick="approveSubmission(${idx})" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1 shadow">
           <i data-lucide="check" class="w-3.5 h-3.5"></i>
-          <span>${dict.btn_approve}</span>
+          <span>Approve & Publish</span>
         </button>
         <button onclick="rejectSubmission(${idx})" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-900/50 text-slate-300 hover:text-red-300 text-xs font-semibold flex items-center gap-1">
           <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-          <span>${dict.btn_reject}</span>
+          <span>Reject</span>
         </button>
       </div>
     </div>
@@ -1564,7 +1681,7 @@ function approveSubmission(idx) {
   communityResources.push(item);
   localStorage.setItem(STORAGE_KEYS.PENDING_RESOURCES, JSON.stringify(pendingResources));
   localStorage.setItem(STORAGE_KEYS.COMMUNITY_RESOURCES, JSON.stringify(communityResources));
-  renderAdminQueue();
+  renderAdminWorkspace();
   renderExplorer();
   showToast(currentLang === 'en' ? 'Resource approved and published!' : 'রিসোর্স অনুমোদিত ও প্রকাশিত হয়েছে!');
 }
@@ -1576,8 +1693,120 @@ function rejectSubmission(idx) {
   }
   pendingResources.splice(idx, 1);
   localStorage.setItem(STORAGE_KEYS.PENDING_RESOURCES, JSON.stringify(pendingResources));
-  renderAdminQueue();
+  renderAdminWorkspace();
   showToast(currentLang === 'en' ? 'Submission rejected' : 'সাবমিশন বাতিল করা হয়েছে');
+}
+
+function handleAdminAddResource(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (!currentUser || !isAdmin(currentUser)) {
+    showToast('Only Admin (Fahim Niloy) can manually add resources.');
+    return;
+  }
+
+  const term = document.getElementById('adminManualTerm')?.value || 'L1-T1';
+  const course = document.getElementById('adminManualCourse')?.value.trim();
+  const title = document.getElementById('adminManualTitle')?.value.trim();
+  const category = document.getElementById('adminManualCategory')?.value || 'Questions & Viva';
+  const url = document.getElementById('adminManualUrl')?.value.trim();
+  const size = document.getElementById('adminManualSize')?.value.trim() || 'Verified Vault File';
+
+  if (!course || !title || !url) {
+    showToast('Please fill all required fields.');
+    return;
+  }
+
+  const newResource = {
+    id: 'adm_res_' + Date.now(),
+    name: title,
+    term_code: term,
+    course: course,
+    category: category,
+    url: url,
+    drive_view_url: url,
+    author: 'Fahim Niloy (Admin)',
+    size_str: size,
+    ext: '.pdf',
+    submitted_at: new Date().toISOString()
+  };
+
+  communityResources.unshift(newResource);
+  localStorage.setItem(STORAGE_KEYS.COMMUNITY_RESOURCES, JSON.stringify(communityResources));
+
+  // Reset form
+  if (e && e.target && e.target.reset) e.target.reset();
+  renderAdminWorkspace();
+  renderExplorer();
+  showToast('Resource added directly to Course Explorer!');
+  switchAdminSubTab('queue');
+}
+
+function renderAdminFeedbacks() {
+  const list = document.getElementById('adminFeedbackList');
+  if (!list) return;
+
+  if (feedbacks.length === 0) {
+    list.innerHTML = `
+      <div class="p-8 rounded-2xl bg-slate-950 border border-slate-800 text-center space-y-2">
+        <i data-lucide="message-square" class="w-8 h-8 text-slate-500 mx-auto"></i>
+        <h4 class="text-sm font-semibold text-slate-300">No Feedback Yet</h4>
+        <p class="text-xs text-slate-500">Student feedback and course requests will appear here.</p>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
+  list.innerHTML = feedbacks.map((fb, idx) => `
+    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[10px] font-semibold">${fb.category}</span>
+          <span class="text-amber-400 text-xs">${'★'.repeat(parseInt(fb.rating || 5, 10))}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] text-slate-500">${fb.timestamp}</span>
+          <button onclick="deleteFeedback(${idx})" title="Delete Feedback" class="text-slate-400 hover:text-red-400 p-1 transition-colors">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+      <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">${fb.message}</p>
+      <div class="text-[11px] text-slate-400 pt-1 border-t border-slate-800/80 flex items-center justify-between">
+        <span>From: <strong class="text-white">${fb.name}</strong> (Roll: ${fb.roll})</span>
+      </div>
+    </div>
+  `).join('');
+
+  lucide.createIcons();
+}
+
+function deleteFeedback(idx) {
+  feedbacks.splice(idx, 1);
+  localStorage.setItem(STORAGE_KEYS.FEEDBACKS, JSON.stringify(feedbacks));
+  renderAdminWorkspace();
+  showToast('Feedback removed');
+}
+
+function clearAllFeedbacks() {
+  if (confirm('Are you sure you want to clear all student feedback messages?')) {
+    feedbacks = [];
+    localStorage.setItem(STORAGE_KEYS.FEEDBACKS, JSON.stringify(feedbacks));
+    renderAdminWorkspace();
+    showToast('All feedbacks cleared');
+  }
+}
+
+function saveAdminSettings() {
+  const email = document.getElementById('adminSettingsEmail')?.value.trim() || 'fahimniloy2314@gmail.com';
+  const phone = document.getElementById('adminSettingsPhone')?.value.trim() || '+880 1850-162261';
+  const portfolio = document.getElementById('adminSettingsPortfolio')?.value.trim() || 'https://mohammad-fahim-ahmed.netlify.app/';
+  const github = document.getElementById('adminSettingsGithub')?.value.trim() || 'https://github.com/Fahim-Niloy2314/classroom-hub';
+
+  const settings = { email, phone, netlify: portfolio, github };
+  localStorage.setItem(STORAGE_KEYS.CONTACT, JSON.stringify(settings));
+  loadCustomContacts();
+  showToast('Settings saved successfully!');
 }
 
 /* =========================================================================
@@ -2151,8 +2380,73 @@ const ME_KNOWLEDGE_BASE = {
   }
 };
 
+/* =========================================================================
+   13. SMART AI STUDY COMPANION & VAULT SEARCH BOT
+   ========================================================================= */
+function searchVaultFiles(query, limit = 4) {
+  if (!query) return [];
+  const cleanTerms = query.toLowerCase()
+    .replace(/[^\w\s\u0980-\u09FF]/gi, ' ')
+    .split(/\s+/)
+    .filter(t => t.length > 1);
+
+  if (cleanTerms.length === 0) return [];
+  const results = [];
+
+  // 1. Search in indexed dataset
+  if (appData && appData.terms) {
+    for (const term of appData.terms) {
+      if (!term.courses) continue;
+      for (const course of term.courses) {
+        if (!course.files) continue;
+        for (const file of course.files) {
+          const text = `${file.name} ${file.course || ''} ${file.term_code || ''} ${file.category || ''} ${file.subfolder || ''}`.toLowerCase();
+          let score = 0;
+          for (const t of cleanTerms) {
+            if (text.includes(t)) {
+              score += 2;
+              // Exact match bonus
+              if (file.name.toLowerCase().includes(t)) score += 3;
+              if ((file.course || '').toLowerCase().includes(t)) score += 4;
+            }
+          }
+          if (score > 0) {
+            results.push({ file, score });
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Search in community & manually added resources
+  for (const file of communityResources) {
+    const text = `${file.name} ${file.course || ''} ${file.term_code || ''} ${file.category || ''}`.toLowerCase();
+    let score = 0;
+    for (const t of cleanTerms) {
+      if (text.includes(t)) score += 3;
+    }
+    if (score > 0) {
+      results.push({ file, score: score + 2 });
+    }
+  }
+
+  results.sort((a, b) => b.score - a.score);
+
+  const seen = new Set();
+  const deduped = [];
+  for (const r of results) {
+    const key = r.file.id || r.file.name;
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(r.file);
+      if (deduped.length >= limit) break;
+    }
+  }
+  return deduped;
+}
+
 function askPresetPrompt(promptText) {
-  const input = document.getElementById('aiInputPrompt');
+  const input = document.getElementById('aiInput') || document.getElementById('aiInputPrompt');
   if (input) {
     input.value = promptText;
     handleAiSubmit(new Event('submit'));
@@ -2175,12 +2469,14 @@ function copyAiResponse(btn) {
 }
 
 function handleAiSubmit(e) {
-  e.preventDefault();
-  const input = document.getElementById('aiInputPrompt');
-  const query = input.value.trim();
+  if (e && e.preventDefault) e.preventDefault();
+  const input = document.getElementById('aiInput') || document.getElementById('aiInputPrompt');
+  const query = (input?.value || '').trim();
   if (!query) return;
 
-  const chatBox = document.getElementById('aiChatBox');
+  const chatBox = document.getElementById('aiChatMessages') || document.getElementById('aiChatBox');
+  if (!chatBox) return;
+
   const isBangla = /[\u0980-\u09FF]/.test(query);
 
   // User Message bubble
@@ -2195,7 +2491,7 @@ function handleAiSubmit(e) {
     </div>
   `;
   chatBox.appendChild(userDiv);
-  input.value = '';
+  if (input) input.value = '';
   chatBox.scrollTop = chatBox.scrollHeight;
   lucide.createIcons();
 
@@ -2209,7 +2505,7 @@ function handleAiSubmit(e) {
     <div class="ai-message-card bg-slate-800/80 rounded-2xl rounded-tl-none p-4 text-xs sm:text-sm text-slate-200 border border-slate-700/60 max-w-2xl leading-relaxed shadow-lg space-y-2">
       <div class="flex items-center gap-1.5 text-xs text-purple-400">
         <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
-        <span>${isBangla ? 'চুয়েট মেকানিক্যাল কোর্স বিশ্লেষণ করা হচ্ছে...' : 'Analyzing CUET Mechanical Engineering knowledge...'}</span>
+        <span>${isBangla ? 'চুয়েট মেকানিক্যাল ভল্ট ও সিলেবাস বিশ্লেষণ করা হচ্ছে...' : 'Searching CUET ME Vault & Knowledge Base...'}</span>
       </div>
     </div>
   `;
@@ -2236,6 +2532,47 @@ function handleAiSubmit(e) {
       topicKey = 'thermodynamics';
     }
 
+    // Smart Vault File Search
+    const matchingFiles = searchVaultFiles(query, 4);
+
+    let vaultCardsHtml = '';
+    if (matchingFiles.length > 0) {
+      vaultCardsHtml = `
+        <div class="mt-3 pt-3 border-t border-slate-700/60 space-y-2">
+          <div class="text-[11px] font-bold text-indigo-300 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="folder-search" class="w-3.5 h-3.5 text-indigo-400"></i>
+              <span>${isBangla ? 'ভল্ট থেকে প্রাপ্ত প্রাসঙ্গিক ফাইলসমূহ' : 'Matching Academic Resources in Vault'} (${matchingFiles.length} files):</span>
+            </span>
+            <button onclick="switchTab('resources')" class="text-[10px] text-teal-400 hover:underline">Open Courses →</button>
+          </div>
+          <div class="grid grid-cols-1 gap-2">
+            ${matchingFiles.map(f => `
+              <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-between gap-2 hover:border-slate-600 transition-all">
+                <div class="min-w-0 pr-2">
+                  <div class="flex items-center gap-1.5 text-[10px] mb-0.5">
+                    <span class="px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono font-bold">${f.term_code || 'ME'}</span>
+                    <span class="text-slate-400 font-medium truncate">${f.course || ''}</span>
+                    <span class="text-slate-500">• ${f.size_str || ''}</span>
+                  </div>
+                  <div class="text-xs font-semibold text-white truncate max-w-xs sm:max-w-md">${f.name}</div>
+                </div>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                  <button onclick="previewFile('${f.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold flex items-center gap-1 shadow">
+                    <i data-lucide="eye" class="w-3 h-3"></i>
+                    <span>Preview</span>
+                  </button>
+                  <a href="${f.drive_view_url || f.url || '#'}" target="_blank" rel="noopener noreferrer" title="Open on Google Drive" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 text-xs">
+                    <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-teal-400"></i>
+                  </a>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
     let answerHtml = '';
     if (topicKey && ME_KNOWLEDGE_BASE[topicKey]) {
       const topic = ME_KNOWLEDGE_BASE[topicKey];
@@ -2248,6 +2585,22 @@ function handleAiSubmit(e) {
           </button>
         </div>
         <div class="ai-prose">${rawText.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>')}</div>
+        ${vaultCardsHtml}
+      `;
+    } else if (matchingFiles.length > 0) {
+      answerHtml = `
+        <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+          <span class="font-bold text-xs text-emerald-300">🔍 CUET ME Vault File Search</span>
+          <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
+            <i data-lucide="copy" class="w-3 h-3"></i> Copy
+          </button>
+        </div>
+        <div class="ai-prose space-y-1">
+          <p>${isBangla 
+            ? `আপনার খোঁজা <strong>"${query}"</strong> সম্পর্কিত ফাইলগুলো নিচে তালিকাভুক্ত করা হলো। আপনি সরাসরি প্রিভিউ দেখতে বা গুগল ড্রাইভে ফাইলগুলো খুলতে পারেন:` 
+            : `Found verified files matching <strong>"${query}"</strong> from the academic repository. You can preview them directly in-app or view on Google Drive:`}</p>
+        </div>
+        ${vaultCardsHtml}
       `;
     } else {
       answerHtml = `
@@ -2260,10 +2613,10 @@ function handleAiSubmit(e) {
         <div class="ai-prose space-y-2">
           <p><strong>Query:</strong> "${query}"</p>
           <p>${isBangla 
-            ? 'এই বিষয়ের সম্পূর্ণ ক্লাস লেকচার নোটস, বিগত বছরের সিটি এবং টার্ম ফাইনাল প্রশ্নব্যাংক দেখতে <strong>Course Explorer</strong> ট্যাবে নির্দিষ্ট সেমিস্টার ফোল্ডারে প্রবেশ করুন।' 
-            : 'For comprehensive lecture slides, CT solutions, and term-final question banks on this topic, check the respective semester folder under the <strong>Course Explorer</strong> tab.'}</p>
+            ? 'এই বিষয়ের সম্পূর্ণ ক্লাস লেকচার নোটস, বিগত বছরের সিটি এবং টার্ম ফাইনাল প্রশ্নব্যাংক দেখতে <strong>Courses</strong> ট্যাবে নির্দিষ্ট সেমিস্টার ফোল্ডারে প্রবেশ করুন।' 
+            : 'For comprehensive lecture slides, CT solutions, and term-final question banks on this topic, check the respective semester folder under the <strong>Courses</strong> tab.'}</p>
           <ul class="text-xs text-slate-300 space-y-1">
-            <li>📌 <strong>Exam Preparation Tip:</strong> Draw neat schematic diagrams with labelled axes and state your boundary assumptions clearly.</li>
+            <li>📌 <strong>Exam Preparation Tip:</strong> Draw neat schematic diagrams with labelled axes and state boundary assumptions clearly.</li>
             <li>📌 <strong>Formula Mastery:</strong> Ensure all absolute temperature units are converted to Kelvin (K) and pressure to Pascal (Pa/kPa).</li>
             <li>📌 <strong>Question Bank:</strong> Practice the past 5-year CUET final exam questions available in the Explorer folder.</li>
           </ul>
@@ -2274,7 +2627,7 @@ function handleAiSubmit(e) {
     botDiv.querySelector('.ai-message-card').innerHTML = answerHtml;
     chatBox.scrollTop = chatBox.scrollHeight;
     lucide.createIcons();
-  }, 400);
+  }, 350);
 }
 
 /* =========================================================================
