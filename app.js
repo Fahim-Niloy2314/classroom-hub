@@ -176,16 +176,16 @@ const I18N = {
     btn_logout: 'লগআউট',
     role_admin: 'অ্যাডমিন',
     role_student: 'শিক্ষার্থী',
-    hero_badge: 'CUET মেকানিক্যাল ইঞ্জিনিয়ারিং একাডেমিক ভল্ট ও ফোল্ডার এক্সপ্লোরার',
+    hero_badge: 'CUET মেকানিক্যাল ইঞ্জিনিয়ারিং একাডেমিক আর্কাইভ ও ফোল্ডার এক্সপ্লোরার',
     hero_welcome: 'স্বাগতম! আমি',
     hero_desc: "চট্টগ্রাম প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় (CUET), মেকানিক্যাল ইঞ্জিনিয়ারিং ডিপার্টমেন্ট ('২০ সিরিজ, রোল: ২০০৩০৬৩)। লেভেল ১ টার্ম ১ থেকে লেভেল ৪ টার্ম ২ পর্যন্ত আমাদের সব কোর্স ফোল্ডার অনুযায়ী সাজানো ক্লাস নোটস, ল্যাব শিট, প্রশ্নব্যাংক ও অফিশিয়াল বুলেটিন।",
     btn_explore_courses: 'কোর্স ফোল্ডার ব্রাউজ করুন',
     btn_portfolio: 'আমার পার্সোনাল ওয়েবসাইট',
     btn_github: 'গিটহাব প্রজেক্ট ও লাইভ ওয়েবসাইট',
-    btn_drive: 'গুগল ড্রাইভ',
+    btn_drive: 'গুগল ড্রাইভ (সব ড্রাইভ একসাথে)',
     label_email: 'ইমেইল:',
     label_phone: 'মোবাইল:',
-    stats_header: 'একাডেমিক ডেটা ভল্ট',
+    stats_header: 'একাডেমিক ডেটা আর্কাইভ',
     stat_files: 'মোট একাডেমিক ফাইল',
     stat_pdfs: 'পিডিএফ ও লেকচার নোট',
     stat_semesters: 'সেমিস্টার (L1-T1 থেকে L4-T2)',
@@ -245,7 +245,7 @@ const I18N = {
     btn_preview: 'প্রিভিউ',
     btn_open_drive: 'গুগল ড্রাইভে প্রিভিউ দেখুন',
     btn_download_drive: 'ফাইল ডাউনলোড',
-    cloud_fallback_desc: 'অনলাইন ক্লাউড মোডে ক্লাসরুমের ৩৩ জিবি একাডেমিক ফাইলগুলো সরাসরি গুগল ড্রাইভ ভল্টে সংরক্ষিত রয়েছে। নিচের বাটনে ক্লিক করে ফাইলটি সরাসরি পড়ুন অথবা ডাউনলোড করুন।',
+    cloud_fallback_desc: 'অনলাইন ক্লাউড মোডে ক্লাসরুমের সব একাডেমিক ফাইল সরাসরি গুগল ড্রাইভে সংরক্ষিত রয়েছে। নিচের বাটনে ক্লিক করে ফাইলটির প্রিভিউ দেখুন।',
     modal_contrib_title: 'একাডেমিক রিসোর্স শেয়ার / জমা দিন',
     modal_contrib_sub: 'আপনার শেয়ার করা নোটস বা ফাইল ফাহিম নিলয়ের রিভিউয়ের পর আর্কাইভে লাইভ যুক্ত হবে।',
     field_res_title: 'রিসোর্স শিরোনাম / বিষয়',
@@ -1272,7 +1272,7 @@ function handleFileDownload(encPath, encName) {
   } else {
     const driveFolderUrl = 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h';
     window.open(driveFolderUrl, '_blank');
-    showToast(currentLang === 'en' ? `Opening Google Drive 5 TB Vault...` : `গুগল ড্রাইভ ৫ টিবি ভল্ট ওপেন করা হচ্ছে...`);
+    showToast(currentLang === 'en' ? `Opening Google Drive...` : `গুগল ড্রাইভ ওপেন করা হচ্ছে...`);
   }
 }
 
