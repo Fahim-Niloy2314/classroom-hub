@@ -2481,3 +2481,52 @@ function showToast(msg) {
   toast.classList.remove('-translate-y-2', 'opacity-0');
   setTimeout(() => toast.classList.add('-translate-y-2', 'opacity-0'), 3000);
 }
+
+/* =========================================================================
+   15. GLOBAL KEYBOARD SHORTCUTS (INTERNATIONAL STANDARD UX)
+   ========================================================================= */
+window.addEventListener('keydown', (e) => {
+  // 1. Ctrl+K or Cmd+K or "/" to focus Search
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    switchTab('resources');
+    const input = document.getElementById('resourceSearchInput');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  } else if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    e.preventDefault();
+    switchTab('resources');
+    const input = document.getElementById('resourceSearchInput');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }
+  
+  // 2. Escape to close any open modal
+  if (e.key === 'Escape') {
+    const docModal = document.getElementById('documentViewerModal');
+    if (docModal && !docModal.classList.contains('hidden')) {
+      closeDocViewer();
+      return;
+    }
+    const authModal = document.getElementById('authModal');
+    if (authModal && !authModal.classList.contains('hidden')) {
+      closeAuthModal();
+      return;
+    }
+    const upModal = document.getElementById('upgradeModal');
+    if (upModal && !upModal.classList.contains('hidden')) {
+      closeUpgradeModal();
+      return;
+    }
+    const subModal = document.getElementById('submitResourceModal');
+    if (subModal && !subModal.classList.contains('hidden')) {
+      closeSubmitResourceModal();
+      return;
+    }
+  }
+});
+
