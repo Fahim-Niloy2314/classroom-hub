@@ -443,12 +443,22 @@
       "designation": "Professor",
       "category": "PROFESSOR",
       "room": "ME Building",
-      "email": "bodiussalam@yahoo.com, bsalam@cuet.ac.bd",
+      "email": "bsalam@cuet.ac.bd",
       "phone": "01713109924",
       "tnt": "2704",
       "whatsapp": "8801713109924",
       "specialization": "Thermal Engineering, Solar Energy, Heat Transfer",
-      "order": 1
+      "order": 1,
+      "emails": [
+        {
+          "address": "bsalam@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "bodiussalam@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_2",
@@ -456,12 +466,22 @@
       "designation": "Professor",
       "category": "PROFESSOR",
       "room": "ME Building",
-      "email": "mahbub87@yahoo.com, malam@cuet.ac.bd",
+      "email": "malam@cuet.ac.bd",
       "phone": "01812830127",
       "tnt": "2702",
       "whatsapp": "8801812830127",
       "specialization": "Production & Manufacturing Engineering, Materials",
-      "order": 2
+      "order": 2,
+      "emails": [
+        {
+          "address": "malam@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "mahbub87@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_3",
@@ -474,7 +494,13 @@
       "tnt": "2724",
       "whatsapp": "8801821781459",
       "specialization": "Robotics, Mechatronics, Automation & Control",
-      "order": 3
+      "order": 3,
+      "emails": [
+        {
+          "address": "baniksajal@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
     },
     {
       "id": "fac_4",
@@ -482,12 +508,22 @@
       "designation": "Professor",
       "category": "PROFESSOR",
       "room": "ME Building",
-      "email": "jamal293@yahoo.com, jamal@cuet.ac.bd",
+      "email": "jamal@cuet.ac.bd",
       "phone": "01720641636",
       "tnt": "2714",
       "whatsapp": "8801720641636",
       "specialization": "Thermal Power, Energy Conservation, Nanofluids",
-      "order": 4
+      "order": 4,
+      "emails": [
+        {
+          "address": "jamal@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "jamal293@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_5",
@@ -495,12 +531,22 @@
       "designation": "Professor",
       "category": "PROFESSOR",
       "room": "ME Building",
-      "email": "humayun@cuet.ac.bd, daliinuoo@yahoo.com",
+      "email": "humayun@cuet.ac.bd",
       "phone": "01716469972",
       "tnt": "2726",
       "whatsapp": "8801716469972",
       "specialization": "Applied Mechanics, Solid Mechanics & Stress Analysis",
-      "order": 5
+      "order": 5,
+      "emails": [
+        {
+          "address": "humayun@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "daliinuoo@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_6",
@@ -508,12 +554,22 @@
       "designation": "Professor",
       "category": "PROFESSOR",
       "room": "ME Building",
-      "email": "afzalur99@yahoo.com, afzal@cuet.ac.bd",
+      "email": "afzal@cuet.ac.bd",
       "phone": "01680453267",
       "tnt": "2723",
       "whatsapp": "8801680453267",
       "specialization": "Fluid Machinery, CFD & Fluid Dynamics",
-      "order": 6
+      "order": 6,
+      "emails": [
+        {
+          "address": "afzal@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "afzalur99@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_7",
@@ -526,7 +582,13 @@
       "tnt": "2710",
       "whatsapp": "8801864800089",
       "specialization": "Automobile Engineering, IC Engines, Alternate Fuels",
-      "order": 7
+      "order": 7,
+      "emails": [
+        {
+          "address": "mmrahman.cuet@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_8",
@@ -534,12 +596,22 @@
       "designation": "Head of Department & Professor",
       "category": "HEAD",
       "room": "Department Head Office, ME Building",
-      "email": "mkamalcuet@yahoo.com, mkamal@cuet.ac.bd",
+      "email": "mkamal@cuet.ac.bd",
       "phone": "01784353193",
       "tnt": "2729",
       "whatsapp": "8801784353193",
       "specialization": "Thermal Engineering, Heat Transfer Enhancement, Renewable Energy",
-      "order": 8
+      "order": 8,
+      "emails": [
+        {
+          "address": "mkamal@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "mkamalcuet@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_9",
@@ -552,7 +624,13 @@
       "tnt": "",
       "whatsapp": "8801717300305",
       "specialization": "Thermodynamics, Power Plant, Heat Systems",
-      "order": 9
+      "order": 9,
+      "emails": [
+        {
+          "address": "rabbi@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
     },
     {
       "id": "fac_10",
@@ -565,7 +643,13 @@
       "tnt": "2727",
       "whatsapp": "8801719416328",
       "specialization": "Materials Science, Metallurgy, Fracture Mechanics",
-      "order": 10
+      "order": 10,
+      "emails": [
+        {
+          "address": "arafat@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
     },
     {
       "id": "fac_11",
@@ -573,12 +657,22 @@
       "designation": "Associate Professor",
       "category": "ASSOCIATE",
       "room": "ME Building",
-      "email": "prasanjit12@gmail.com, prasanjit@cuet.ac.bd",
+      "email": "prasanjit@cuet.ac.bd",
       "phone": "01642997909",
       "tnt": "",
       "whatsapp": "8801642997909",
       "specialization": "Combustion, Energy Systems, Thermal Modeling",
-      "order": 11
+      "order": 11,
+      "emails": [
+        {
+          "address": "prasanjit@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "prasanjit12@gmail.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_12",
@@ -586,12 +680,22 @@
       "designation": "Associate Professor",
       "category": "ASSOCIATE",
       "room": "ME Building",
-      "email": "yessayem@yahoo.com, a.sayem@cuet.ac.bd",
+      "email": "a.sayem@cuet.ac.bd",
       "phone": "01710503692",
       "tnt": "",
       "whatsapp": "8801710503692",
       "specialization": "Fluid Mechanics, Multiphase Flow & Heat Exchangers",
-      "order": 12
+      "order": 12,
+      "emails": [
+        {
+          "address": "a.sayem@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "yessayem@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_13",
@@ -599,12 +703,22 @@
       "designation": "Associate Professor",
       "category": "ASSOCIATE",
       "room": "ME Building",
-      "email": "mamun_cuet2003@yahoo.com, mamuncuet2003@cuet.ac.bd",
+      "email": "mamuncuet2003@cuet.ac.bd",
       "phone": "01818651850",
       "tnt": "",
       "whatsapp": "8801818651850",
       "specialization": "Applied Mechanics, Vibration Analysis, Dynamics",
-      "order": 13
+      "order": 13,
+      "emails": [
+        {
+          "address": "mamuncuet2003@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "mamun_cuet2003@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_14",
@@ -617,7 +731,13 @@
       "tnt": "2722",
       "whatsapp": "8801735530848",
       "specialization": "Manufacturing Engineering, Tool Wear & Metal Cutting",
-      "order": 14
+      "order": 14,
+      "emails": [
+        {
+          "address": "mowazzem@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
     },
     {
       "id": "fac_15",
@@ -625,12 +745,22 @@
       "designation": "Associate Professor",
       "category": "ASSOCIATE",
       "room": "ME Building",
-      "email": "tilok_cuet@yahoo.com, tilok@cuet.ac.bd",
+      "email": "tilok@cuet.ac.bd",
       "phone": "01818767625",
       "tnt": "",
       "whatsapp": "8801818767625",
       "specialization": "Renewable Energy, Heat Transfer, Fluid Mechanics",
-      "order": 15
+      "order": 15,
+      "emails": [
+        {
+          "address": "tilok@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "tilok_cuet@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_16",
@@ -643,7 +773,13 @@
       "tnt": "2720",
       "whatsapp": "8801837888835",
       "specialization": "Thermodynamics & Heat Transfer",
-      "order": 16
+      "order": 16,
+      "emails": [
+        {
+          "address": "aislam@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
     },
     {
       "id": "fac_17",
@@ -656,7 +792,13 @@
       "tnt": "2712",
       "whatsapp": "8801725554528",
       "specialization": "Machine Design & Stress Analysis",
-      "order": 17
+      "order": 17,
+      "emails": [
+        {
+          "address": "bdmasrur91@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_18",
@@ -669,7 +811,13 @@
       "tnt": "",
       "whatsapp": "8801738263617",
       "specialization": "Nanotechnology & Materials Science",
-      "order": 18
+      "order": 18,
+      "emails": [
+        {
+          "address": "rmostafiz31@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_19",
@@ -677,12 +825,22 @@
       "designation": "Assistant Professor",
       "category": "ASSOCIATE",
       "room": "ME Building",
-      "email": "afnanhasan@cuet.ac.bd, afnanhasan@gmail.com",
+      "email": "afnanhasan@cuet.ac.bd",
       "phone": "01303042334",
       "tnt": "",
       "whatsapp": "8801303042334",
       "specialization": "Aerodynamics & CFD",
-      "order": 19
+      "order": 19,
+      "emails": [
+        {
+          "address": "afnanhasan@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "afnanhasan@gmail.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_20",
@@ -690,12 +848,22 @@
       "designation": "Assistant Professor",
       "category": "ASSOCIATE",
       "room": "ME Building",
-      "email": "radheshyamnathjisu@gmail.com, radheshyam@cuet.ac.bd",
+      "email": "radheshyam@cuet.ac.bd",
       "phone": "01521227537",
       "tnt": "",
       "whatsapp": "8801521227537",
       "specialization": "Robotics, Automation & Mechatronics",
-      "order": 20
+      "order": 20,
+      "emails": [
+        {
+          "address": "radheshyam@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "radheshyamnathjisu@gmail.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_21",
@@ -708,7 +876,13 @@
       "tnt": "",
       "whatsapp": "8801812680648",
       "specialization": "Fluid Mechanics & Heat Transfer",
-      "order": 21
+      "order": 21,
+      "emails": [
+        {
+          "address": "tafsir2086@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_22",
@@ -721,7 +895,13 @@
       "tnt": "",
       "whatsapp": "8801882823600",
       "specialization": "Automobile Engineering & Thermal Power",
-      "order": 22
+      "order": 22,
+      "emails": [
+        {
+          "address": "bdnezam15@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_23",
@@ -734,7 +914,13 @@
       "tnt": "",
       "whatsapp": "8801712132762",
       "specialization": "Solid Mechanics & CAD/CAM",
-      "order": 23
+      "order": 23,
+      "emails": [
+        {
+          "address": "meraz@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
     },
     {
       "id": "fac_24",
@@ -742,12 +928,22 @@
       "designation": "Assistant Professor",
       "category": "ASSOCIATE",
       "room": "ME Building",
-      "email": "minhaz@cuet.ac.bd, minhaz.ahmed.1603018@gmail.com",
+      "email": "minhaz@cuet.ac.bd",
       "phone": "01537202191",
       "tnt": "",
       "whatsapp": "8801537202191",
       "specialization": "Renewable Energy & Mechanical Design",
-      "order": 24
+      "order": 24,
+      "emails": [
+        {
+          "address": "minhaz@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "minhaz.ahmed.1603018@gmail.com",
+          "label": "Alternate email"
+        }
+      ]
     },
     {
       "id": "fac_25",
@@ -760,7 +956,13 @@
       "tnt": "",
       "whatsapp": "8801747680478",
       "specialization": "Thermodynamics & Heat Transfer",
-      "order": 25
+      "order": 25,
+      "emails": [
+        {
+          "address": "alrifat50@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_26",
@@ -773,7 +975,13 @@
       "tnt": "",
       "whatsapp": "8801824192709",
       "specialization": "Fluid Dynamics & Turbomachinery",
-      "order": 26
+      "order": 26,
+      "emails": [
+        {
+          "address": "Rakibmamun107@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_27",
@@ -786,7 +994,13 @@
       "tnt": "",
       "whatsapp": "8801992880020",
       "specialization": "Control Systems & Robotics",
-      "order": 27
+      "order": 27,
+      "emails": [
+        {
+          "address": "protickchandraghosh123@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_28",
@@ -799,7 +1013,13 @@
       "tnt": "",
       "whatsapp": "8801762388882",
       "specialization": "Materials Science & Mechanical Testing",
-      "order": 28
+      "order": 28,
+      "emails": [
+        {
+          "address": "tahsin.me.113@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_29",
@@ -812,7 +1032,13 @@
       "tnt": "",
       "whatsapp": "8801876593419",
       "specialization": "Heat Transfer & IC Engines",
-      "order": 29
+      "order": 29,
+      "emails": [
+        {
+          "address": "tanvirmahmud775@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_30",
@@ -825,7 +1051,13 @@
       "tnt": "2186",
       "whatsapp": "8801991945168",
       "specialization": "Laboratory & Practical Session Support",
-      "order": 30
+      "order": 30,
+      "emails": [
+        {
+          "address": "fahmidazahan82@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_31",
@@ -838,7 +1070,13 @@
       "tnt": "",
       "whatsapp": "8801713109923",
       "specialization": "Laboratory Instrumentation & Testing Operations",
-      "order": 31
+      "order": 31,
+      "emails": [
+        {
+          "address": "sujoncuet@yahoo.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_32",
@@ -851,7 +1089,13 @@
       "tnt": "2754",
       "whatsapp": "8801714595605",
       "specialization": "Lab Setup & Technical Maintenance",
-      "order": 32
+      "order": 32,
+      "emails": [
+        {
+          "address": "dippdipu@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_33",
@@ -864,7 +1108,13 @@
       "tnt": "2759",
       "whatsapp": "8801782555584",
       "specialization": "Workshop Machines & Testing Services",
-      "order": 33
+      "order": 33,
+      "emails": [
+        {
+          "address": "iswarme2018@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_34",
@@ -877,7 +1127,13 @@
       "tnt": "",
       "whatsapp": "8801835508202",
       "specialization": "Academic Administration & Records",
-      "order": 34
+      "order": 34,
+      "emails": [
+        {
+          "address": "mdmonirctg99@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_35",
@@ -890,7 +1146,13 @@
       "tnt": "",
       "whatsapp": "8801817725904",
       "specialization": "Administrative Support & Coordination",
-      "order": 35
+      "order": 35,
+      "emails": [
+        {
+          "address": "dastagir88@yahoo.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_36",
@@ -903,7 +1165,13 @@
       "tnt": "2755",
       "whatsapp": "8801811923524",
       "specialization": "Office Affairs & Student Communication",
-      "order": 36
+      "order": 36,
+      "emails": [
+        {
+          "address": "radhacuet@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_37",
@@ -916,7 +1184,13 @@
       "tnt": "2756",
       "whatsapp": "8801914594662",
       "specialization": "Departmental Correspondence & Logistics",
-      "order": 37
+      "order": 37,
+      "emails": [
+        {
+          "address": "mdabdullahcuet@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_38",
@@ -929,7 +1203,8 @@
       "tnt": "",
       "whatsapp": "8801818557009",
       "specialization": "Laboratory Operations & Maintenance",
-      "order": 38
+      "order": 38,
+      "emails": []
     },
     {
       "id": "fac_39",
@@ -942,7 +1217,13 @@
       "tnt": "",
       "whatsapp": "8801627635838",
       "specialization": "Lab Maintenance & Support",
-      "order": 39
+      "order": 39,
+      "emails": [
+        {
+          "address": "emranulhoque@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_42",
@@ -955,7 +1236,13 @@
       "tnt": "",
       "whatsapp": "8801811920365",
       "specialization": "Machine Operation & Tooling",
-      "order": 42
+      "order": 42,
+      "emails": [
+        {
+          "address": "rupayandas002@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_43",
@@ -968,7 +1255,13 @@
       "tnt": "",
       "whatsapp": "8801818889100",
       "specialization": "Workshop Fabrication & Maintenance",
-      "order": 43
+      "order": 43,
+      "emails": [
+        {
+          "address": "khalilcuet26@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_44",
@@ -981,7 +1274,13 @@
       "tnt": "",
       "whatsapp": "8801815185152",
       "specialization": "Laboratory Technical Support",
-      "order": 44
+      "order": 44,
+      "emails": [
+        {
+          "address": "Khrakib85@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_45",
@@ -994,7 +1293,8 @@
       "tnt": "",
       "whatsapp": "8801825868662",
       "specialization": "Workshop Equipment Support",
-      "order": 45
+      "order": 45,
+      "emails": []
     },
     {
       "id": "fac_46",
@@ -1007,7 +1307,13 @@
       "tnt": "",
       "whatsapp": "8801987527264",
       "specialization": "Lab Record & Equipment Handling",
-      "order": 46
+      "order": 46,
+      "emails": [
+        {
+          "address": "afrinatasmim.sub@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_47",
@@ -1020,7 +1326,8 @@
       "tnt": "",
       "whatsapp": "8801834058770",
       "specialization": "Laboratory Operations Support",
-      "order": 47
+      "order": 47,
+      "emails": []
     },
     {
       "id": "fac_48",
@@ -1033,7 +1340,8 @@
       "tnt": "",
       "whatsapp": "8801917884470",
       "specialization": "Lab Facilities & Logistics",
-      "order": 48
+      "order": 48,
+      "emails": []
     },
     {
       "id": "fac_49",
@@ -1046,7 +1354,8 @@
       "tnt": "",
       "whatsapp": "8801840219603",
       "specialization": "Equipment Upkeep & Lab Handling",
-      "order": 49
+      "order": 49,
+      "emails": []
     },
     {
       "id": "fac_50",
@@ -1059,7 +1368,13 @@
       "tnt": "",
       "whatsapp": "8801830557462",
       "specialization": "Laboratory Technical Maintenance",
-      "order": 50
+      "order": 50,
+      "emails": [
+        {
+          "address": "mitonshilabeer@gmail.com",
+          "label": "Primary email"
+        }
+      ]
     },
     {
       "id": "fac_51",
@@ -1072,7 +1387,8 @@
       "tnt": "",
       "whatsapp": "8801641416841",
       "specialization": "Departmental Lab Logistics",
-      "order": 51
+      "order": 51,
+      "emails": []
     },
     {
       "id": "fac_52",
@@ -1085,7 +1401,8 @@
       "tnt": "",
       "whatsapp": "8801830108809",
       "specialization": "Workshop & Laboratory Support",
-      "order": 52
+      "order": 52,
+      "emails": []
     },
     {
       "id": "fac_53",
@@ -1098,7 +1415,8 @@
       "tnt": "",
       "whatsapp": "8801834575980",
       "specialization": "Departmental Lab Logistics",
-      "order": 53
+      "order": 53,
+      "emails": []
     }
   ],
   "routines": {
