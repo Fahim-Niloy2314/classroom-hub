@@ -340,3 +340,18 @@ html.light [class*="border-slate-700"] {
   border-color: #e2e8f0 !important;
 }
 
+/* 10. KaTeX Mathematical Display Formatting */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.4rem 0.6rem;
+  margin: 0.4rem 0;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.katex {
+  font-size: 1.05em;
+  color: #f8fafc;
+}
+
