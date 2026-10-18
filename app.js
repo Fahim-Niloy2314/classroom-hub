@@ -805,6 +805,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   setupDialogLightDismiss();
   await loadClassroomData();
+  await loadPortalSyncData();
   applyLanguage(currentLang);
   loadCustomContacts();
   applyPortalSettings();
@@ -819,6 +820,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderAdminWorkspace();
   lucide.createIcons();
 });
+
+async function loadPortalSyncData() {
+  try {
+    const res = await fetch('portal_sync.json?v=' + Date.now(), { cache: 'no-cache' });
+    if (res.ok) {
+      const syncData = await res.json();
+      if (syncData.notices && Array.isArray(syncData.notices) && syncData.notices.length > 0) {
+        adminNotices = syncData.notices;
+        localStorage.setItem(STORAGE_KEYS.ADMIN_NOTICES, JSON.stringify(adminNotices));
+      }
+      if (syncData.faculty && Array.isArray(syncData.faculty) && syncData.faculty.length >= 40) {
+        saveFacultyMembers(syncData.faculty);
+      }
+      if (syncData.portalSettings) {
+        Object.assign(portalSettings, syncData.portalSettings);
+        localStorage.setItem(STORAGE_KEYS.PORTAL_SETTINGS, JSON.stringify(portalSettings));
+      }
+      console.log('✓ Successfully synchronized live CMS updates from portal_sync.json');
+    }
+  } catch (err) {
+    console.warn('Note on portal_sync.json (operating in cached mode):', err);
+  }
+}
 
 async function loadClassroomData() {
   if (window.CLASSROOM_DATA) {
@@ -7584,196 +7608,667 @@ function resetCgpaCalculator() {
    ========================================================================= */
 const DEFAULT_FACULTY_MEMBERS = [
   {
-    id: 'fac_1',
-    name: 'Prof. Dr. Muhammad Mostafa Kamal Bhuiya',
-    designation: 'Head of Department & Professor',
-    category: 'HEAD',
-    room: 'ME Building, Room 301',
-    email: 'kamal@cuet.ac.bd',
-    phone: '+880 1711-000000',
-    whatsapp: '8801711000000',
-    specialization: 'Thermal Engineering, Heat Transfer, Fluid Mechanics',
-    order: 1
+    "id": "fac_1",
+    "name": "Dr. Bodius Salam",
+    "designation": "Professor",
+    "category": "PROFESSOR",
+    "room": "ME Building",
+    "email": "bodiussalam@yahoo.com, bsalam@cuet.ac.bd",
+    "phone": "01713109924",
+    "tnt": "2704",
+    "whatsapp": "8801713109924",
+    "specialization": "Thermal Engineering, Solar Energy, Heat Transfer",
+    "order": 1
   },
   {
-    id: 'fac_2',
-    name: 'Prof. Dr. Bodius Salam',
-    designation: 'Professor',
-    category: 'PROFESSOR',
-    room: 'ME Building, Room 302',
-    email: 'bsalam@cuet.ac.bd',
-    phone: '+880 1712-000000',
-    whatsapp: '8801712000000',
-    specialization: 'Renewable Energy, Heat Transfer, Solar Thermal Systems',
-    order: 2
+    "id": "fac_2",
+    "name": "Dr. Md. Mahbubul Alam",
+    "designation": "Professor",
+    "category": "PROFESSOR",
+    "room": "ME Building",
+    "email": "mahbub87@yahoo.com, malam@cuet.ac.bd",
+    "phone": "01812830127",
+    "tnt": "2702",
+    "whatsapp": "8801812830127",
+    "specialization": "Production & Manufacturing Engineering, Materials",
+    "order": 2
   },
   {
-    id: 'fac_3',
-    name: 'Prof. Dr. Md. Mahbubul Alam',
-    designation: 'Dean (Faculty of ME) & Professor',
-    category: 'HEAD',
-    room: 'Dean Office, ME Building',
-    email: 'mahbub@cuet.ac.bd',
-    phone: '+880 1713-000000',
-    whatsapp: '8801713000000',
-    specialization: 'Manufacturing Processes, Production Engineering, Materials',
-    order: 3
+    "id": "fac_3",
+    "name": "Dr. Sajal Chandra Banik",
+    "designation": "Professor",
+    "category": "PROFESSOR",
+    "room": "Mechatronics & Robotics Lab",
+    "email": "baniksajal@cuet.ac.bd",
+    "phone": "01821781459",
+    "tnt": "2724",
+    "whatsapp": "8801821781459",
+    "specialization": "Robotics, Mechatronics, Automation & Control",
+    "order": 3
   },
   {
-    id: 'fac_4',
-    name: 'Prof. Dr. Sajal Chandra Banik',
-    designation: 'Professor',
-    category: 'PROFESSOR',
-    room: 'Mechatronics & Robotics Lab, Room 201',
-    email: 'banik@cuet.ac.bd',
-    phone: '+880 1714-000000',
-    whatsapp: '8801714000000',
-    specialization: 'Robotics, Mechatronics, Control Systems & Automation',
-    order: 4
+    "id": "fac_4",
+    "name": "Dr. Jamal Uddin Ahamed",
+    "designation": "Professor",
+    "category": "PROFESSOR",
+    "room": "ME Building",
+    "email": "jamal293@yahoo.com, jamal@cuet.ac.bd",
+    "phone": "01720641636",
+    "tnt": "2714",
+    "whatsapp": "8801720641636",
+    "specialization": "Thermal Power, Energy Conservation, Nanofluids",
+    "order": 4
   },
   {
-    id: 'fac_5',
-    name: 'Prof. Dr. Md. Mizanur Rahman',
-    designation: 'Professor',
-    category: 'PROFESSOR',
-    room: 'ME Building, Room 304',
-    email: 'mizanur@cuet.ac.bd',
-    phone: '+880 1715-000000',
-    whatsapp: '8801715000000',
-    specialization: 'Automobile Engineering, IC Engines, Alternative Fuels',
-    order: 5
+    "id": "fac_5",
+    "name": "Dr. Sheikh Muhammad Humayun Kabir",
+    "designation": "Professor",
+    "category": "PROFESSOR",
+    "room": "ME Building",
+    "email": "humayun@cuet.ac.bd, daliinuoo@yahoo.com",
+    "phone": "01716469972",
+    "tnt": "2726",
+    "whatsapp": "8801716469972",
+    "specialization": "Applied Mechanics, Solid Mechanics & Stress Analysis",
+    "order": 5
   },
   {
-    id: 'fac_6',
-    name: 'Prof. Dr. Jamal Hossen',
-    designation: 'Professor',
-    category: 'PROFESSOR',
-    room: 'ME Building, Room 305',
-    email: 'jamal@cuet.ac.bd',
-    phone: '+880 1716-000000',
-    whatsapp: '8801716000000',
-    specialization: 'Computational Fluid Dynamics (CFD), Aerodynamics',
-    order: 6
+    "id": "fac_6",
+    "name": "Dr. Kazi Afzalur Rahman",
+    "designation": "Professor",
+    "category": "PROFESSOR",
+    "room": "ME Building",
+    "email": "afzalur99@yahoo.com, afzal@cuet.ac.bd",
+    "phone": "01680453267",
+    "tnt": "2723",
+    "whatsapp": "8801680453267",
+    "specialization": "Fluid Machinery, CFD & Fluid Dynamics",
+    "order": 6
   },
   {
-    id: 'fac_7',
-    name: 'Prof. Dr. Kazi Afzalur Rahman',
-    designation: 'Professor',
-    category: 'PROFESSOR',
-    room: 'ME Building, Room 306',
-    email: 'afzal@cuet.ac.bd',
-    phone: '+880 1717-000000',
-    whatsapp: '8801717000000',
-    specialization: 'Machine Design, Solid Mechanics, Finite Element Analysis',
-    order: 7
+    "id": "fac_7",
+    "name": "Dr. Mohammad Mizanur Rahman",
+    "designation": "Professor",
+    "category": "PROFESSOR",
+    "room": "Automobile Lab, ME Building",
+    "email": "mmrahman.cuet@gmail.com",
+    "phone": "01864800089",
+    "tnt": "2710",
+    "whatsapp": "8801864800089",
+    "specialization": "Automobile Engineering, IC Engines, Alternate Fuels",
+    "order": 7
   },
   {
-    id: 'fac_8',
-    name: 'Prof. Dr. Md. Tazul Islam',
-    designation: 'Professor',
-    category: 'PROFESSOR',
-    room: 'ME Building, Room 307',
-    email: 'tazul@cuet.ac.bd',
-    phone: '+880 1718-000000',
-    whatsapp: '8801718000000',
-    specialization: 'Turbomachinery, Fluid Power Systems, Energy Systems',
-    order: 8
+    "id": "fac_8",
+    "name": "Dr. Muhammad Mostafa Kamal Bhuiya",
+    "designation": "Head of Department & Professor",
+    "category": "HEAD",
+    "room": "Department Head Office, ME Building",
+    "email": "mkamalcuet@yahoo.com, mkamal@cuet.ac.bd",
+    "phone": "01784353193",
+    "tnt": "2729",
+    "whatsapp": "8801784353193",
+    "specialization": "Thermal Engineering, Heat Transfer Enhancement, Renewable Energy",
+    "order": 8
   },
   {
-    id: 'fac_9',
-    name: 'Dr. Sanjoy Kumar Nandi',
-    designation: 'Associate Professor',
-    category: 'ASSOCIATE',
-    room: 'ME Building, Room 202',
-    email: 'sanjoy@cuet.ac.bd',
-    phone: '+880 1719-000000',
-    whatsapp: '8801719000000',
-    specialization: 'Thermal Science, Nanofluids, Heat Exchanger Design',
-    order: 9
+    "id": "fac_9",
+    "name": "Dr. Md. Sanaul Rabbi",
+    "designation": "Professor",
+    "category": "PROFESSOR",
+    "room": "ME Building",
+    "email": "rabbi@cuet.ac.bd",
+    "phone": "01717300305",
+    "tnt": "",
+    "whatsapp": "8801717300305",
+    "specialization": "Thermodynamics, Power Plant, Heat Systems",
+    "order": 9
   },
   {
-    id: 'fac_10',
-    name: 'Dr. Md. Arafat Hossain',
-    designation: 'Associate Professor',
-    category: 'ASSOCIATE',
-    room: 'ME Building, Room 203',
-    email: 'arafat@cuet.ac.bd',
-    phone: '+880 1720-000000',
-    whatsapp: '8801720000000',
-    specialization: 'Materials Science, Metallurgy, Fracture Mechanics',
-    order: 10
+    "id": "fac_10",
+    "name": "Dr. Md. Arafat Rahman",
+    "designation": "Professor",
+    "category": "PROFESSOR",
+    "room": "ME Building",
+    "email": "arafat@cuet.ac.bd",
+    "phone": "01719416328",
+    "tnt": "2727",
+    "whatsapp": "8801719416328",
+    "specialization": "Materials Science, Metallurgy, Fracture Mechanics",
+    "order": 10
   },
   {
-    id: 'fac_11',
-    name: 'Engr. Md. Nurul Absar',
-    designation: 'Assistant Professor',
-    category: 'ASSOCIATE',
-    room: 'ME Building, Room 204',
-    email: 'absar@cuet.ac.bd',
-    phone: '+880 1721-000000',
-    whatsapp: '8801721000000',
-    specialization: 'Mechanics of Machinery, Vibrations & Noise Control',
-    order: 11
+    "id": "fac_11",
+    "name": "Dr. Prasanjit Das",
+    "designation": "Associate Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "prasanjit12@gmail.com, prasanjit@cuet.ac.bd",
+    "phone": "01642997909",
+    "tnt": "",
+    "whatsapp": "8801642997909",
+    "specialization": "Combustion, Energy Systems, Thermal Modeling",
+    "order": 11
   },
   {
-    id: 'fac_12',
-    name: 'Engr. Asif Mohammad',
-    designation: 'Assistant Professor',
-    category: 'ASSOCIATE',
-    room: 'ME Building, Room 205',
-    email: 'asif@cuet.ac.bd',
-    phone: '+880 1722-000000',
-    whatsapp: '8801722000000',
-    specialization: 'Applied Thermodynamics, Refrigeration & Cryogenics',
-    order: 12
+    "id": "fac_12",
+    "name": "Dr. Abu Shadat Muhammad Sayem",
+    "designation": "Associate Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "yessayem@yahoo.com, a.sayem@cuet.ac.bd",
+    "phone": "01710503692",
+    "tnt": "",
+    "whatsapp": "8801710503692",
+    "specialization": "Fluid Mechanics, Multiphase Flow & Heat Exchangers",
+    "order": 12
   },
   {
-    id: 'fac_13',
-    name: 'Engr. Tanvir Ahmed',
-    designation: 'Lecturer',
-    category: 'ASSOCIATE',
-    room: 'ME Building, Room 206',
-    email: 'tanvir@cuet.ac.bd',
-    phone: '+880 1723-000000',
-    whatsapp: '8801723000000',
-    specialization: 'Fluid Power, CAD/CAM, Operations Research',
-    order: 13
+    "id": "fac_13",
+    "name": "Dr. Md. Mamunur Roshid",
+    "designation": "Associate Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "mamun_cuet2003@yahoo.com, mamuncuet2003@cuet.ac.bd",
+    "phone": "01818651850",
+    "tnt": "",
+    "whatsapp": "8801818651850",
+    "specialization": "Applied Mechanics, Vibration Analysis, Dynamics",
+    "order": 13
   },
   {
-    id: 'fac_14',
-    name: 'Engr. Sourav Barua',
-    designation: 'Lecturer',
-    category: 'ASSOCIATE',
-    room: 'ME Building, Room 207',
-    email: 'sourav@cuet.ac.bd',
-    phone: '+880 1724-000000',
-    whatsapp: '8801724000000',
-    specialization: 'Control Engineering, Smart Sensors, IoT Applications',
-    order: 14
+    "id": "fac_14",
+    "name": "Dr. Md. Abu Mowazzem Hossain",
+    "designation": "Associate Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "mowazzem@cuet.ac.bd",
+    "phone": "01735530848",
+    "tnt": "2722",
+    "whatsapp": "8801735530848",
+    "specialization": "Manufacturing Engineering, Tool Wear & Metal Cutting",
+    "order": 14
   },
   {
-    id: 'fac_15',
-    name: 'Md. Rafiqul Islam',
-    designation: 'Administrative Officer',
-    category: 'STAFF',
-    room: 'Department Head Office, Ground Floor',
-    email: 'me_office@cuet.ac.bd',
-    phone: '+880 31-714946',
-    whatsapp: '8801819000000',
-    specialization: 'Academic Administration, Exam Notifications & Registration',
-    order: 15
+    "id": "fac_15",
+    "name": "Dr. Tilok Kumar Das",
+    "designation": "Associate Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "tilok_cuet@yahoo.com, tilok@cuet.ac.bd",
+    "phone": "01818767625",
+    "tnt": "",
+    "whatsapp": "8801818767625",
+    "specialization": "Renewable Energy, Heat Transfer, Fluid Mechanics",
+    "order": 15
   },
   {
-    id: 'fac_16',
-    name: 'Mohammed Harun-or-Rashid',
-    designation: 'Senior Lab Technician',
-    category: 'STAFF',
-    room: 'Machine Shop & Central Workshop',
-    email: 'harun_lab@cuet.ac.bd',
-    phone: '+880 1819-000000',
-    whatsapp: '8801819000000',
-    specialization: 'Thermal Lab Operations, Lathe & Shaper Machine Maintenance',
-    order: 16
+    "id": "fac_16",
+    "name": "Mr. Md. Aminul Islam",
+    "designation": "Assistant Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "aislam@cuet.ac.bd",
+    "phone": "01837888835",
+    "tnt": "2720",
+    "whatsapp": "8801837888835",
+    "specialization": "Thermodynamics & Heat Transfer",
+    "order": 16
+  },
+  {
+    "id": "fac_17",
+    "name": "Mr. Syed Masrur Ahmmad",
+    "designation": "Assistant Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "bdmasrur91@gmail.com",
+    "phone": "01725554528",
+    "tnt": "2712",
+    "whatsapp": "8801725554528",
+    "specialization": "Machine Design & Stress Analysis",
+    "order": 17
+  },
+  {
+    "id": "fac_18",
+    "name": "Dr. Mostafizur Rahman",
+    "designation": "Assistant Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "rmostafiz31@gmail.com",
+    "phone": "01738263617",
+    "tnt": "",
+    "whatsapp": "8801738263617",
+    "specialization": "Nanotechnology & Materials Science",
+    "order": 18
+  },
+  {
+    "id": "fac_19",
+    "name": "Dr. Afnan Hasan",
+    "designation": "Assistant Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "afnanhasan@cuet.ac.bd, afnanhasan@gmail.com",
+    "phone": "01303042334",
+    "tnt": "",
+    "whatsapp": "8801303042334",
+    "specialization": "Aerodynamics & CFD",
+    "order": 19
+  },
+  {
+    "id": "fac_20",
+    "name": "Mr. Radheshyam Nath Jisu",
+    "designation": "Assistant Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "radheshyamnathjisu@gmail.com, radheshyam@cuet.ac.bd",
+    "phone": "01521227537",
+    "tnt": "",
+    "whatsapp": "8801521227537",
+    "specialization": "Robotics, Automation & Mechatronics",
+    "order": 20
+  },
+  {
+    "id": "fac_21",
+    "name": "Mr. Tafsirul Hassan",
+    "designation": "Assistant Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "tafsir2086@gmail.com",
+    "phone": "01812680648",
+    "tnt": "",
+    "whatsapp": "8801812680648",
+    "specialization": "Fluid Mechanics & Heat Transfer",
+    "order": 21
+  },
+  {
+    "id": "fac_22",
+    "name": "Mr. Mohammad Nezam Uddin Chy",
+    "designation": "Assistant Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "bdnezam15@gmail.com",
+    "phone": "01882823600",
+    "tnt": "",
+    "whatsapp": "8801882823600",
+    "specialization": "Automobile Engineering & Thermal Power",
+    "order": 22
+  },
+  {
+    "id": "fac_23",
+    "name": "Mr. Redoy Masum Meraz",
+    "designation": "Assistant Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "meraz@cuet.ac.bd",
+    "phone": "01712132762",
+    "tnt": "",
+    "whatsapp": "8801712132762",
+    "specialization": "Solid Mechanics & CAD/CAM",
+    "order": 23
+  },
+  {
+    "id": "fac_24",
+    "name": "Mr. Minhaz Ahmed",
+    "designation": "Assistant Professor",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "minhaz@cuet.ac.bd, minhaz.ahmed.1603018@gmail.com",
+    "phone": "01537202191",
+    "tnt": "",
+    "whatsapp": "8801537202191",
+    "specialization": "Renewable Energy & Mechanical Design",
+    "order": 24
+  },
+  {
+    "id": "fac_25",
+    "name": "Mr. Abdullah Al Rifat",
+    "designation": "Lecturer",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "alrifat50@gmail.com",
+    "phone": "01747680478",
+    "tnt": "",
+    "whatsapp": "8801747680478",
+    "specialization": "Thermodynamics & Heat Transfer",
+    "order": 25
+  },
+  {
+    "id": "fac_26",
+    "name": "Mr. Abdullah-Al-Mamun",
+    "designation": "Lecturer",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "Rakibmamun107@gmail.com",
+    "phone": "01824192709",
+    "tnt": "",
+    "whatsapp": "8801824192709",
+    "specialization": "Fluid Dynamics & Turbomachinery",
+    "order": 26
+  },
+  {
+    "id": "fac_27",
+    "name": "Mr. Protick Chandra Ghosh",
+    "designation": "Lecturer",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "protickchandraghosh123@gmail.com",
+    "phone": "01992880020",
+    "tnt": "",
+    "whatsapp": "8801992880020",
+    "specialization": "Control Systems & Robotics",
+    "order": 27
+  },
+  {
+    "id": "fac_28",
+    "name": "Mr. Tahsin Abid Ahmed",
+    "designation": "Lecturer",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "tahsin.me.113@gmail.com",
+    "phone": "01762388882",
+    "tnt": "",
+    "whatsapp": "8801762388882",
+    "specialization": "Materials Science & Mechanical Testing",
+    "order": 28
+  },
+  {
+    "id": "fac_29",
+    "name": "Mr. Md. Tanvir Mahmud",
+    "designation": "Lecturer",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "tanvirmahmud775@gmail.com",
+    "phone": "01876593419",
+    "tnt": "",
+    "whatsapp": "8801876593419",
+    "specialization": "Heat Transfer & IC Engines",
+    "order": 29
+  },
+  {
+    "id": "fac_30",
+    "name": "Ms. Fahmida Zahan",
+    "designation": "Lecturer",
+    "category": "ASSOCIATE",
+    "room": "ME Building",
+    "email": "fahmidazahan82@gmail.com",
+    "phone": "01991945168",
+    "tnt": "2186",
+    "whatsapp": "8801991945168",
+    "specialization": "Thermal Science & Energy Systems",
+    "order": 30
+  },
+  {
+    "id": "fac_31",
+    "name": "Mr. Sujon Kanti Das",
+    "designation": "Senior Technical Officer",
+    "category": "STAFF",
+    "room": "ME Workshop / Laboratories",
+    "email": "sujoncuet@yahoo.com",
+    "phone": "01713109923",
+    "tnt": "",
+    "whatsapp": "8801713109923",
+    "specialization": "Laboratory Instrumentation & Testing Operations",
+    "order": 31
+  },
+  {
+    "id": "fac_32",
+    "name": "Mr. Md. Mominur Rahman",
+    "designation": "Technical Officer",
+    "category": "STAFF",
+    "room": "ME Laboratory",
+    "email": "dippdipu@gmail.com",
+    "phone": "01714595605",
+    "tnt": "2754",
+    "whatsapp": "8801714595605",
+    "specialization": "Lab Setup & Technical Maintenance",
+    "order": 32
+  },
+  {
+    "id": "fac_33",
+    "name": "Mr. Iswar Chandra Mondal",
+    "designation": "Technical Officer",
+    "category": "STAFF",
+    "room": "Central Workshop & ME Labs",
+    "email": "iswarme2018@gmail.com",
+    "phone": "01782555584",
+    "tnt": "2759",
+    "whatsapp": "8801782555584",
+    "specialization": "Workshop Machines & Testing Services",
+    "order": 33
+  },
+  {
+    "id": "fac_34",
+    "name": "Mr. Sirajul Monir",
+    "designation": "Section Officer",
+    "category": "STAFF",
+    "room": "Department Office, ME Building",
+    "email": "mdmonirctg99@gmail.com",
+    "phone": "01835508202",
+    "tnt": "",
+    "whatsapp": "8801835508202",
+    "specialization": "Academic Administration & Records",
+    "order": 34
+  },
+  {
+    "id": "fac_35",
+    "name": "Mr. Syed Md. Dastagir",
+    "designation": "Section Officer",
+    "category": "STAFF",
+    "room": "Department Office, ME Building",
+    "email": "dastagir88@yahoo.com",
+    "phone": "01817725904",
+    "tnt": "",
+    "whatsapp": "8801817725904",
+    "specialization": "Administrative Support & Coordination",
+    "order": 35
+  },
+  {
+    "id": "fac_36",
+    "name": "Ms. Anuradha Mallick",
+    "designation": "Administrative Officer",
+    "category": "STAFF",
+    "room": "Department Office, ME Building",
+    "email": "radhacuet@gmail.com",
+    "phone": "01811923524",
+    "tnt": "2755",
+    "whatsapp": "8801811923524",
+    "specialization": "Office Affairs & Student Communication",
+    "order": 36
+  },
+  {
+    "id": "fac_37",
+    "name": "Mr. Mohammad Abdullah",
+    "designation": "Office Staff",
+    "category": "STAFF",
+    "room": "Department Office, ME Building",
+    "email": "mdabdullahcuet@gmail.com",
+    "phone": "01914594662",
+    "tnt": "2756",
+    "whatsapp": "8801914594662",
+    "specialization": "Departmental Correspondence & Logistics",
+    "order": 37
+  },
+  {
+    "id": "fac_38",
+    "name": "Mr. Md. Abu Shahadat",
+    "designation": "Staff / Technician",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "",
+    "phone": "01818557009",
+    "tnt": "",
+    "whatsapp": "8801818557009",
+    "specialization": "Laboratory Operations & Maintenance",
+    "order": 38
+  },
+  {
+    "id": "fac_39",
+    "name": "Mr. Emranul Hoque",
+    "designation": "Staff / Technician",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "emranulhoque@gmail.com",
+    "phone": "01627635838",
+    "tnt": "",
+    "whatsapp": "8801627635838",
+    "specialization": "Lab Maintenance & Support",
+    "order": 39
+  },
+  {
+    "id": "fac_42",
+    "name": "Mr. Rupayan Das",
+    "designation": "Staff / Technician",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "rupayandas002@gmail.com",
+    "phone": "01811920365",
+    "tnt": "",
+    "whatsapp": "8801811920365",
+    "specialization": "Machine Operation & Tooling",
+    "order": 42
+  },
+  {
+    "id": "fac_43",
+    "name": "Mr. Muhammed Khalilur Rahman",
+    "designation": "Staff / Technician",
+    "category": "STAFF",
+    "room": "Central Workshop & Labs",
+    "email": "khalilcuet26@gmail.com",
+    "phone": "01818889100",
+    "tnt": "",
+    "whatsapp": "8801818889100",
+    "specialization": "Workshop Fabrication & Maintenance",
+    "order": 43
+  },
+  {
+    "id": "fac_44",
+    "name": "Mr. Mohammad Kamrul Hasan",
+    "designation": "Staff / Technician",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "Khrakib85@gmail.com",
+    "phone": "01815185152",
+    "tnt": "",
+    "whatsapp": "8801815185152",
+    "specialization": "Laboratory Technical Support",
+    "order": 44
+  },
+  {
+    "id": "fac_45",
+    "name": "Mr. Muhammad Abdul Kader",
+    "designation": "Staff / Technician",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "",
+    "phone": "01825868662",
+    "tnt": "",
+    "whatsapp": "8801825868662",
+    "specialization": "Workshop Equipment Support",
+    "order": 45
+  },
+  {
+    "id": "fac_46",
+    "name": "Ms. Afrina Tasmim",
+    "designation": "Staff / Lab Attendant",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "afrinatasmim.sub@gmail.com",
+    "phone": "01987527264",
+    "tnt": "",
+    "whatsapp": "8801987527264",
+    "specialization": "Lab Record & Equipment Handling",
+    "order": 46
+  },
+  {
+    "id": "fac_47",
+    "name": "Mr. Md. Abu Taher",
+    "designation": "Staff / Lab Attendant",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "",
+    "phone": "01834058770",
+    "tnt": "",
+    "whatsapp": "8801834058770",
+    "specialization": "Laboratory Operations Support",
+    "order": 47
+  },
+  {
+    "id": "fac_48",
+    "name": "Mr. Shafiqul Islam",
+    "designation": "Staff / Lab Attendant",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "",
+    "phone": "01917884470",
+    "tnt": "",
+    "whatsapp": "8801917884470",
+    "specialization": "Lab Facilities & Logistics",
+    "order": 48
+  },
+  {
+    "id": "fac_49",
+    "name": "Mr. Sumon Chakraborty",
+    "designation": "Staff / Lab Attendant",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "",
+    "phone": "01840219603",
+    "tnt": "",
+    "whatsapp": "8801840219603",
+    "specialization": "Equipment Upkeep & Lab Handling",
+    "order": 49
+  },
+  {
+    "id": "fac_50",
+    "name": "Mr. Miton Shil",
+    "designation": "Staff / Lab Attendant",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "mitonshilabeer@gmail.com",
+    "phone": "01830557462",
+    "tnt": "",
+    "whatsapp": "8801830557462",
+    "specialization": "Laboratory Technical Maintenance",
+    "order": 50
+  },
+  {
+    "id": "fac_51",
+    "name": "Mr. Nazim Uddin",
+    "designation": "Staff / Lab Attendant",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "",
+    "phone": "01641416841",
+    "tnt": "",
+    "whatsapp": "8801641416841",
+    "specialization": "Departmental Lab Logistics",
+    "order": 51
+  },
+  {
+    "id": "fac_52",
+    "name": "Mr. Jobayed Hossen",
+    "designation": "Staff / Lab Attendant",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "",
+    "phone": "01830108809",
+    "tnt": "",
+    "whatsapp": "8801830108809",
+    "specialization": "Workshop & Laboratory Support",
+    "order": 52
+  },
+  {
+    "id": "fac_53",
+    "name": "Mr. Mohammed Ariful Hoque",
+    "designation": "Staff / Lab Attendant",
+    "category": "STAFF",
+    "room": "ME Laboratories",
+    "email": "",
+    "phone": "01834575980",
+    "tnt": "",
+    "whatsapp": "8801834575980",
+    "specialization": "Departmental Lab Logistics",
+    "order": 53
   }
 ];
 
@@ -7785,11 +8280,12 @@ function getFacultyMembers() {
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length >= 40) return parsed;
     } catch (e) {
       console.warn('Error reading faculty members:', e);
     }
   }
+  localStorage.setItem(STORAGE_KEYS.ADMIN_FACULTY, JSON.stringify(DEFAULT_FACULTY_MEMBERS));
   return DEFAULT_FACULTY_MEMBERS;
 }
 
@@ -7844,7 +8340,9 @@ function renderFacultyDirectory() {
       (f.designation && f.designation.toLowerCase().includes(facultySearchKeyword)) ||
       (f.specialization && f.specialization.toLowerCase().includes(facultySearchKeyword)) ||
       (f.room && f.room.toLowerCase().includes(facultySearchKeyword)) ||
-      (f.email && f.email.toLowerCase().includes(facultySearchKeyword))
+      (f.email && f.email.toLowerCase().includes(facultySearchKeyword)) ||
+      (f.phone && f.phone.includes(facultySearchKeyword)) ||
+      (f.tnt && f.tnt.includes(facultySearchKeyword))
     );
   }
 
@@ -7891,9 +8389,12 @@ function renderFacultyDirectory() {
             </div>
           ` : ''}
           ${f.phone ? `
-            <div class="flex items-center gap-2">
-              <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
-              <span>${f.phone}</span>
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
+                <span class="font-mono text-slate-200 text-xs">${f.phone}</span>
+              </div>
+              ${f.tnt ? `<span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-amber-300 font-mono font-bold border border-slate-700">TNT: ${f.tnt}</span>` : ''}
             </div>
           ` : ''}
           ${f.specialization ? `
