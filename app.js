@@ -1471,48 +1471,35 @@ function renderHome() {
   if (!appData) return;
   const dict = I18N[currentLang];
 
-  document.getElementById('statFilesCount').textContent = (appData.summary?.total_academic_files || 3896).toLocaleString();
-  document.getElementById('statPdfCount').textContent = (appData.summary?.pdf_count || 2986).toLocaleString();
-  document.getElementById('statTermsCount').textContent = appData.terms?.length || 8;
-  document.getElementById('statCoursesCount').textContent = `${appData.summary?.total_courses || 50}+`;
+  const statFiles = document.getElementById('statFilesCount');
+  if (statFiles) statFiles.textContent = (appData.summary?.total_academic_files || 3896).toLocaleString();
+  const statPdf = document.getElementById('statPdfCount');
+  if (statPdf) statPdf.textContent = (appData.summary?.pdf_count || 2986).toLocaleString();
+  const statTerms = document.getElementById('statTermsCount');
+  if (statTerms) statTerms.textContent = appData.terms?.length || 8;
+  const statCourses = document.getElementById('statCoursesCount');
+  if (statCourses) statCourses.textContent = `${appData.summary?.total_courses || 50}+`;
 
   const grid = document.getElementById('homeSemestersGrid');
-  if (!grid) return;
-  grid.innerHTML = '';
-
-  appData.terms.forEach(term => {
-    const card = document.createElement('div');
-    card.className = 'p-5 rounded-2xl glass-card cursor-pointer group flex flex-col justify-between';
-    card.onclick = () => {
-      openSemesterFolder(term.code);
-    };
-
-    card.innerHTML = `
-      <div class="space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-400 font-bold font-mono text-xs border border-indigo-500/30">
-            ${term.code}
-          </span>
-          <span class="text-xs text-slate-500 font-medium">Level ${term.code[1]} Term ${term.code[4]}</span>
-        </div>
-        <h4 class="text-base font-bold text-white group-hover:text-indigo-400 transition-colors flex items-center gap-2">
-          <i data-lucide="folder" class="w-4 h-4 text-indigo-400"></i>
-          <span>${term.code} Semester</span>
-        </h4>
-        <p class="text-xs text-slate-400 line-clamp-2">
-          ${term.courses.map(c => c.name).slice(0, 3).join(', ')}...
-        </p>
-      </div>
-
-      <div class="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-        <span>${term.course_count} ${currentLang === 'en' ? 'Courses' : 'টি কোর্স'}</span>
-        <span class="text-indigo-400 font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
-          ${term.total_files} ${currentLang === 'en' ? 'Files' : 'ফাইল'} →
-        </span>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
+  if (grid && appData.terms) {
+    grid.innerHTML = appData.terms.map(term => {
+      const previewNames = term.courses ? term.courses.map(c => c.name).slice(0, 3).join(', ') : '';
+      return `
+        <button onclick="openSemesterFolder('${term.code}')" class="academic-card p-3.5 text-left transition-all group">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-bold text-forest font-mono">${term.code}</span>
+            <i data-lucide="folder" class="w-4 h-4 text-muted group-hover:text-forest transition-colors"></i>
+          </div>
+          <div class="text-xs font-semibold text-main group-hover:text-forest">Level ${term.code[1]} Term ${term.code[4]}</div>
+          <div class="text-[10px] text-muted mt-0.5 line-clamp-1">${previewNames || 'Core Engineering Curriculum'}</div>
+          <div class="text-[10px] text-muted font-mono mt-1 pt-1 border-t border-line/60 flex items-center justify-between">
+            <span>${term.course_count} ${currentLang === 'en' ? 'courses' : 'কোর্স'}</span>
+            <span class="text-forest font-semibold">${term.total_files} ${currentLang === 'en' ? 'files' : 'ফাইল'}</span>
+          </div>
+        </button>
+      `;
+    }).join('');
+  }
 
   renderHomeVideos();
   if (typeof renderHomeNotices === 'function') renderHomeNotices();
@@ -1899,6 +1886,15 @@ function openSubfolder(encPath) {
   renderExplorer();
 }
 
+function navigateExplorerTo(level, term = null, course = null, subfolder = null) {
+  explorerState.level = level;
+  explorerState.selectedTerm = term;
+  explorerState.selectedCourse = course;
+  explorerState.selectedSubfolder = subfolder;
+  setupSemesterPills();
+  renderExplorer();
+}
+
 function renderBreadcrumbs() {
   const container = document.getElementById('explorerBreadcrumbs');
   const backBtn = document.getElementById('explorerBackBtn');
@@ -1906,13 +1902,13 @@ function renderBreadcrumbs() {
   if (!container) return;
 
   const crumbs = [
-    { label: dict.all_semesters_title, action: () => { explorerState.level = 'semesters'; explorerState.selectedTerm = null; explorerState.selectedCourse = null; explorerState.selectedSubfolder = null; setupSemesterPills(); renderExplorer(); } }
+    { label: dict.all_semesters_title, onclick: "navigateExplorerTo('semesters')" }
   ];
 
   if (explorerState.selectedTerm) {
     crumbs.push({
       label: `${explorerState.selectedTerm}`,
-      action: () => { explorerState.level = 'courses'; explorerState.selectedCourse = null; explorerState.selectedSubfolder = null; renderExplorer(); }
+      onclick: `navigateExplorerTo('courses', '${explorerState.selectedTerm}')`
     });
   }
 
@@ -1920,7 +1916,7 @@ function renderBreadcrumbs() {
     const decodedCourse = decodeURIComponent(explorerState.selectedCourse);
     crumbs.push({
       label: decodedCourse,
-      action: () => { explorerState.level = 'files'; explorerState.selectedSubfolder = null; renderExplorer(); }
+      onclick: `navigateExplorerTo('files', '${explorerState.selectedTerm}', '${encodeURIComponent(decodedCourse)}')`
     });
   }
 
@@ -1933,7 +1929,7 @@ function renderBreadcrumbs() {
       const isLast = idx === parts.length - 1;
       crumbs.push({
         label: part,
-        action: isLast ? () => {} : () => { explorerState.selectedSubfolder = targetPath; renderExplorer(); }
+        onclick: isLast ? '' : `navigateExplorerTo('files', '${explorerState.selectedTerm}', '${encodeURIComponent(decodeURIComponent(explorerState.selectedCourse))}', '${encodeURIComponent(targetPath)}')`
       });
     });
   }
@@ -1942,9 +1938,9 @@ function renderBreadcrumbs() {
     const isLast = idx === crumbs.length - 1;
     return `
       <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
-        ${idx > 0 ? '<i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-600"></i>' : ''}
-        <button onclick="(${c.action.toString()})()" class="${isLast ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-white'} flex items-center gap-1 text-xs transition-colors">
-          <i data-lucide="${isLast && explorerState.level === 'files' ? 'folder-open' : 'folder'}" class="w-3.5 h-3.5"></i>
+        ${idx > 0 ? '<i data-lucide="chevron-right" class="w-3.5 h-3.5 text-muted"></i>' : ''}
+        <button ${c.onclick ? `onclick="${c.onclick}"` : ''} class="${isLast ? 'text-forest font-bold' : 'text-muted hover:text-main'} flex items-center gap-1 text-xs transition-colors">
+          <i data-lucide="${isLast && explorerState.level === 'files' ? 'folder-open' : 'folder'}" class="w-3.5 h-3.5 text-forest"></i>
           <span>${c.label}</span>
         </button>
       </span>
@@ -1986,14 +1982,14 @@ function renderExplorer() {
 
   // CASE 1: SEARCH ACTIVE -> Global search across all 3,896 files
   if (searchQuery) {
-    titleEl.textContent = currentLang === 'en' ? `Search Results for "${searchQuery}"` : `"${searchQuery}" এর সার্চ ফলাফল`;
+    if (titleEl) titleEl.textContent = currentLang === 'en' ? `Search Results for "${searchQuery}"` : `"${searchQuery}" এর সার্চ ফলাফল`;
     const allFiles = getAllFlatFiles();
     const filtered = allFiles.filter(f => {
       if (explorerState.selectedCategory !== 'ALL' && f.category !== explorerState.selectedCategory) return false;
       const target = `${f.name} ${f.course} ${f.term_code} ${f.category}`.toLowerCase();
       return searchQuery.split(/\s+/).every(token => target.includes(token));
     });
-    countBadge.textContent = filtered.length;
+    if (countBadge) countBadge.textContent = filtered.length;
     renderFileList(filtered, grid);
     lucide.createIcons();
     return;
@@ -2023,8 +2019,8 @@ function renderExplorer() {
     }
 
     const filtered = scopeFiles.filter(f => f.category === explorerState.selectedCategory);
-    titleEl.textContent = `${catTitle} • ${scopeLabel}`;
-    countBadge.textContent = filtered.length;
+    if (titleEl) titleEl.textContent = `${catTitle} • ${scopeLabel}`;
+    if (countBadge) countBadge.textContent = filtered.length;
     renderFileList(filtered, grid);
     lucide.createIcons();
     return;
@@ -2032,8 +2028,8 @@ function renderExplorer() {
 
   // CASE 2: LEVEL 1 -> SEMESTERS VIEW
   if (explorerState.level === 'semesters') {
-    titleEl.textContent = dict.all_semesters_title;
-    countBadge.textContent = appData.terms.length;
+    if (titleEl) titleEl.textContent = dict.all_semesters_title;
+    if (countBadge) countBadge.textContent = appData.terms.length;
 
     grid.innerHTML = appData.terms.map(term => `
       <div onclick="openSemesterFolder('${term.code}')" class="p-5 rounded-2xl glass-card cursor-pointer group flex items-start gap-4 hover:border-indigo-500/50 transition-all">
@@ -2077,10 +2073,10 @@ function renderExplorer() {
   // CASE 3: LEVEL 2 -> COURSE FOLDERS IN SELECTED SEMESTER
   if (explorerState.level === 'courses') {
     const termObj = appData.terms.find(t => t.code === explorerState.selectedTerm);
-    titleEl.textContent = `${dict.courses_in} ${explorerState.selectedTerm}`;
+    if (titleEl) titleEl.textContent = `${dict.courses_in} ${explorerState.selectedTerm}`;
     if (!termObj) { grid.innerHTML = `<p class="col-span-full text-center text-slate-500">Term not found</p>`; return; }
 
-    countBadge.textContent = termObj.courses.length;
+    if (countBadge) countBadge.textContent = termObj.courses.length;
 
     grid.innerHTML = termObj.courses.map(course => `
       <div onclick="openCourseFolder('${encodeURIComponent(course.name)}')" class="p-5 rounded-2xl glass-card cursor-pointer group flex items-start gap-4 hover:border-indigo-500/50 transition-all">
@@ -2131,9 +2127,9 @@ function renderExplorer() {
     // Title representation
     if (currentSubfolder) {
       const subfolderBaseName = currentSubfolder.split('/').pop();
-      titleEl.textContent = `${subfolderBaseName} (${decodedCourseName})`;
+      if (titleEl) titleEl.textContent = `${subfolderBaseName} (${decodedCourseName})`;
     } else {
-      titleEl.textContent = decodedCourseName;
+      if (titleEl) titleEl.textContent = decodedCourseName;
     }
 
     // Partition into immediate subfolders and direct files at this level
@@ -2171,7 +2167,7 @@ function renderExplorer() {
 
     const subfolderKeys = Object.keys(immediateFoldersMap).sort((a, b) => a.localeCompare(undefined, { numeric: true, sensitivity: 'base' }));
 
-    countBadge.textContent = subfolderKeys.length + directFiles.length;
+    if (countBadge) countBadge.textContent = subfolderKeys.length + directFiles.length;
 
     let html = '';
 
@@ -2527,7 +2523,8 @@ async function initVisitorCount() {
 async function handleFeedbackSubmit(e) {
   if (e && e.preventDefault) e.preventDefault();
   const name = document.getElementById('fbName')?.value.trim() || 'Anonymous Student';
-  const roll = document.getElementById('fbRoll')?.value.trim() || 'N/A';
+  const roll = document.getElementById('fbRoll')?.value.trim() || '';
+  const contact = document.getElementById('fbContact')?.value.trim() || '';
   const category = document.getElementById('fbCategory')?.value || 'General Feedback';
   const message = document.getElementById('fbMessage')?.value.trim();
   const rating = document.querySelector('input[name="fbRating"]:checked')?.value || '5';
@@ -2537,10 +2534,10 @@ async function handleFeedbackSubmit(e) {
     return;
   }
 
-  // Generate unique confirmed receipt reference
+  let isDeliveredToServer = false;
   let subId = 'SUB-' + Math.floor(Date.now() / 1000) + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
-  // Try to dispatch to ClassroomHub server backend /api/submissions
+  // Dispatch to ClassroomHub server backend /api/submissions
   try {
     const srvResp = await fetch('/api/submissions', {
       method: 'POST',
@@ -2550,9 +2547,10 @@ async function handleFeedbackSubmit(e) {
         title: `${category} from ${name}`,
         description: message,
         studentName: name,
-        studentEmail: roll !== 'N/A' ? `u${roll}@student.cuet.ac.bd` : '',
+        studentEmail: contact.includes('@') ? contact : '',
+        studentPhone: !contact.includes('@') && contact ? contact : '',
         rating: rating,
-        roll: roll
+        roll: roll || 'N/A'
       })
     });
     if (srvResp.ok) {
@@ -2560,9 +2558,10 @@ async function handleFeedbackSubmit(e) {
       if (srvData.receiptId) {
         subId = srvData.receiptId;
       }
+      isDeliveredToServer = true;
     }
   } catch (err) {
-    console.log('ClassroomHub server offline, registered with local receipt ID:', err);
+    console.log('ClassroomHub server offline:', err);
   }
 
   const newFeedback = {
@@ -6329,7 +6328,7 @@ function renderAdminRoutineTable() {
                     <span>👨‍🏫 ${slot.teacher || 'TBA'}</span>
                   </div>
                 </div>
-                <button onclick="deleteRoutineSlot('${sem}', '${day}', ${idx})" class="p-1 rounded hover:bg-red-500/20 text-red-400 text-xs" title="মুছে ফেলুন">
+                <button onclick="deleteDepartmentRoutineSlot('${sem}', '${day}', ${idx})" class="p-1 rounded hover:bg-red-500/20 text-red-400 text-xs" title="মুছে ফেলুন">
                   <i data-lucide="trash-2" class="w-3 h-3"></i>
                 </button>
               </div>
@@ -6383,7 +6382,7 @@ function addRoutineSlot(e) {
   showToast('ক্লাস সিডিউল সফলভাবে যুক্ত হয়েছে!');
 }
 
-function deleteRoutineSlot(sem, day, idx) {
+function deleteDepartmentRoutineSlot(sem, day, idx) {
   const routine = getStoredRoutine();
   if (routine[sem] && routine[sem][day]) {
     routine[sem][day].splice(idx, 1);
@@ -7774,11 +7773,11 @@ function renderAiLocalResponse(query, isBangla, botDiv, chatBox, videoCardsHtml,
 
 async function handleAiSubmit(e) {
   if (e && e.preventDefault) e.preventDefault();
-  const input = document.getElementById('aiInput') || document.getElementById('aiInputPrompt');
+  const input = document.getElementById('aiInputPrompt') || document.getElementById('aiInput');
   const query = (input?.value || '').trim();
   if (!query) return;
 
-  const chatBox = document.getElementById('aiChatMessages') || document.getElementById('aiChatBox');
+  const chatBox = document.getElementById('aiChatStreamContainer') || document.getElementById('aiChatMessages') || document.getElementById('aiChatBox');
   if (!chatBox) return;
 
   aiConversationTurnCount++;
@@ -7946,9 +7945,17 @@ async function handleAiSubmit(e) {
   if (geminiApiKey) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const sysInstruction = `You are Google Gemini 2.0 Flash embedded in ClassroomHub (created for CUET Mechanical Engineering by Fahim Niloy, Roll: 2003063). Answer in ${isBangla ? 'Bengali' : 'English'}. Be direct, mathematically precise, helpful, and polite. Always provide formulas in LaTeX math format ($...$ and $$...$$). If asked about power plants, explain Power Plant Engineering, Rankine cycle, components (boiler, turbine, condenser, pump), heat rate, and efficiencies.`;
+      const ctxSelect = document.getElementById('aiSubjectContextSelect');
+      const selectedCtx = ctxSelect ? ctxSelect.value : 'general';
+      let subjectPromptContext = '';
+      if (selectedCtx && selectedCtx !== 'general' && typeof CUET_COURSE_REGISTRY !== 'undefined' && CUET_COURSE_REGISTRY[selectedCtx]) {
+        const courses = CUET_COURSE_REGISTRY[selectedCtx];
+        subjectPromptContext = ` Current Academic Term: ${selectedCtx}. Courses in this semester: ${courses.map(c => c.code + ': ' + c.name).join(', ')}. When relevant, focus on topics from this curriculum.`;
+      }
+
+      const sysInstruction = `You are Google Gemini 2.0 Flash embedded in ClassroomHub (created for CUET Mechanical Engineering by Fahim Niloy, Roll: 2003063). Answer in ${isBangla ? 'Bengali' : 'English'}. Be direct, mathematically precise, helpful, and polite. Always provide formulas in LaTeX math format ($...$ and $$...$$).${subjectPromptContext}`;
 
       aiChatHistory.push({ role: 'user', parts: [{ text: query }] });
       const recentHistory = aiChatHistory.slice(-8);
@@ -8174,19 +8181,20 @@ function showToast(msg) {
    15. GLOBAL KEYBOARD SHORTCUTS (INTERNATIONAL STANDARD UX)
    ========================================================================= */
 window.addEventListener('keydown', (e) => {
-  // 1. Ctrl+K or Cmd+K or "/" to focus Search
+  // 1. Ctrl+K or Cmd+K or "/" to focus Search (respects inputs, textareas, and contenteditable)
+  const isTyping = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault();
-    switchTab('resources');
-    const input = document.getElementById('resourceSearchInput');
+    navigateTo('home');
+    const input = document.getElementById('globalSearchInput') || document.getElementById('resourceSearchInput');
     if (input) {
       input.focus();
       input.select();
     }
-  } else if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+  } else if (e.key === '/' && !isTyping) {
     e.preventDefault();
-    switchTab('resources');
-    const input = document.getElementById('resourceSearchInput');
+    navigateTo('home');
+    const input = document.getElementById('globalSearchInput') || document.getElementById('resourceSearchInput');
     if (input) {
       input.focus();
       input.select();
@@ -8257,12 +8265,7 @@ function switchHomeSubTab(tabName) {
 }
 
 function quickOpenSemester(term) {
-  switchTab('resources');
-  const termSelect = document.getElementById('termSelect');
-  if (termSelect) {
-    termSelect.value = term;
-    renderResources();
-  }
+  openSemesterFolder(term);
 }
 
 /* =========================================================================
@@ -8610,7 +8613,7 @@ function renderMyRoutineStudio() {
                                 <div class="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition-opacity">
                                   <button onclick="openEditRoutineSlotModal('${item.id}')" class="p-1 hover:text-indigo-300 text-slate-400" title="Edit"><i data-lucide="pencil" class="w-2.5 h-2.5"></i></button>
                                   <button onclick="duplicateRoutineSlot('${item.id}')" class="p-1 hover:text-blue-300 text-slate-400" title="Duplicate"><i data-lucide="copy" class="w-2.5 h-2.5"></i></button>
-                                  <button onclick="deleteRoutineSlot('${item.id}')" class="p-1 hover:text-red-400 text-slate-400" title="Delete"><i data-lucide="trash-2" class="w-2.5 h-2.5"></i></button>
+                                  <button onclick="deletePersonalRoutineSlot('${item.id}')" class="p-1 hover:text-red-400 text-slate-400" title="Delete"><i data-lucide="trash-2" class="w-2.5 h-2.5"></i></button>
                                 </div>
                               </div>
                               <div class="text-[10px] text-slate-300 truncate" title="${item.courseName}">${item.courseName}</div>
@@ -8695,7 +8698,7 @@ function renderMyRoutineStudio() {
                   <button onclick="duplicateRoutineSlot('${item.id}')" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-300 hover:text-white transition-all" title="Duplicate">
                     <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                   </button>
-                  <button onclick="deleteRoutineSlot('${item.id}')" class="p-2 rounded-xl bg-slate-800 hover:bg-red-900/40 text-red-400 hover:text-red-300 transition-all" title="Delete">
+                  <button onclick="deletePersonalRoutineSlot('${item.id}')" class="p-2 rounded-xl bg-slate-800 hover:bg-red-900/40 text-red-400 hover:text-red-300 transition-all" title="Delete">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                   </button>
                 </div>
@@ -8728,7 +8731,7 @@ function openAddRoutineSlotModal(prefillDay, prefillTime) {
 
   if (form) form.reset();
   if (editId) editId.value = '';
-  if (titleEl) titleEl.textContent = 'Add Class Entry';
+  if (titleEl) if (titleEl) titleEl.textContent = 'Add Class Entry';
   if (alertEl) alertEl.classList.add('hidden');
 
   if (daySel && prefillDay) daySel.value = prefillDay;
@@ -8766,7 +8769,7 @@ function openEditRoutineSlotModal(slotId) {
   const notesInp = document.getElementById('slotNotes');
   const alertEl = document.getElementById('slotTimeValidationAlert');
 
-  if (titleEl) titleEl.textContent = 'Edit Class Entry';
+  if (titleEl) if (titleEl) titleEl.textContent = 'Edit Class Entry';
   if (editId) editId.value = slot.id;
   if (daySel) daySel.value = slot.day;
   if (startInp) startInp.value = slot.startTime;
@@ -8872,12 +8875,20 @@ function duplicateRoutineSlot(slotId) {
   showToast('ক্লাস ডুপ্লিকেট করা হয়েছে!');
 }
 
-function deleteRoutineSlot(slotId) {
+function deletePersonalRoutineSlot(slotId) {
   if (!confirm('আপনি কি এই ক্লাস স্লটটি মুছে ফেলতে চান?')) return;
   const routine = getMyPersonalRoutine();
   routine.entries = routine.entries.filter(e => e.id !== slotId);
   saveMyPersonalRoutine(routine);
   showToast('ক্লাস মুছে ফেলা হয়েছে।');
+}
+
+function deleteRoutineSlot(arg1, arg2, arg3) {
+  if (arg2 !== undefined) {
+    return deleteDepartmentRoutineSlot(arg1, arg2, arg3);
+  } else {
+    return deletePersonalRoutineSlot(arg1);
+  }
 }
 
 function startBlankRoutinePrompt() {
@@ -9318,6 +9329,27 @@ async function exportMyRoutineDocx() {
 }
 
 // ==================== CALENDAR EXPORT (.ICS) FOR GOOGLE / OUTLOOK ====================
+function escapeIcsText(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r?\n/g, '\\n');
+}
+
+function foldIcsLine(line) {
+  if (line.length <= 75) return line;
+  let res = '';
+  let remaining = line;
+  while (remaining.length > 75) {
+    res += remaining.slice(0, 75) + '\r\n ';
+    remaining = remaining.slice(75);
+  }
+  res += remaining;
+  return res;
+}
+
 function exportRoutineIcs() {
   const routine = getMyPersonalRoutine();
   if (routine.entries.length === 0) {
@@ -9326,13 +9358,13 @@ function exportRoutineIcs() {
   }
 
   const dayMap = {
-    'Sunday': 'SU',
-    'Monday': 'MO',
-    'Tuesday': 'TU',
-    'Wednesday': 'WE',
-    'Thursday': 'TH',
-    'Friday': 'FR',
-    'Saturday': 'SA'
+    'Sunday': { code: 'SU', idx: 0 },
+    'Monday': { code: 'MO', idx: 1 },
+    'Tuesday': { code: 'TU', idx: 2 },
+    'Wednesday': { code: 'WE', idx: 3 },
+    'Thursday': { code: 'TH', idx: 4 },
+    'Friday': { code: 'FR', idx: 5 },
+    'Saturday': { code: 'SA', idx: 6 }
   };
 
   let ics = [
@@ -9341,14 +9373,32 @@ function exportRoutineIcs() {
     'PRODID:-//ClassroomHub//CUET Student Routine Studio//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    `X-WR-CALNAME:CUET Routine - ${routine.semester || 'ME'} ${routine.section || ''}`
+    `X-WR-CALNAME:CUET Routine - ${routine.semester || 'ME'} ${routine.section || ''}`,
+    'X-WR-TIMEZONE:Asia/Dhaka'
   ];
 
   const now = new Date();
   const stamp = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
+  // Academic term reference: 16 weeks duration
+  // Start on 2026-10-18 (Sunday) and bound until 2027-02-28
+  const termStartYear = 2026;
+  const termStartMonth = 9; // October (0-indexed)
+  const termStartDay = 18;   // Sunday
+  const untilStr = '20270228T235959Z';
+
+  const pad = (n) => n < 10 ? '0' + n : n;
+
   routine.entries.forEach(e => {
-    const byDay = dayMap[e.day] || 'SU';
+    const dayInfo = dayMap[e.day] || { code: 'SU', idx: 0 };
+    const byDay = dayInfo.code;
+    const dayOffset = dayInfo.idx; // Days after Sunday Oct 18
+
+    const classDate = new Date(termStartYear, termStartMonth, termStartDay + dayOffset);
+    const yStr = classDate.getFullYear();
+    const mStr = pad(classDate.getMonth() + 1);
+    const dStr = pad(classDate.getDate());
+
     const sMins = parseTimeToMinutes(e.startTime);
     const eMins = parseTimeToMinutes(e.endTime) || (sMins + 50);
     const sH = Math.floor(sMins / 60) % 24;
@@ -9356,19 +9406,19 @@ function exportRoutineIcs() {
     const eH = Math.floor(eMins / 60) % 24;
     const eM = eMins % 60;
 
-    const pad = (n) => n < 10 ? '0' + n : n;
-    const timeStart = `20261101T${pad(sH)}${pad(sM)}00`;
-    const timeEnd = `20261101T${pad(eH)}${pad(eM)}00`;
+    const timeStart = `${yStr}${mStr}${dStr}T${pad(sH)}${pad(sM)}00`;
+    const timeEnd = `${yStr}${mStr}${dStr}T${pad(eH)}${pad(eM)}00`;
 
     ics.push('BEGIN:VEVENT');
-    ics.push(`UID:routine_${e.id || Date.now()}@classroomhub`);
+    ics.push(foldIcsLine(`UID:routine_${e.id || Date.now()}@classroomhub`));
     ics.push(`DTSTAMP:${stamp}`);
-    ics.push(`DTSTART:${timeStart}`);
-    ics.push(`DTEND:${timeEnd}`);
-    ics.push(`RRULE:FREQ=WEEKLY;BYDAY=${byDay}`);
-    ics.push(`SUMMARY:${e.courseCode} - ${e.courseName || 'Class'}`);
-    ics.push(`LOCATION:${e.room ? 'Room ' + e.room : 'CUET ME'}`);
-    ics.push(`DESCRIPTION:Instructor: ${e.teacher || 'N/A'}\nNotes: ${e.notes || ''}`);
+    ics.push(`DTSTART;TZID=Asia/Dhaka:${timeStart}`);
+    ics.push(`DTEND;TZID=Asia/Dhaka:${timeEnd}`);
+    ics.push(`RRULE:FREQ=WEEKLY;UNTIL=${untilStr};BYDAY=${byDay}`);
+    ics.push(foldIcsLine(`SUMMARY:${escapeIcsText(e.courseCode + (e.courseName ? ' - ' + e.courseName : ''))}`));
+    ics.push(foldIcsLine(`LOCATION:${escapeIcsText(e.room ? 'Room ' + e.room + ', CUET Mechanical' : 'CUET ME')}`));
+    const desc = `Instructor: ${e.teacher || 'N/A'}${e.notes ? '\nNotes: ' + e.notes : ''}`;
+    ics.push(foldIcsLine(`DESCRIPTION:${escapeIcsText(desc)}`));
     ics.push('END:VEVENT');
   });
 
@@ -9388,7 +9438,11 @@ function exportRoutineIcs() {
 function printMyRoutine() {
   const routine = getMyPersonalRoutine();
   const printArea = document.getElementById('printableRoutineContainer');
+  const cvArea = document.getElementById('printableCvContainer');
+  if (cvArea) cvArea.innerHTML = '';
   if (!printArea) return;
+  document.body.classList.remove('printing-cv');
+  document.body.classList.add('printing-routine');
 
   const timeSlots = (routine.timeSlots && routine.timeSlots.length > 0)
     ? routine.timeSlots
@@ -10436,7 +10490,7 @@ function renderFacultyDirectory() {
   }
 
   const allMembers = getFacultyMembers();
-  if (countBadge) countBadge.textContent = `${allMembers.length} Members`;
+  if (countBadge) if (countBadge) countBadge.textContent = `${allMembers.length} Members`;
   if (homeBadge) homeBadge.textContent = allMembers.length;
 
   if (!grid) return;
@@ -11877,7 +11931,9 @@ async function exportMyCvDocx() {
 // ==================== PRINT / PDF FOR CV ====================
 function printMyCv() {
   const printArea = document.getElementById('printableCvContainer');
+  const routineArea = document.getElementById('printableRoutineContainer');
   const paper = document.getElementById('cvLivePreviewPaper');
+  if (routineArea) routineArea.innerHTML = '';
   if (!printArea || !paper) return;
 
   printArea.innerHTML = `
@@ -11885,20 +11941,62 @@ function printMyCv() {
       ${paper.innerHTML}
     </div>
   `;
+  document.body.classList.remove('printing-routine');
+  document.body.classList.add('printing-cv');
   window.print();
+  setTimeout(() => {
+    document.body.classList.remove('printing-cv');
+  }, 1000);
 }
 
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('printing-routine', 'printing-cv');
+});
+
 function saveCvDraftPrompt() {
+  // Step 1: Capture current data and template FIRST
+  const currentCv = getActiveCvData();
+  const currentTemplate = (typeof cvCurrentTemplate !== 'undefined') ? cvCurrentTemplate : 'modern';
+
+  // Step 2: Prompt and validate target draft name
   const name = prompt('সিভি ড্রাফট সংরক্ষণের জন্য একটি নাম দিন (e.g. Mechanical Engineer, Intern CV):', cvCurrentDraftName);
   if (!name || !name.trim()) return;
   const cleanName = name.trim();
+
+  // Step 3 & 4: Check if already exists and confirm overwrite
+  const allDrafts = getStoredCvDrafts();
+  if (allDrafts[cleanName] && cleanName !== cvCurrentDraftName) {
+    if (!confirm(`"${cleanName}" নামের ড্রাফট ইতিমধ্যে বিদ্যমান। আপনি কি এটি বর্তমান তথ্য দিয়ে ওভাররাইট করতে চান?`)) {
+      return;
+    }
+  }
+
+  // Step 5: Save captured data
+  currentCv.template = currentTemplate;
+  currentCv.savedAt = Date.now();
+  allDrafts[cleanName] = currentCv;
+  saveStoredCvDrafts(allDrafts);
+
+  // Step 6: Switch active draft
   cvCurrentDraftName = cleanName;
 
-  const cv = getActiveCvData();
-  saveActiveCvData(cv);
-
+  // Step 7: Refresh
   initCvBuilder();
   showToast(`ড্রাফট "${cleanName}" সফলভাবে সংরক্ষিত হয়েছে!`);
+}
+
+function deleteCurrentCvDraft() {
+  if (cvCurrentDraftName === 'default') {
+    showToast('ডিফল্ট ড্রাফট মুছে ফেলা যাবে না। তবে তথ্য ক্লিয়ার করতে পারবেন।');
+    return;
+  }
+  if (!confirm(`আপনি কি সত্যিই "${cvCurrentDraftName}" ড্রাফটটি মুছে ফেলতে চান?`)) return;
+  const drafts = getStoredCvDrafts();
+  delete drafts[cvCurrentDraftName];
+  saveStoredCvDrafts(drafts);
+  cvCurrentDraftName = Object.keys(drafts)[0] || 'default';
+  initCvBuilder();
+  showToast('ড্রাফট মুছে ফেলা হয়েছে।');
 }
 
 function loadSelectedCvDraft() {
@@ -11996,7 +12094,7 @@ function renderProgressRecentList() {
   if (!container) return;
 
   const recents = JSON.parse(localStorage.getItem('classroom_recent_files') || '[]');
-  if (countBadge) countBadge.textContent = recents.length;
+  if (countBadge) if (countBadge) countBadge.textContent = recents.length;
 
   if (recents.length === 0) {
     container.innerHTML = `
@@ -12064,7 +12162,7 @@ function renderProgressBookmarksList() {
   if (!container) return;
 
   const currentBookmarks = JSON.parse(localStorage.getItem(STORAGE_KEYS.BOOKMARKS) || '[]');
-  if (countBadge) countBadge.textContent = currentBookmarks.length;
+  if (countBadge) if (countBadge) countBadge.textContent = currentBookmarks.length;
   if (badgeLabel) badgeLabel.textContent = `${currentBookmarks.length} ${currentLang === 'en' ? 'files' : 'ফাইল'}`;
 
   if (currentBookmarks.length === 0) {
@@ -12140,7 +12238,7 @@ function renderProgressCompletionList() {
   const completed = JSON.parse(localStorage.getItem('classroom_completed_items') || '{}');
 
   const totalCompletedAcrossAll = Object.keys(completed).length;
-  if (countBadge) countBadge.textContent = totalCompletedAcrossAll;
+  if (countBadge) if (countBadge) countBadge.textContent = totalCompletedAcrossAll;
 
   // Find courses for this semester from registry or appData
   let courses = [];
@@ -12281,7 +12379,7 @@ function renderProgressTasksList() {
 
   const tasks = getStudyTasks();
   const activeCount = tasks.filter(t => !t.done).length;
-  if (countBadge) countBadge.textContent = activeCount;
+  if (countBadge) if (countBadge) countBadge.textContent = activeCount;
   if (badgeLabel) badgeLabel.textContent = `${activeCount} ${currentLang === 'en' ? 'active' : 'সক্রিয়'}`;
 
   if (tasks.length === 0) {
@@ -12367,3 +12465,5 @@ function renderPublicFaqs() {
   `).join('');
   if (window.lucide) lucide.createIcons();
 }
+
+window.handleAiQuestionSubmit = handleAiSubmit;
