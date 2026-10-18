@@ -1,7 +1,421 @@
 {
-  "version": "2.0.0",
-  "lastUpdated": "2026-10-18T22:13:17.714145",
-  "publishedBy": "Fahim Niloy (CUET ME '20, Roll: 2003063)",
+  "version": "3.3.0",
+  "lastUpdated": "2026-10-18T18:33:45Z",
+  "publishedBy": "Mohammad Fahim Ahmed (Fahim Niloy)",
+  "portalSettings": {
+    "heroTitle": "Mechanical Engineering",
+    "heroSubtitle": "Academic Vault & Student Hub",
+    "deptDesc": "Chittagong University of Engineering and Technology (CUET)",
+    "heroDesc": "A comprehensive digitized academic repository preserving 3,896+ course materials from Level 1 Term 1 to Level 4 Term 2.",
+    "creatorName": "Mohammad Fahim Ahmed",
+    "creatorBadge": "Fahim Niloy",
+    "creatorDept": "Department of Mechanical Engineering",
+    "creatorBatch": "'20",
+    "creatorId": "2003063",
+    "primaryEmail": "fahimcuet63@gmail.com",
+    "phone": "+880 1850-162261",
+    "portfolioUrl": "https://mohammad-fahim-ahmed.netlify.app/",
+    "githubUrl": "https://github.com/Fahim-Niloy2314/classroom-hub",
+    "card1Title": "Course Explorer",
+    "card1Desc": "Browse 3,896+ verified notes, questions, and lab manuals organized exactly by semester.",
+    "card2Title": "Student Hub & Tools",
+    "card2Desc": "Personal Class Routine Studio, Editable Word (.docx) Timetable, and CUET GPA/CGPA Calculator.",
+    "card3Title": "Syllabus & Course Registry",
+    "card3Desc": "Official CUET 160-credit Mechanical Engineering degree requirements and course registry.",
+    "card4Title": "AI Study Assistant",
+    "card4Desc": "Talk naturally with Fahim Niloy AI just like Gemini about mechanical theories and formulas.",
+    "maintenanceMode": false
+  },
+  "courseRegistry": {
+    "L1-T1": [
+      {
+        "code": "ME-111",
+        "name": "Engineering Mechanics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-112",
+        "name": "Engineering Mechanics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-152",
+        "name": "Mechanical Engineering Drawing",
+        "credits": 1.5,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-154",
+        "name": "Workshop Practice",
+        "credits": 1.5,
+        "type": "sessional"
+      },
+      {
+        "code": "Chem-131",
+        "name": "Chemistry",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Chem-132",
+        "name": "Chemistry Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Math-131",
+        "name": "Mathematics-I (Differential & Integral Calculus)",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Phy-131",
+        "name": "Physics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Phy-132",
+        "name": "Physics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Hum-131",
+        "name": "English",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L1-T2": [
+      {
+        "code": "ME-181",
+        "name": "Computer Programming & Applications",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-182",
+        "name": "Computer Programming Sessional",
+        "credits": 1.5,
+        "type": "sessional"
+      },
+      {
+        "code": "EE-131",
+        "name": "Electrical Technology",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "EE-132",
+        "name": "Electrical Technology Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Math-133",
+        "name": "Mathematics-II (Coordinate Geometry & Ordinary Diff Eq)",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Chem-133",
+        "name": "Chemistry-II",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Phy-133",
+        "name": "Physics-II",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Phy-134",
+        "name": "Physics Sessional II",
+        "credits": 0.75,
+        "type": "sessional"
+      }
+    ],
+    "L2-T1": [
+      {
+        "code": "ME-211",
+        "name": "Thermodynamics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-212",
+        "name": "Thermodynamics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-231",
+        "name": "Engineering Mechanics-I (Dynamics)",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-251",
+        "name": "Production Processes",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-252",
+        "name": "Production Processes Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Math-231",
+        "name": "Mathematics-III (Vector Analysis & Matrices)",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Hum-231",
+        "name": "Sociology & Government",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L2-T2": [
+      {
+        "code": "ME-233",
+        "name": "Engineering Mechanics-II",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-235",
+        "name": "Mechanics of Solids",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-236",
+        "name": "Mechanics of Solids Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "EE-231",
+        "name": "Electronics & Electrical Machines",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "EE-232",
+        "name": "Electronics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Math-233",
+        "name": "Mathematics-IV (Fourier Analysis & Complex Variables)",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Hum-233",
+        "name": "Economics & Accountancy",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L3-T1": [
+      {
+        "code": "ME-311",
+        "name": "Heat Transfer",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-312",
+        "name": "Heat Transfer Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-321",
+        "name": "Fluid Mechanics-I",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-322",
+        "name": "Fluid Mechanics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-331",
+        "name": "Mechanics of Machinery & Vibration",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-361",
+        "name": "Measurement & Quality Control",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-381",
+        "name": "Numerical Analysis & Statistics",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L3-T2": [
+      {
+        "code": "ME-313",
+        "name": "Convection & Mass Transfer",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-323",
+        "name": "Fluid Mechanics-II",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-333",
+        "name": "Machine Design-I",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-334",
+        "name": "Machine Design Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-351",
+        "name": "Metallurgy & Materials Science",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-352",
+        "name": "Metallurgy Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Hum-331",
+        "name": "Industrial Law & Principles of Management",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L4-T1": [
+      {
+        "code": "ME-413",
+        "name": "Power Plant Engineering",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-414",
+        "name": "Power Plant Engineering Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-417",
+        "name": "Refrigeration & Air Conditioning",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-418",
+        "name": "RAC Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-431",
+        "name": "Machine Design-II",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-451",
+        "name": "Machine Tools & Tool Engineering",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-461",
+        "name": "Production & Operations Management",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L4-T2": [
+      {
+        "code": "ME-411",
+        "name": "Applied Thermodynamics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-412",
+        "name": "Applied Thermodynamics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-421",
+        "name": "Fluid Machinery",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-422",
+        "name": "Fluid Machinery Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-423",
+        "name": "Aerodynamics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-455",
+        "name": "Mechatronics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-456",
+        "name": "Mechatronics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-463",
+        "name": "Industrial Management",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-498",
+        "name": "Project & Thesis",
+        "credits": 3.0,
+        "type": "sessional"
+      }
+    ]
+  },
   "notices": [
     {
       "id": "not_1",
@@ -1309,110 +1723,231 @@
     "L4-T2": {
       "Sunday": [
         {
-          "time": "08:00 AM - 08:50 AM",
-          "course": "ME 4201: Power Plant Engineering",
-          "room": "ME-304",
-          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+          "time": "08:30 AM - 09:20 AM",
+          "course": "CT / Self-Study",
+          "room": "2317",
+          "teacher": "Batch '20"
         },
         {
-          "time": "08:50 AM - 09:40 AM",
-          "course": "ME 4203: Automobile Engineering",
-          "room": "ME-304",
-          "teacher": "Prof. Dr. Md. Mizanur Rahman"
+          "time": "09:20 AM - 10:10 AM",
+          "course": "ME-463: Industrial Management",
+          "room": "2317",
+          "teacher": "Prof. Dr. X"
         },
         {
-          "time": "10:00 AM - 12:30 PM",
-          "course": "ME 4202: Power Plant Sessional",
-          "room": "Thermal Power Lab",
-          "teacher": "Dr. Sanjoy Kumar Nandi / Lab Staff"
+          "time": "10:10 AM - 11:00 AM",
+          "course": "ME-411: Applied Thermodynamics",
+          "room": "2317",
+          "teacher": "Dr. Y"
         },
         {
-          "time": "01:30 PM - 02:20 PM",
-          "course": "IPE 4201: Production Planning & Control",
-          "room": "ME-304",
-          "teacher": "Prof. Dr. Md. Mahbubul Alam"
+          "time": "11:15 AM - 12:05 PM",
+          "course": "ME-423: Aerodynamics",
+          "room": "2317",
+          "teacher": "Faculty"
         }
       ],
       "Monday": [
         {
-          "time": "08:00 AM - 09:40 AM",
-          "course": "ME 4201: Power Plant Engineering",
-          "room": "ME-304",
-          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+          "time": "09:20 AM - 10:10 AM",
+          "course": "ME-411: Applied Thermodynamics",
+          "room": "2317",
+          "teacher": "Dr. Y"
         },
         {
-          "time": "09:50 AM - 10:40 AM",
-          "course": "ME 4205: Operations Research & Quality Control",
-          "room": "ME-304",
-          "teacher": "Engr. Tanvir Ahmed"
+          "time": "10:10 AM - 11:00 AM",
+          "course": "ME-455: Mechatronics",
+          "room": "2317",
+          "teacher": "Faculty"
         },
         {
-          "time": "10:50 AM - 01:20 PM",
-          "course": "ME 4000: Project & Thesis",
-          "room": "Department Laboratories",
-          "teacher": "Assigned Supervisors"
+          "time": "11:15 AM - 12:05 PM",
+          "course": "ME-463: Industrial Management",
+          "room": "2317",
+          "teacher": "Prof. Dr. X"
+        },
+        {
+          "time": "12:05 PM - 12:55 PM",
+          "course": "ME-423: Aerodynamics",
+          "room": "2317",
+          "teacher": "Faculty"
+        },
+        {
+          "time": "02:35 PM - 05:00 PM",
+          "course": "ME-412: Applied Thermodynamics Sessional",
+          "room": "Thermal Lab",
+          "teacher": "Lab Faculty"
         }
       ],
       "Tuesday": [
         {
-          "time": "08:00 AM - 08:50 AM",
-          "course": "ME 4203: Automobile Engineering",
-          "room": "ME-304",
-          "teacher": "Prof. Dr. Md. Mizanur Rahman"
+          "time": "09:20 AM - 10:10 AM",
+          "course": "ME-421: Fluid Machinery",
+          "room": "2317",
+          "teacher": "Faculty"
         },
         {
-          "time": "08:50 AM - 10:30 AM",
-          "course": "ME 4205: Operations Research & Quality Control",
-          "room": "ME-304",
-          "teacher": "Engr. Tanvir Ahmed"
+          "time": "10:10 AM - 11:00 AM",
+          "course": "ME-463: Industrial Management",
+          "room": "2317",
+          "teacher": "Prof. Dr. X"
         },
         {
-          "time": "10:50 AM - 01:20 PM",
-          "course": "ME 4204: Automobile Sessional",
-          "room": "Automobile Lab",
-          "teacher": "Engr. Asif Mohammad / Lab Team"
+          "time": "11:15 AM - 12:05 PM",
+          "course": "ME-411: Applied Thermodynamics",
+          "room": "2317",
+          "teacher": "Dr. Y"
+        },
+        {
+          "time": "12:05 PM - 12:55 PM",
+          "course": "ME-423: Aerodynamics",
+          "room": "2317",
+          "teacher": "Faculty"
+        },
+        {
+          "time": "02:35 PM - 05:00 PM",
+          "course": "ME-422: Fluid Machinery Sessional",
+          "room": "Fluid Lab",
+          "teacher": "Lab Faculty"
         }
       ],
       "Wednesday": [
         {
-          "time": "08:00 AM - 08:50 AM",
-          "course": "IPE 4201: Production Planning & Control",
-          "room": "ME-304",
-          "teacher": "Prof. Dr. Md. Mahbubul Alam"
+          "time": "09:20 AM - 10:10 AM",
+          "course": "ME-455: Mechatronics",
+          "room": "2317",
+          "teacher": "Faculty"
         },
         {
-          "time": "08:50 AM - 09:40 AM",
-          "course": "ME 4201: Power Plant Engineering",
-          "room": "ME-304",
-          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+          "time": "11:15 AM - 12:05 PM",
+          "course": "ME-421: Fluid Machinery",
+          "room": "2317",
+          "teacher": "Faculty"
         },
         {
-          "time": "10:00 AM - 01:00 PM",
-          "course": "ME 4000: Project & Thesis Progress Work",
-          "room": "Assigned Research Lab",
+          "time": "02:35 PM - 05:00 PM",
+          "course": "ME-498: Project & Thesis",
+          "room": "CAD / ME Lab",
           "teacher": "Supervisors"
         }
       ],
       "Thursday": [
         {
-          "time": "08:00 AM - 09:40 AM",
-          "course": "ME 4203: Automobile Engineering",
-          "room": "ME-304",
-          "teacher": "Prof. Dr. Md. Mizanur Rahman"
+          "time": "09:20 AM - 10:10 AM",
+          "course": "ME-463: Industrial Management",
+          "room": "2317",
+          "teacher": "Prof. Dr. X"
         },
         {
-          "time": "09:50 AM - 10:40 AM",
-          "course": "IPE 4201: Production Planning & Control",
-          "room": "ME-304",
-          "teacher": "Prof. Dr. Md. Mahbubul Alam"
+          "time": "10:10 AM - 11:00 AM",
+          "course": "ME-421: Fluid Machinery",
+          "room": "2317",
+          "teacher": "Faculty"
         },
         {
-          "time": "10:50 AM - 12:30 PM",
-          "course": "ME 4205: Operations Research & Quality Control",
-          "room": "ME-304",
-          "teacher": "Engr. Tanvir Ahmed"
+          "time": "11:15 AM - 12:05 PM",
+          "course": "ME-455: Mechatronics",
+          "room": "2317",
+          "teacher": "Faculty"
+        },
+        {
+          "time": "02:35 PM - 05:00 PM",
+          "course": "ME-456: Mechatronics Sessional",
+          "room": "Mechatronics Lab",
+          "teacher": "Lab Faculty"
         }
       ]
     }
-  }
+  },
+  "customResources": [],
+  "videos": [
+    {
+      "id": "vid_l4t2_thermo",
+      "title": "Applied Thermodynamics (Advanced Rankine, Brayton, Refrigeration)",
+      "subject": "ME-411 Applied Thermodynamics",
+      "channel": "NPTEL / MIT OpenCourseWare",
+      "lang": "en",
+      "term": "L4-T2",
+      "type": "Lecture Series",
+      "url": "https://www.youtube.com/playlist?list=PLbMVogVj5nJS9nO_n8W5b9P_x-m8v4Yv3"
+    },
+    {
+      "id": "vid_l4t2_aero",
+      "title": "Aerodynamics & Lift Generation (Airfoil Theory & Compressible Flow)",
+      "subject": "ME-423 Aerodynamics",
+      "channel": "Stanford / Brian Douglas",
+      "lang": "en",
+      "term": "L4-T2",
+      "type": "Video Playlist",
+      "url": "https://www.youtube.com/playlist?list=PLbRMhDVUMngfdXZGkWc083n5p2GkY2iA1"
+    }
+  ],
+  "timeline": [
+    {
+      "id": "milestone_term_final",
+      "title": "Term Final Examinations",
+      "term": "L4-T2",
+      "date": "2026-11-20",
+      "type": "Exam",
+      "description": "Comprehensive term final written examination according to CUET academic calendar."
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How do I download an editable class routine in Microsoft Word format?",
+      "answer": "Go to Student Hub & Tools -> Timetable Studio -> Click 'Download Routine Template (.docx)'. You can choose either a clean Blank Template or the authentic CUET ME Sample Routine. Both open directly in Microsoft Word as standard editable tables without requiring any account or Google Drive permissions."
+    },
+    {
+      "question": "Where are my personal timetable changes saved?",
+      "answer": "Your customized classes and notes are stored securely on your current device browser storage. Your personal routine is private to you and is never merged with or overwritten by published department templates."
+    },
+    {
+      "question": "Does installing the PWA automatically download all 48GB of Google Drive materials?",
+      "answer": "No. The PWA caches the web application interface, timetable studio, CV builder, calculators, and navigation so the site opens instantly offline. Large PDF textbooks and multi-gigabyte course archives remain hosted on Google Drive and stream on-demand when clicked."
+    }
+  ],
+  "cvTemplates": [
+    {
+      "id": "template_job",
+      "name": "Simple Job / Internship Resume",
+      "description": "Clean, single-column layout optimized for ATS scanners and corporate applications. No photo by default.",
+      "defaultSections": [
+        "contact",
+        "summary",
+        "education",
+        "experience",
+        "skills",
+        "projects"
+      ]
+    },
+    {
+      "id": "template_eng",
+      "name": "Engineering Graduate Resume",
+      "description": "Technical layout emphasizing capstone design, CAD/FEA simulation tools, industrial training, and practical projects.",
+      "defaultSections": [
+        "contact",
+        "summary",
+        "education",
+        "projects",
+        "skills",
+        "experience",
+        "certifications"
+      ]
+    },
+    {
+      "id": "template_academic",
+      "name": "Academic & Research CV",
+      "description": "Formal multi-page curriculum vitae covering research experience, journal publications, conference presentations, honors, and references.",
+      "defaultSections": [
+        "contact",
+        "summary",
+        "education",
+        "research",
+        "projects",
+        "skills",
+        "awards",
+        "references"
+      ]
+    }
+  ]
 }
