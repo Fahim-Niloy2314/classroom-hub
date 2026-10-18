@@ -45,7 +45,8 @@ const STORAGE_KEYS = {
   ADMIN_SEO: 'classroom_admin_seo',
   ADMIN_DRAFT: 'classroom_admin_draft',
   PORTAL_SETTINGS: 'classroom_portal_settings',
-  GEMINI_API_KEY: 'classroom_gemini_api_key'
+  GEMINI_API_KEY: 'classroom_gemini_api_key',
+  OPENAI_API_KEY: 'classroom_openai_api_key'
 };
 
 // Admin Email List
@@ -70,15 +71,34 @@ const DEFAULT_PORTAL_SETTINGS = {
     { id: 'tracker', label: 'Tracker', icon: 'check-square', visible: true }
   ],
   heroTitle: "Mechanical Engineering",
-  heroSubtitle: "CUET Undergraduate Comprehensive Academic Repository & Study Vault",
+  heroSubtitle: "Academic Vault & Archive",
   deptDesc: "Chittagong University of Engineering and Technology (CUET)",
-  primaryEmail: "fahimcuet63@gmail.com"
+  heroDesc: "A comprehensive digitized academic repository preserving 3,893+ course materials from Level 1 Term 1 to Level 4 Term 2.",
+  creatorName: "Mohammad Fahim Ahmed",
+  creatorBadge: "Fahim Niloy",
+  creatorDept: "Department of Mechanical Engineering",
+  creatorBatch: "'20",
+  creatorId: "2003063",
+  primaryEmail: "fahimcuet63@gmail.com",
+  phone: "+880 1850-162261",
+  portfolioUrl: "https://mohammad-fahim-ahmed.netlify.app/",
+  githubUrl: "https://github.com/Fahim-Niloy2314/classroom-hub",
+  card1Title: "Course Explorer",
+  card1Desc: "Browse 3,895+ verified notes, questions, and lab manuals organized exactly by semester.",
+  card2Title: "Video Lectures",
+  card2Desc: "সেমিস্টার ও টার্ম অনুযায়ী ফোল্ডার আকারে সাজানো ভেরিফাইড ভিডিও লেকচার।",
+  card3Title: "Syllabus & Rules",
+  card3Desc: "CUET 160-credit degree requirements, mark distributions, GPA grading scale, and regulations.",
+  card4Title: "AI Study Chatbot",
+  card4Desc: "Talk naturally with Fahim Niloy AI just like Gemini about theories, formulas, and concepts."
 };
 
 let portalSettings = JSON.parse(localStorage.getItem(STORAGE_KEYS.PORTAL_SETTINGS) || 'null');
 if (!portalSettings || !portalSettings.tabs) {
   portalSettings = JSON.parse(JSON.stringify(DEFAULT_PORTAL_SETTINGS));
   localStorage.setItem(STORAGE_KEYS.PORTAL_SETTINGS, JSON.stringify(portalSettings));
+} else {
+  portalSettings = Object.assign({}, DEFAULT_PORTAL_SETTINGS, portalSettings);
 }
 
 let pendingResources = JSON.parse(localStorage.getItem(STORAGE_KEYS.PENDING_RESOURCES) || '[]');
@@ -705,6 +725,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyLanguage(currentLang);
   loadCustomContacts();
   applyPortalSettings();
+  updateAiKeyStatusBadge();
   updateAuthUI();
   initVisitorCount();
   renderHome();
@@ -796,6 +817,7 @@ function toggleLanguage() {
   currentLang = currentLang === 'en' ? 'bn' : 'en';
   localStorage.setItem(STORAGE_KEYS.LANG, currentLang);
   applyLanguage(currentLang);
+  applyPortalSettings();
   renderHome();
   renderExplorer();
   renderTracker();
@@ -946,6 +968,11 @@ function updateAuthUI() {
 
   if (editContactBtn) {
     editContactBtn.classList.toggle('hidden', !isUserAdmin);
+  }
+
+  const adminHomeEditBanner = document.getElementById('adminHomeEditBanner');
+  if (adminHomeEditBanner) {
+    adminHomeEditBanner.classList.toggle('hidden', !isUserAdmin);
   }
 
   if (adminTab) adminTab.classList.toggle('hidden', !isUserAdmin);
@@ -1256,6 +1283,7 @@ function saveContactSettings() {
   localStorage.setItem(STORAGE_KEYS.CONTACT, JSON.stringify(updated));
   loadCustomContacts();
   applyPortalSettings();
+  updateAiKeyStatusBadge();
   closeEditContactModal();
   showToast(currentLang === 'en' ? 'Contacts updated successfully' : 'যোগাযোগের তথ্য সংরক্ষিত হয়েছে');
 }
@@ -3426,6 +3454,7 @@ function handleBackupFileSelected(e) {
         localStorage.setItem(STORAGE_KEYS.CONTACT, JSON.stringify(data.contacts));
         loadCustomContacts();
   applyPortalSettings();
+  updateAiKeyStatusBadge();
       }
 
       logAdminAction('Restored Backup', `Loaded file: ${file.name}`);
@@ -3527,6 +3556,7 @@ function saveAdminSettings() {
   localStorage.setItem(STORAGE_KEYS.CONTACT, JSON.stringify(settings));
   loadCustomContacts();
   applyPortalSettings();
+  updateAiKeyStatusBadge();
   showToast('Settings saved successfully!');
 }
 
@@ -4513,14 +4543,86 @@ function applyPortalSettings() {
   }
 
   // 3. Hero & Banner Custom Texts
-  if (portalSettings.heroTitle) {
-    const h1 = document.querySelector('#view-home h1');
-    if (h1) h1.innerHTML = `${portalSettings.heroTitle} <br class="hidden sm:block">`;
+  const homeHeroTitle = document.getElementById('homeHeroTitle');
+  if (homeHeroTitle && portalSettings.heroTitle) {
+    homeHeroTitle.textContent = portalSettings.heroTitle;
   }
-  if (portalSettings.deptDesc) {
-    const deptPill = document.querySelector('#view-home .inline-flex span:last-child');
-    if (deptPill) deptPill.textContent = portalSettings.deptDesc;
+  const homeHeroHighlight = document.getElementById('homeHeroHighlight');
+  if (homeHeroHighlight && portalSettings.heroSubtitle) {
+    homeHeroHighlight.textContent = portalSettings.heroSubtitle;
   }
+  const homeDeptPill = document.getElementById('homeDeptPill');
+  if (homeDeptPill && portalSettings.deptDesc) {
+    homeDeptPill.textContent = portalSettings.deptDesc;
+  }
+  const homeHeroDesc = document.getElementById('homeHeroDesc');
+  if (homeHeroDesc && portalSettings.heroDesc) {
+    homeHeroDesc.textContent = portalSettings.heroDesc;
+  }
+
+  // Creator Credentials
+  const homeCreatorName = document.getElementById('homeCreatorName');
+  if (homeCreatorName && portalSettings.creatorName) {
+    homeCreatorName.textContent = portalSettings.creatorName;
+  }
+  const homeCreatorBadge = document.getElementById('homeCreatorBadge');
+  if (homeCreatorBadge && portalSettings.creatorBadge) {
+    homeCreatorBadge.textContent = portalSettings.creatorBadge;
+  }
+  const homeCreatorDept = document.getElementById('homeCreatorDept');
+  if (homeCreatorDept && portalSettings.creatorDept) {
+    homeCreatorDept.textContent = portalSettings.creatorDept;
+  }
+  const homeCreatorBatch = document.getElementById('homeCreatorBatch');
+  if (homeCreatorBatch && portalSettings.creatorBatch) {
+    homeCreatorBatch.textContent = portalSettings.creatorBatch;
+  }
+  const homeCreatorId = document.getElementById('homeCreatorId');
+  if (homeCreatorId && portalSettings.creatorId) {
+    homeCreatorId.textContent = portalSettings.creatorId;
+  }
+
+  // Contact Information
+  const homeEmailLink = document.getElementById('homeEmailLink');
+  if (homeEmailLink && portalSettings.primaryEmail) {
+    homeEmailLink.href = `mailto:${portalSettings.primaryEmail}`;
+    homeEmailLink.textContent = portalSettings.primaryEmail;
+  }
+  const homePhoneLink = document.getElementById('homePhoneLink');
+  if (homePhoneLink && portalSettings.phone) {
+    homePhoneLink.href = `tel:${portalSettings.phone.replace(/\s+/g, '')}`;
+    homePhoneLink.textContent = portalSettings.phone;
+  }
+  const homeNetlifyLink = document.getElementById('homeNetlifyLink');
+  if (homeNetlifyLink && portalSettings.portfolioUrl) {
+    homeNetlifyLink.href = portalSettings.portfolioUrl;
+  }
+  const homeGithubLink = document.getElementById('homeGithubLink');
+  if (homeGithubLink && portalSettings.githubUrl) {
+    homeGithubLink.href = portalSettings.githubUrl;
+  }
+
+  // 4 Core Action Cards
+  const homeCard1Title = document.getElementById('homeCard1Title');
+  if (homeCard1Title && portalSettings.card1Title) homeCard1Title.textContent = portalSettings.card1Title;
+  const homeCard1Desc = document.getElementById('homeCard1Desc');
+  if (homeCard1Desc && portalSettings.card1Desc) homeCard1Desc.textContent = portalSettings.card1Desc;
+
+  const homeCard2Title = document.getElementById('homeCard2Title');
+  if (homeCard2Title && portalSettings.card2Title) homeCard2Title.textContent = portalSettings.card2Title;
+  const homeCard2Desc = document.getElementById('homeCard2Desc');
+  if (homeCard2Desc && portalSettings.card2Desc) homeCard2Desc.textContent = portalSettings.card2Desc;
+
+  const homeCard3Title = document.getElementById('homeCard3Title');
+  if (homeCard3Title && portalSettings.card3Title) homeCard3Title.textContent = portalSettings.card3Title;
+  const homeCard3Desc = document.getElementById('homeCard3Desc');
+  if (homeCard3Desc && portalSettings.card3Desc) homeCard3Desc.textContent = portalSettings.card3Desc;
+
+  const homeCard4Title = document.getElementById('homeCard4Title');
+  if (homeCard4Title && portalSettings.card4Title) homeCard4Title.textContent = portalSettings.card4Title;
+  const homeCard4Desc = document.getElementById('homeCard4Desc');
+  if (homeCard4Desc && portalSettings.card4Desc) homeCard4Desc.textContent = portalSettings.card4Desc;
+
   if (portalSettings.primaryEmail) {
     const footerEmail = document.querySelector('footer a[href^="mailto:"]');
     if (footerEmail) {
@@ -4535,15 +4637,35 @@ function renderAdminLayoutSettings() {
   const container = document.getElementById('adminNavTabsList');
   if (!container) return;
 
-  const cfgHeroTitle = document.getElementById('cfgHeroTitle');
-  const cfgHeroSubtitle = document.getElementById('cfgHeroSubtitle');
-  const cfgDeptDesc = document.getElementById('cfgDeptDesc');
-  const cfgPrimaryEmail = document.getElementById('cfgPrimaryEmail');
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val !== undefined ? val : '';
+  };
 
-  if (cfgHeroTitle) cfgHeroTitle.value = portalSettings.heroTitle || 'Mechanical Engineering';
-  if (cfgHeroSubtitle) cfgHeroSubtitle.value = portalSettings.heroSubtitle || '';
-  if (cfgDeptDesc) cfgDeptDesc.value = portalSettings.deptDesc || 'Chittagong University of Engineering and Technology (CUET)';
-  if (cfgPrimaryEmail) cfgPrimaryEmail.value = portalSettings.primaryEmail || 'fahimcuet63@gmail.com';
+  setVal('cfgHeroTitle', portalSettings.heroTitle || DEFAULT_PORTAL_SETTINGS.heroTitle);
+  setVal('cfgHeroSubtitle', portalSettings.heroSubtitle || DEFAULT_PORTAL_SETTINGS.heroSubtitle);
+  setVal('cfgDeptDesc', portalSettings.deptDesc || DEFAULT_PORTAL_SETTINGS.deptDesc);
+  setVal('cfgHeroDesc', portalSettings.heroDesc || DEFAULT_PORTAL_SETTINGS.heroDesc);
+
+  setVal('cfgCreatorName', portalSettings.creatorName || DEFAULT_PORTAL_SETTINGS.creatorName);
+  setVal('cfgCreatorBadge', portalSettings.creatorBadge || DEFAULT_PORTAL_SETTINGS.creatorBadge);
+  setVal('cfgCreatorDept', portalSettings.creatorDept || DEFAULT_PORTAL_SETTINGS.creatorDept);
+  setVal('cfgCreatorBatch', portalSettings.creatorBatch || DEFAULT_PORTAL_SETTINGS.creatorBatch);
+  setVal('cfgCreatorId', portalSettings.creatorId || DEFAULT_PORTAL_SETTINGS.creatorId);
+
+  setVal('cfgPrimaryEmail', portalSettings.primaryEmail || DEFAULT_PORTAL_SETTINGS.primaryEmail);
+  setVal('cfgPhone', portalSettings.phone || DEFAULT_PORTAL_SETTINGS.phone);
+  setVal('cfgPortfolioUrl', portalSettings.portfolioUrl || DEFAULT_PORTAL_SETTINGS.portfolioUrl);
+  setVal('cfgGithubUrl', portalSettings.githubUrl || DEFAULT_PORTAL_SETTINGS.githubUrl);
+
+  setVal('cfgCard1Title', portalSettings.card1Title || DEFAULT_PORTAL_SETTINGS.card1Title);
+  setVal('cfgCard1Desc', portalSettings.card1Desc || DEFAULT_PORTAL_SETTINGS.card1Desc);
+  setVal('cfgCard2Title', portalSettings.card2Title || DEFAULT_PORTAL_SETTINGS.card2Title);
+  setVal('cfgCard2Desc', portalSettings.card2Desc || DEFAULT_PORTAL_SETTINGS.card2Desc);
+  setVal('cfgCard3Title', portalSettings.card3Title || DEFAULT_PORTAL_SETTINGS.card3Title);
+  setVal('cfgCard3Desc', portalSettings.card3Desc || DEFAULT_PORTAL_SETTINGS.card3Desc);
+  setVal('cfgCard4Title', portalSettings.card4Title || DEFAULT_PORTAL_SETTINGS.card4Title);
+  setVal('cfgCard4Desc', portalSettings.card4Desc || DEFAULT_PORTAL_SETTINGS.card4Desc);
 
   container.innerHTML = portalSettings.tabs.map((tab, idx) => {
     const isFirst = idx === 0;
@@ -4606,6 +4728,7 @@ function toggleNavTabVisibility(tabId) {
   tab.visible = !tab.visible;
   localStorage.setItem(STORAGE_KEYS.PORTAL_SETTINGS, JSON.stringify(portalSettings));
   applyPortalSettings();
+  updateAiKeyStatusBadge();
   renderAdminLayoutSettings();
   showToast(`${tab.label} visibility updated: ${tab.visible ? 'Visible' : 'Hidden'}`);
 }
@@ -4622,6 +4745,7 @@ function moveNavTab(tabId, direction) {
 
   localStorage.setItem(STORAGE_KEYS.PORTAL_SETTINGS, JSON.stringify(portalSettings));
   applyPortalSettings();
+  updateAiKeyStatusBadge();
   renderAdminLayoutSettings();
   showToast('Navigation tab sequence updated!');
 }
@@ -4634,26 +4758,56 @@ function savePortalSettingsFromForm() {
     }
   });
 
-  const cfgHeroTitle = document.getElementById('cfgHeroTitle');
-  const cfgHeroSubtitle = document.getElementById('cfgHeroSubtitle');
-  const cfgDeptDesc = document.getElementById('cfgDeptDesc');
-  const cfgPrimaryEmail = document.getElementById('cfgPrimaryEmail');
+  const getVal = (id, fallback) => {
+    const el = document.getElementById(id);
+    return el && el.value.trim() ? el.value.trim() : fallback;
+  };
 
-  if (cfgHeroTitle) portalSettings.heroTitle = cfgHeroTitle.value.trim();
-  if (cfgHeroSubtitle) portalSettings.heroSubtitle = cfgHeroSubtitle.value.trim();
-  if (cfgDeptDesc) portalSettings.deptDesc = cfgDeptDesc.value.trim();
-  if (cfgPrimaryEmail) portalSettings.primaryEmail = cfgPrimaryEmail.value.trim();
+  portalSettings.heroTitle = getVal('cfgHeroTitle', portalSettings.heroTitle);
+  portalSettings.heroSubtitle = getVal('cfgHeroSubtitle', portalSettings.heroSubtitle);
+  portalSettings.deptDesc = getVal('cfgDeptDesc', portalSettings.deptDesc);
+  portalSettings.heroDesc = getVal('cfgHeroDesc', portalSettings.heroDesc);
+
+  portalSettings.creatorName = getVal('cfgCreatorName', portalSettings.creatorName);
+  portalSettings.creatorBadge = getVal('cfgCreatorBadge', portalSettings.creatorBadge);
+  portalSettings.creatorDept = getVal('cfgCreatorDept', portalSettings.creatorDept);
+  portalSettings.creatorBatch = getVal('cfgCreatorBatch', portalSettings.creatorBatch);
+  portalSettings.creatorId = getVal('cfgCreatorId', portalSettings.creatorId);
+
+  portalSettings.primaryEmail = getVal('cfgPrimaryEmail', portalSettings.primaryEmail);
+  portalSettings.phone = getVal('cfgPhone', portalSettings.phone);
+  portalSettings.portfolioUrl = getVal('cfgPortfolioUrl', portalSettings.portfolioUrl);
+  portalSettings.githubUrl = getVal('cfgGithubUrl', portalSettings.githubUrl);
+
+  portalSettings.card1Title = getVal('cfgCard1Title', portalSettings.card1Title);
+  portalSettings.card1Desc = getVal('cfgCard1Desc', portalSettings.card1Desc);
+  portalSettings.card2Title = getVal('cfgCard2Title', portalSettings.card2Title);
+  portalSettings.card2Desc = getVal('cfgCard2Desc', portalSettings.card2Desc);
+  portalSettings.card3Title = getVal('cfgCard3Title', portalSettings.card3Title);
+  portalSettings.card3Desc = getVal('cfgCard3Desc', portalSettings.card3Desc);
+  portalSettings.card4Title = getVal('cfgCard4Title', portalSettings.card4Title);
+  portalSettings.card4Desc = getVal('cfgCard4Desc', portalSettings.card4Desc);
+
+  // Sync to STORAGE_KEYS.CONTACT
+  const contactObj = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONTACT) || '{}');
+  contactObj.email = portalSettings.primaryEmail;
+  contactObj.phone = portalSettings.phone;
+  contactObj.netlify = portalSettings.portfolioUrl;
+  contactObj.github = portalSettings.githubUrl;
+  localStorage.setItem(STORAGE_KEYS.CONTACT, JSON.stringify(contactObj));
 
   localStorage.setItem(STORAGE_KEYS.PORTAL_SETTINGS, JSON.stringify(portalSettings));
   applyPortalSettings();
+  updateAiKeyStatusBadge();
   renderAdminLayoutSettings();
-  showToast('Portal navigation and layout settings successfully saved!');
+  showToast('হোমপেজের সকল কনটেন্ট ও সেটিংস সফলভাবে সেভ করা হয়েছে!');
 }
 
 function resetPortalSettings() {
   portalSettings = JSON.parse(JSON.stringify(DEFAULT_PORTAL_SETTINGS));
   localStorage.setItem(STORAGE_KEYS.PORTAL_SETTINGS, JSON.stringify(portalSettings));
   applyPortalSettings();
+  updateAiKeyStatusBadge();
   renderAdminLayoutSettings();
   showToast('Portal navigation settings reset to default!');
 }
@@ -4661,8 +4815,11 @@ function resetPortalSettings() {
 
 /* =========================================================================
    EXPANSIVE GEMINI-QUALITY ENGINEERING & ACADEMIC KNOWLEDGE SOLVER
-   (Authored & Curated by Fahim Niloy for CUET Mechanical Engineering)
+   (Integrated with Direct Google Gemini 2.0 Live & OpenAI ChatGPT)
    ========================================================================= */
+
+let aiChatHistory = [];
+let aiConversationTurnCount = 0;
 
 function searchVaultFiles(query, limit = 3) {
   if (!query) return [];
@@ -4771,7 +4928,108 @@ function copyAiResponse(btn) {
   });
 }
 
-// Expansive Multi-Domain Engineering Solver Engine
+function openDirectChatGPT() {
+  const input = document.getElementById('aiInput');
+  const q = (input?.value || '').trim();
+  const url = q ? `https://chatgpt.com/?q=${encodeURIComponent(q)}` : 'https://chatgpt.com/';
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function openDirectGemini() {
+  const input = document.getElementById('aiInput');
+  const q = (input?.value || '').trim();
+  const url = q ? `https://gemini.google.com/app?prompt=${encodeURIComponent(q)}` : 'https://gemini.google.com/app';
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function clearAiChat() {
+  const chatBox = document.getElementById('aiChatMessages');
+  if (chatBox) {
+    chatBox.innerHTML = `
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+          <span class="font-bold text-xs">FN</span>
+        </div>
+        <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed ai-prose shadow-lg">
+          <p>
+            চ্যাট হিস্টোরি পরিষ্কার করা হয়েছে। নতুন যেকোনো প্রশ্ন লিখে পাঠান অথবা সরাসরি <strong>ChatGPT</strong> বা <strong>Gemini</strong>-তে জিজ্ঞেস করুন!
+          </p>
+        </div>
+      </div>
+    `;
+    lucide.createIcons();
+    aiChatHistory = [];
+    aiConversationTurnCount = 0;
+    showToast('চ্যাট হিস্টোরি পরিষ্কার করা হয়েছে।');
+  }
+}
+
+// Modal management for Gemini & ChatGPT Live API
+function openGeminiApiKeyModal() {
+  const dialog = document.getElementById('geminiApiKeyDialog');
+  const gemInput = document.getElementById('geminiApiKeyInput');
+  const oaiInput = document.getElementById('openaiApiKeyInput');
+  if (gemInput) gemInput.value = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY) || '';
+  if (oaiInput) oaiInput.value = localStorage.getItem(STORAGE_KEYS.OPENAI_API_KEY) || '';
+  if (dialog) dialog.showModal();
+}
+
+function closeGeminiApiKeyModal() {
+  const dialog = document.getElementById('geminiApiKeyDialog');
+  if (dialog) dialog.close();
+}
+
+function saveGeminiApiKey() {
+  const gemInput = document.getElementById('geminiApiKeyInput');
+  const oaiInput = document.getElementById('openaiApiKeyInput');
+  const gemKey = (gemInput?.value || '').trim();
+  const oaiKey = (oaiInput?.value || '').trim();
+
+  if (gemKey) {
+    localStorage.setItem(STORAGE_KEYS.GEMINI_API_KEY, gemKey);
+  } else {
+    localStorage.removeItem(STORAGE_KEYS.GEMINI_API_KEY);
+  }
+
+  if (oaiKey) {
+    localStorage.setItem(STORAGE_KEYS.OPENAI_API_KEY, oaiKey);
+  } else {
+    localStorage.removeItem(STORAGE_KEYS.OPENAI_API_KEY);
+  }
+
+  updateAiKeyStatusBadge();
+  closeGeminiApiKeyModal();
+  showToast(gemKey || oaiKey ? 'Live AI connected successfully!' : 'API settings updated.');
+}
+
+function clearGeminiApiKey() {
+  localStorage.removeItem(STORAGE_KEYS.GEMINI_API_KEY);
+  localStorage.removeItem(STORAGE_KEYS.OPENAI_API_KEY);
+  const gemInput = document.getElementById('geminiApiKeyInput');
+  const oaiInput = document.getElementById('openaiApiKeyInput');
+  if (gemInput) gemInput.value = '';
+  if (oaiInput) oaiInput.value = '';
+  updateAiKeyStatusBadge();
+  closeGeminiApiKeyModal();
+  showToast('API key removed. Switched to offline knowledge mode.');
+}
+
+function updateAiKeyStatusBadge() {
+  const badge = document.getElementById('geminiKeyStatusText');
+  const gemKey = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY);
+  const oaiKey = localStorage.getItem(STORAGE_KEYS.OPENAI_API_KEY);
+  if (!badge) return;
+
+  if (gemKey) {
+    badge.innerHTML = '<span class="text-emerald-400 font-bold">🟢 Gemini 2.0 Live</span>';
+  } else if (oaiKey) {
+    badge.innerHTML = '<span class="text-emerald-400 font-bold">🟢 ChatGPT Live</span>';
+  } else {
+    badge.innerHTML = '<span>⚡ Connect Live AI (Free)</span>';
+  }
+}
+
+// Multi-Domain Engineering Knowledge Solver Engine
 function getEngineeringConceptResponse(query, isBangla) {
   const q = query.toLowerCase();
 
@@ -4804,11 +5062,6 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ dS = \\left( \\frac{\\delta Q}{T} \\right)_{\\text{rev}} \\]
         </div>
-        <p>For an ideal gas with constant specific heats:</p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ s_2 - s_1 = c_p \\ln\\left(\\frac{T_2}{T_1}\\right) - R \\ln\\left(\\frac{P_2}{P_1}\\right) = c_v \\ln\\left(\\frac{T_2}{T_1}\\right) + R \\ln\\left(\\frac{v_2}{v_1}\\right) \\]
-        </div>
-        <p><strong>Key Insight:</strong> Entropy generation $S_{\\text{gen}} > 0$ directly quantifies irreversibilities such as fluid friction, unrestricted expansion, and heat transfer across finite temperature differences.</p>
       `
     };
   }
@@ -4828,20 +5081,11 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ \\eta_{\\text{Brayton}} = 1 - \\frac{1}{r_p^{(k-1)/k}} \\]
         </div>
-        <p><strong>দক্ষতা বৃদ্ধির বাস্তব পদ্ধতি:</strong> রিজেনারেশন (Regeneration), ইন্টারকুলিং (Intercooling), এবং রিহিট (Reheat) ব্যবহারের মাধ্যমে বিদ্যুৎ উৎপাদন ক্ষমতা বহুলাংশে বাড়ানো হয়।</p>
       ` : `
         <p><strong>The Brayton Cycle:</strong> The ideal thermodynamic cycle for modern gas turbine power plants and aircraft jet propulsion systems.</p>
-        <p><strong>Cycle Processes:</strong></p>
-        <ul class="list-disc pl-4 space-y-1 text-xs">
-          <li><strong>1-2:</strong> Isentropic compression in an axial compressor.</li>
-          <li><strong>2-3:</strong> Constant-pressure heat addition ($q_{\\text{in}} = c_p(T_3 - T_2)$) in combustor.</li>
-          <li><strong>3-4:</strong> Isentropic expansion in the turbine ($w_{\\text{out}} = c_p(T_3 - T_4)$).</li>
-          <li><strong>4-1:</strong> Constant-pressure heat rejection.</li>
-        </ul>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ \\eta_{\\text{th, Brayton}} = 1 - \\frac{1}{r_p^{(k-1)/k}}, \\quad \\text{where } r_p = \\frac{P_2}{P_1} \\]
         </div>
-        <p><strong>Back Work Ratio (BWR):</strong> Gas turbines have a high BWR (~0.4 - 0.6) because compressing compressible air requires substantial turbine work.</p>
       `
     };
   }
@@ -4860,13 +5104,11 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ \\eta_{\\text{th}} = \\frac{w_{\\text{net}}}{q_{\\text{in}}} = \\frac{(h_3 - h_4) - (h_2 - h_1)}{h_3 - h_2} \\]
         </div>
-        <p><strong>রিহিট ও রিজেনারেশন:</strong> টারবাইনের শেষ ব্লেডে আর্দ্রতা (moisture) ৯-১০% এর নিচে রাখতে সুপারহিটিং ও রিহিটিং অপরিহার্য।</p>
       ` : `
         <p><strong>Rankine Cycle:</strong> The vapor power cycle executing in thermal, nuclear, and concentrated solar power plants.</p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ \\eta_{\\text{th}} = \\frac{w_{\\text{turb}} - w_{\\text{pump}}}{q_{\\text{in}}} = \\frac{(h_3 - h_4) - (h_2 - h_1)}{h_3 - h_2} \\]
         </div>
-        <p><strong>Key Design Parameters:</strong> Boiler pressure ($P_{\\text{high}}$), Condenser vacuum pressure ($P_{\\text{low}}$), Superheat temperature, and moisture content at turbine exhaust ($x_4 \\ge 0.88 - 0.90$).</p>
       `
     };
   }
@@ -4883,22 +5125,14 @@ function getEngineeringConceptResponse(query, isBangla) {
         </div>
         <p><strong>প্রিন্সিপাল স্ট্রেসসমূহ (Principal Stresses):</strong> যে তলে কোনো শিয়ার স্ট্রেস থাকে না (\\( \\tau = 0 \\)):</p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ \\sigma_{1, 2} = \\frac{\\sigma_x + \\sigma_y}{2} \\pm \\sqrt{ \\left( \\frac{\\sigma_x - \\sigma_y}{2} \\right)^2 + \\tau_{xy}^2 } \\]
-          প্রিন্সিপাল কোণ: \\[ \\tan 2\\theta_p = \\frac{2\\tau_{xy}}{\\sigma_x - \\sigma_y} \\]
+          \\[ \\sigma_{1, 2} = \\frac{\\sigma_x + \\sigma_y}{2} \\pm R \\]
         </div>
-        <p><strong>ব্যবহারিক প্রয়োগ:</strong> শ্যাফ্ট, প্রেসার ভেসেল বা ব্রিজ ডিজাইনে উপাদান যাতে ভেঙে না যায়, সেজন্য ভন মাইসেস (Von Mises) বা ট্রেস্কা (Tresca) মানদণ্ডের সাথে তুলনা করা হয়।</p>
       ` : `
-        <p><strong>Mohr's Circle Formulation:</strong> A planar transformation technique representing normal stress $\\sigma$ on the horizontal axis and shear stress $\\tau$ on the vertical axis.</p>
+        <p><strong>Mohr's Circle Formulation:</strong> Planar transformation representing normal stress $\\sigma$ and shear stress $\\tau$.</p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           Center: \\[ C = \\left( \\frac{\\sigma_x + \\sigma_y}{2}, 0 \\right) \\]
           Radius & Max In-Plane Shear: \\[ R = \\tau_{\\max} = \\sqrt{ \\left( \\frac{\\sigma_x - \\sigma_y}{2} \\right)^2 + \\tau_{xy}^2 } \\]
         </div>
-        <p><strong>Principal Stresses:</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ \\sigma_{1, 2} = \\frac{\\sigma_x + \\sigma_y}{2} \\pm R \\]
-          Orientation: \\[ \\tan(2\\theta_p) = \\frac{2\\tau_{xy}}{\\sigma_x - \\sigma_y} \\]
-        </div>
-        <p><strong>Failure Criteria Connection:</strong> Maximum Shear Stress Theory (Tresca) sets $\\tau_{\\max} \\le S_y / 2$, while Distortion Energy Theory (von Mises) evaluates $\\sigma' = \\sqrt{\\sigma_1^2 - \\sigma_1\\sigma_2 + \\sigma_2^2} \\le S_y$.</p>
       `
     };
   }
@@ -4911,31 +5145,15 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ \\frac{M}{I} = \\frac{\\sigma}{y} = \\frac{E}{R} \\]
         </div>
-        <ul class="list-disc pl-4 space-y-1 text-xs">
-          <li>\\( M \\) = বেন্ডিং মোমেন্ট (N-m)</li>
-          <li>\\( I \\) = নিউট্রাল অ্যাক্সিস সাপেক্ষে এরিয়া মোমেন্ট অফ ইনার্শিয়া (\\( m^4 \\))</li>
-          <li>\\( \\sigma \\) = নিউট্রাল অ্যাক্সিস থেকে \\( y \\) দূরত্বের ফাইবার স্ট্রেস (Pa)</li>
-          <li>\\( E \\) = মডুলাস অফ ইলাস্টিসিটি, \\( R \\) = বক্রতার ব্যাসার্ধ</li>
-        </ul>
         <p><strong>সেকশন মডুলাস (Section Modulus \\( Z \\)):</strong> বিমের শক্তি নির্দেশক:</p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ \\sigma_{\\max} = \\frac{M}{Z}, \\quad \\text{where } Z = \\frac{I}{y_{\\max}} \\]
         </div>
-        <p><strong>SFD ও BMD সম্পর্ক:</strong> মোমেন্টের ব্যবকলনই হলো শিয়ার ফোর্স (\\( V = \\frac{dM}{dx} \\))। যেখানে শিয়ার ফোর্স শূন্য (\\( V = 0 \\)), সেখানেই ম্যাক্সিমাম বেন্ডিং মোমেন্ট অবস্থান করে!</p>
       ` : `
-        <p><strong>Pure Bending & Flexure Formula:</strong> Governs transverse loading of slender prismatic beams.</p>
+        <p><strong>Pure Bending & Flexure Formula:</strong></p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ \\frac{M}{I} = \\frac{\\sigma}{y} = \\frac{E}{\\rho} \\quad \\implies \\quad \\sigma = -\\frac{M y}{I} \\]
         </div>
-        <p><strong>Section Modulus ($Z$):</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ Z = \\frac{I}{c} \\quad \\implies \\quad \\sigma_{\\max} = \\frac{M_{\\max}}{Z} \\le \\sigma_{\\text{allow}} \\]
-        </div>
-        <p><strong>Differential Equilibrium Relations:</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ \\frac{dV}{dx} = -w(x), \\quad \\frac{dM}{dx} = V(x) \\]
-        </div>
-        <p>Maximum bending moments always occur where the shear force crosses zero ($V = 0$).</p>
       `
     };
   }
@@ -4951,24 +5169,11 @@ function getEngineeringConceptResponse(query, isBangla) {
         <p><strong>পোলার মোমেন্ট অফ ইনার্শিয়া (Polar Moment of Inertia):</strong></p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           সলিড শ্যাফ্ট: \\[ J = \\frac{\\pi d^4}{32} \\]
-          ফাঁপা শ্যাফ্ট: \\[ J = \\frac{\\pi (d_o^4 - d_i^4)}{32} \\]
-        </div>
-        <p><strong>পাওয়ার ট্রান্সমিশন সূত্র:</strong> \\( P \\) ওয়াট পাওয়ার \\( N \\) rpm গতিতে সরবরাহ করলে টর্ক:</p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ P = \\frac{2\\pi N T}{60} \\quad \\implies \\quad T = \\frac{60 P}{2\\pi N} \\]
         </div>
       ` : `
-        <p><strong>Elastic Torsion Formula:</strong> For solid or hollow circular cross-sections subjected to torque $T$:</p>
+        <p><strong>Elastic Torsion Formula:</strong></p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ \\frac{T}{J} = \\frac{\\tau}{r} = \\frac{G \\theta}{L} \\quad \\implies \\quad \\tau_{\\max} = \\frac{T c}{J} = \\frac{16 T}{\\pi d^3} \\]
-        </div>
-        <p><strong>Angle of Twist:</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ \\theta = \\frac{T L}{J G} \\]
-        </div>
-        <p><strong>Shaft Power Relationship:</strong> Power $P$ (kW) at rotational speed $N$ (rpm):</p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ T = \\frac{9550 \\times P(\\text{kW})}{N(\\text{rpm})} \\text{ N}\\cdot\\text{m} \\]
+          \\[ \\frac{T}{J} = \\frac{\\tau}{r} = \\frac{G \\theta}{L} \\quad \\implies \\quad \\tau_{\\max} = \\frac{16 T}{\\pi d^3} \\]
         </div>
       `
     };
@@ -4979,30 +5184,15 @@ function getEngineeringConceptResponse(query, isBangla) {
     return {
       title: "Fluid Mechanics: Bernoulli's Principle & Conservation of Energy",
       html: isBangla ? `
-        <p><strong>বার্নৌলির সমীকরণ (Bernoulli's Equation):</strong> ইনভিস্কিড (অঘর্ষণীয়), অসংকোচনীয় (incompressible), ও স্থির প্রবাহের (steady flow) জন্য একটি স্ট্রিমলাইন বরাবর মোট শক্তির সমীকরণ:</p>
+        <p><strong>বার্নৌলির সমীকরণ (Bernoulli's Equation):</strong> ইনভিস্কিড, অসংকোচনীয় ও স্থির প্রবাহের জন্য একটি স্ট্রিমলাইন বরাবর মোট শক্তির সমীকরণ:</p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ P + \\frac{1}{2}\\rho V^2 + \\rho g z = \\text{ধ্রুবক} \\]
-          অথবা হেড আকারে: \\[ \\frac{P}{\\rho g} + \\frac{V^2}{2g} + z = H \\]
         </div>
-        <p><strong>তিনটি হেডের অর্থ:</strong></p>
-        <ul class="list-disc pl-4 space-y-1 text-xs">
-          <li>\\( \\frac{P}{\\rho g} \\) = স্ট্যাটিক প্রেশার হেড (Pressure Head)</li>
-          <li>\\( \\frac{V^2}{2g} \\) = ডায়নামিক বা ভেলোসিটি হেড (Velocity Head)</li>
-          <li>\\( z \\) = পটেনশিয়াল বা এলিভেশন হেড (Elevation Head)</li>
-        </ul>
-        <p><strong>বাস্তব প্রয়োগ:</strong> ভেনচুরিমিতার দিয়ে পাইপে প্রবাহ নির্ণয়, পিটোট টিউব দিয়ে উড়োজাহাজের বেগ পরিমাপ এবং বিমানের ডানায় লিফ্ট ফোর্স তৈরি।</p>
       ` : `
         <p><strong>Bernoulli's Equation:</strong> Represents mechanical energy conservation along a streamline for frictionless, steady, incompressible fluid flow:</p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ \\frac{P_1}{\\gamma} + \\frac{V_1^2}{2g} + z_1 = \\frac{P_2}{\\gamma} + \\frac{V_2^2}{2g} + z_2 + h_L \\]
         </div>
-        <p><strong>Key Assumptions:</strong></p>
-        <ol class="list-decimal pl-4 space-y-1 text-xs">
-          <li>Steady state flow ($\\partial / \\partial t = 0$)</li>
-          <li>Incompressible fluid ($\\rho = \\text{const}$)</li>
-          <li>Frictionless/Inviscid (viscous shear losses neglected, or grouped into head loss $h_L$)</li>
-          <li>Flow strictly along a streamline.</li>
-        </ol>
       `
     };
   }
@@ -5015,30 +5205,11 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ Re = \\frac{\\rho V D}{\\mu} = \\frac{V D}{\\nu} \\]
         </div>
-        <p><strong>বৃত্তাকার পাইপের ফ্লো রিজিয়ন:</strong></p>
-        <ul class="list-disc pl-4 space-y-1 text-xs">
-          <li>\\( Re < 2300 \\): <strong>ল্যামিনার প্রবাহ (Laminar Flow)</strong> - মসৃণ স্তরভিত্তিক গতি।</li>
-          <li>\\( 2300 \\le Re \\le 4000 \\): <strong>ট্রানজিশনাল প্রবাহ (Transitional)</strong>।</li>
-          <li>\\( Re > 4000 \\): <strong>টার্বুলেন্ট প্রবাহ (Turbulent Flow)</strong> - বিশৃঙ্খল ঘূর্ণি ও দ্রুত মিশ্রণ।</li>
-        </ul>
-        <p><strong>পাইপে ফ্রিকশন হেড লস (Darcy-Weisbach Equation):</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ h_f = f \\frac{L}{D} \\frac{V^2}{2g} \\]
-          ল্যামিনার প্রবাহের জন্য ফ্রিকশন ফ্যাক্টর: \\[ f = \\frac{64}{Re} \\]
-        </div>
+        <p>পাইপে ল্যামিনার প্রবাহ: \\( Re < 2300 \\), টার্বুলেন্ট প্রবাহ: \\( Re > 4000 \\)।</p>
       ` : `
         <p><strong>Reynolds Number ($Re$):</strong> Dimensionless ratio of inertial forces to viscous forces:</p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ Re = \\frac{\\rho V D_h}{\\mu} = \\frac{V D_h}{\\nu} \\]
-        </div>
-        <p><strong>Pipe Flow Regimes:</strong></p>
-        <ul class="list-disc pl-4 space-y-1 text-xs">
-          <li>$Re < 2300$: Laminar ($f = 64/Re$, Hagen-Poiseuille velocity profile $u(r) = 2V_{\\text{avg}}(1 - r^2/R^2)$).</li>
-          <li>$2300 \\le Re \\le 4000$: Critical transition zone.</li>
-          <li>$Re > 4000$: Fully turbulent (Colebrook equation, Moody chart).</li>
-        </ul>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          Darcy-Weisbach Major Loss: \\[ h_f = f \\frac{L}{D} \\frac{V^2}{2g} \\]
         </div>
       `
     };
@@ -5050,27 +5221,17 @@ function getEngineeringConceptResponse(query, isBangla) {
       html: isBangla ? `
         <p><strong>হাইড্রোলিক টারবাইনের শ্রেণিবিন্যাস:</strong></p>
         <ul class="list-disc pl-4 space-y-1.5 text-xs">
-          <li><strong>পেল্টন হুইল (Pelton Wheel):</strong> পিউর ইমপালস টারবাইন। উচ্চ হেড (\\( H > 150 \\) m) কিন্তু কম প্রবাহের জন্য আদর্শ। নজলের মাধ্যমে প্রেশার হেডকে পুরোপুরি উচ্চগতির জেটে রূপান্তর করা হয়।</li>
-          <li><strong>ফ্রান্সিস টারবাইন (Francis Turbine):</strong> মিক্সড ফ্লো রিঅ্যাকশন টারবাইন। মাঝারি হেড (৩০ - ১৫০ m) এবং মাঝারি প্রবাহের জন্য বিশ্বের সবচেয়ে জনপ্রিয় টারবাইন।</li>
-          <li><strong>কাপলান টারবাইন (Kaplan Turbine):</strong> অ্যাক্সিয়াল ফ্লো রিঅ্যাকশন টারবাইন। কম হেড (\\( H < 30 \\) m) এবং বিশাল পানির স্রোতের জন্য অ্যাডজাস্টেবল ব্লেড বিশিষ্ট।</li>
+          <li><strong>পেল্টন হুইল (Pelton):</strong> ইমপালস টারবাইন। উচ্চ হেড (\\( H > 150 \\) m) কিন্তু কম প্রবাহের জন্য আদর্শ।</li>
+          <li><strong>ফ্রান্সিস (Francis):</strong> মাঝারি হেড (৩০ - ১৫০ m) ও মাঝারি প্রবাহের জন্য মিক্সড ফ্লো রিঅ্যাকশন টারবাইন।</li>
+          <li><strong>কাপলান (Kaplan):</strong> কম হেড (\\( H < 30 \\) m) ও বিশাল প্রবাহের জন্য অ্যাক্সিয়াল ফ্লো টারবাইন।</li>
         </ul>
-        <p><strong>সেন্ট্রিফিউগাল পাম্প ও ক্যাভিটেশন (Cavitation):</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          NPSH শর্ত: \\[ \\text{NPSH}_{\\text{available}} > \\text{NPSH}_{\\text{required}} \\]
-        </div>
-        <p>যদি পাম্পের ইনলেটে প্রেশার বাষ্পচাপের (Vapor pressure) নিচে নেমে যায়, বাষ্পের বুদবুদ সৃষ্টি হয় এবং ব্লেডে ধাক্কা লেগে মেটাল ক্ষয়প্রাপ্ত হয়, যাকে ক্যাভিটেশন বলা হয়।</p>
       ` : `
         <p><strong>Hydraulic Turbines Classification Matrix:</strong></p>
         <ul class="list-disc pl-4 space-y-1.5 text-xs">
-          <li><strong>Pelton Wheel (Impulse):</strong> High head ($H > 150$ m), low flow rate. Complete pressure-to-velocity conversion through needle nozzles before striking double-cup buckets.</li>
-          <li><strong>Francis (Reaction):</strong> Medium head ($30 - 150$ m), radial inflow to axial discharge. High peak efficiency (~95%).</li>
-          <li><strong>Kaplan (Axial Reaction):</strong> Low head ($H < 30$ m), massive volumetric discharge. Features adjustable runner blades and guide vanes for off-design efficiency.</li>
+          <li><strong>Pelton Wheel (Impulse):</strong> High head ($H > 150$ m), low flow rate.</li>
+          <li><strong>Francis (Reaction):</strong> Medium head ($30 - 150$ m), radial inflow to axial discharge.</li>
+          <li><strong>Kaplan (Axial Reaction):</strong> Low head ($H < 30$ m), high discharge.</li>
         </ul>
-        <p><strong>Centrifugal Pump Net Positive Suction Head (NPSH):</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ \\text{NPSH}_A = \\frac{P_{\\text{atm}}}{\\gamma} + z_s - h_{fs} - \\frac{P_v}{\\gamma} \\ge \\text{NPSH}_R \\]
-        </div>
-        <p>Prevents destructive cavitation bubbles from imploding against impeller blades.</p>
       `
     };
   }
@@ -5084,64 +5245,29 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ q = -k A \\frac{dT}{dx} \\]
         </div>
-        <ul class="list-disc pl-4 space-y-1 text-xs">
-          <li>\\( q \\) = তাপ সঞ্চালনের হার (Watts)</li>
-          <li>\\( k \\) = উপাদানের থার্মাল কন্ডাক্টিভিটি (W/m·K)</li>
-          <li>\\( A \\) = সারফেস এরিয়া (\\( m^2 \\))</li>
-          <li>\\( \\frac{dT}{dx} \\) = তাপমাত্রার গ্রেডিয়েন্ট (ঋণাত্মক চিহ্ন নির্দেশ করে উচ্চ তাপমাত্রা থেকে নিম্নে তাপের গতি)</li>
-        </ul>
-        <p><strong>ইনসুলেশনের ক্রিটিক্যাল রেডিয়াস (Critical Radius of Insulation):</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          সিলিন্ডার বা পাইপের জন্য: \\[ r_{cr} = \\frac{k_{\\text{ins}}}{h} \\]
-          গোলকের জন্য: \\[ r_{cr} = \\frac{2 k_{\\text{ins}}}{h} \\]
-        </div>
-        <p>পাইপের ব্যাসার্ধ \\( r_{cr} \\) এর কম হলে ইনসুলেশন বাড়ালে তাপ ক্ষতি উল্টো বেড়ে যায়!</p>
+        <p>সিলিন্ডারে ক্রিটিক্যাল রেডিয়াস: \\[ r_{cr} = \\frac{k}{h} \\]</p>
       ` : `
         <p><strong>Fourier's Law of Heat Conduction:</strong></p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ \\dot{Q}_{\\text{cond}} = -k A \\frac{dT}{dx} \\quad \\implies \\quad \\dot{Q} = \\frac{\\Delta T}{R_{\\text{th}}} \\]
-        </div>
-        <p><strong>Thermal Resistance Formulations:</strong></p>
-        <ul class="list-disc pl-4 space-y-1 text-xs">
-          <li>Plane Wall: $R_{\\text{wall}} = L / (kA)$</li>
-          <li>Cylindrical Radial Wall: $R_{\\text{cyl}} = \\frac{\\ln(r_2/r_1)}{2\\pi k L}$</li>
-          <li>Convection Boundary: $R_{\\text{conv}} = 1 / (hA)$</li>
-        </ul>
-        <p><strong>Critical Radius of Insulation:</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ r_{\\text{cr, cylinder}} = \\frac{k}{h}, \\quad r_{\\text{cr, sphere}} = \\frac{2k}{h} \\]
+          \\[ \\dot{Q}_{\\text{cond}} = -k A \\frac{dT}{dx} \\]
         </div>
       `
     };
   }
 
-  // 5. MATHEMATICS & COMPUTATIONAL METHODS
+  // 5. MATHEMATICS
   if (q.includes('laplace') || q.includes('differential equation') || q.includes('ode') || q.includes('ল্যাপ্লাস') || q.includes('ডিফারেনশিয়াল')) {
     return {
       title: 'Engineering Mathematics: Differential Equations & Laplace Transforms',
       html: isBangla ? `
-        <p><strong>ল্যাপ্লাস ট্রান্সফর্ম (Laplace Transform) এর সংজ্ঞা:</strong> টাইম ডোমেইনের কঠিন ডিফারেনশিয়াল সমীকরণকে বীজগাণিতিক জটিল ফ্রিকোয়েন্সি \\( s \\)-ডোমেইনে রূপান্তর করার পদ্ধতি:</p>
+        <p><strong>ল্যাপ্লাস ট্রান্সফর্ম (Laplace Transform) এর সংজ্ঞা:</strong></p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ \\mathcal{L}\\{f(t)\\} = F(s) = \\int_{0}^{\\infty} e^{-st} f(t) dt \\]
         </div>
-        <p><strong>প্রয়োজনীয় স্ট্যান্ডার্ড রূপান্তর:</strong></p>
-        <ul class="list-disc pl-4 space-y-1 text-xs font-mono">
-          <li>\\( \\mathcal{L}\\{1\\} = \\frac{1}{s} \\)</li>
-          <li>\\( \\mathcal{L}\\{t^n\\} = \\frac{n!}{s^{n+1}} \\)</li>
-          <li>\\( \\mathcal{L}\\{e^{at}\\} = \\frac{1}{s-a} \\)</li>
-          <li>\\( \\mathcal{L}\\{\\sin(\\omega t)\\} = \\frac{\\omega}{s^2 + \\omega^2} \\)</li>
-          <li>\\( \\mathcal{L}\\{\\cos(\\omega t)\\} = \\frac{s}{s^2 + \\omega^2} \\)</li>
-        </ul>
-        <p><strong>ডেরিভেটিভ প্রোপার্টি:</strong> সমীকরণ সমাধানে \\( \\mathcal{L}\\{y'\\} = s Y(s) - y(0) \\) এবং \\( \\mathcal{L}\\{y''\\} = s^2 Y(s) - s y(0) - y'(0) \\) ব্যবহার করা হয়।</p>
       ` : `
-        <p><strong>Laplace Transform Definition:</strong> Integral transformation mapping differential equations into algebraic equations in complex frequency domain $s = \\sigma + j\\omega$:</p>
+        <p><strong>Laplace Transform Definition:</strong></p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ \\mathcal{L}\\{f(t)\\} = F(s) = \\int_{0}^{\\infty} e^{-st} f(t) dt \\]
-        </div>
-        <p><strong>Key Transform Pairs:</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ \\mathcal{L}\\{t^n\\} = \\frac{n!}{s^{n+1}}, \\quad \\mathcal{L}\\{e^{at}\\} = \\frac{1}{s-a}, \\quad \\mathcal{L}\\{\\cos(\\omega t)\\} = \\frac{s}{s^2+\\omega^2} \\]
-          Derivative Rule: \\[ \\mathcal{L}\\{f''(t)\\} = s^2 F(s) - s f(0) - f'(0) \\]
         </div>
       `
     };
@@ -5151,157 +5277,91 @@ function getEngineeringConceptResponse(query, isBangla) {
     return {
       title: 'Engineering Mathematics: Eigenvalues, Eigenvectors & Linear Systems',
       html: isBangla ? `
-        <p><strong>আইগেনভ্যালু ও আইগেনভেক্টর (Eigenvalues & Eigenvectors):</strong> কোনো লিনিয়ার রূপান্তরে যে ভেক্টরের শুধু দৈর্ঘ্য বাড়ে বা কমে কিন্তু দিক পরিবর্তিত হয় না:</p>
+        <p><strong>আইগেনভ্যালু সমীকরণ:</strong></p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ A \\vec{v} = \\lambda \\vec{v} \\quad \\implies \\quad (A - \\lambda I)\\vec{v} = 0 \\]
+          \\[ A \\vec{v} = \\lambda \\vec{v} \\quad \\implies \\quad |A - \\lambda I| = 0 \\]
         </div>
-        <p><strong>ক্যারেক্টারিস্টিক সমীকরণ (Characteristic Equation):</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          \\[ \\det(A - \\lambda I) = |A - \\lambda I| = 0 \\]
-        </div>
-        <p><strong>প্রকৌশলগত প্রয়োগ:</strong> মেকানিক্যাল ভাইব্রেশন এনালাইসিসে ন্যাচারাল ফ্রিকোয়েন্সি (Natural Frequencies) নির্ণয় এবং স্ট্রাকচারাল স্ট্যাবিলিটি যাচাইয়ে আইগেনভ্যালু অপরিহার্য।</p>
       ` : `
         <p><strong>Characteristic Equation & Eigen Decomposition:</strong></p>
         <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
           \\[ A \\mathbf{x} = \\lambda \\mathbf{x} \\quad \\implies \\quad \\det(A - \\lambda I) = 0 \\]
         </div>
-        <p><strong>Physical Significance:</strong> In mechanical structural dynamics and vibration analysis ($[M]\\ddot{\\mathbf{x}} + [K]\\mathbf{x} = 0$), eigenvalues $\\lambda_i = \\omega_n^2$ correspond to the square of natural frequencies, while eigenvectors $\\mathbf{x}_i$ define the corresponding mode shapes.</p>
       `
     };
   }
 
-  // 6. MATERIALS SCIENCE & MANUFACTURING
+  // 6. MATERIALS & PROGRAMMING
   if (q.includes('iron') || q.includes('phase diagram') || q.includes('heat treatment') || q.includes('মার্টেনসাইট') || q.includes('ফেজ ডায়াগ্রাম')) {
     return {
       title: 'Materials Science: Fe-C Equilibrium Diagram & Heat Treatment',
       html: isBangla ? `
-        <p><strong>আয়রন-কার্বন ফেজ ডায়াগ্রাম (Iron-Carbon Equilibrium Diagram):</strong></p>
-        <ul class="list-disc pl-4 space-y-1 text-xs">
-          <li><strong>ইউটেকটয়েড পয়েন্ট (Eutectoid Point):</strong> 0.76% কার্বন, 727°C। এখানে অস্টেনাইট (Austenite) পরিবর্তিত হয়ে ল্যামেলার পার্লাইটে (Pearlite = \\( \\alpha \\) + \\( \\text{Fe}_3\\text{C} \\)) রূপ নেয়।</li>
-          <li><strong>ইউটেকটিক পয়েন্ট (Eutectic Point):</strong> 4.3% কার্বন, 1147°C (লিকুইড থেকে লেডেবুরাইট)।</li>
-        </ul>
-        <p><strong>প্রধান হিট ট্রিটমেন্ট প্রক্রিয়াসমূহ:</strong></p>
-        <ol class="list-decimal pl-4 space-y-1 text-xs">
-          <li><strong>Annealing:</strong> উচ্চতাপে গরম করে ফার্নেসে ধীরে ধীরে ঠান্ডা করা (নমনীয়তা বাড়ানো ও স্ট্রেস রিলিজের জন্য)।</li>
-          <li><strong>Normalizing:</strong> বাতাসে ঠান্ডা করে সুষম দানাদার কাঠামো তৈরি করা।</li>
-          <li><strong>Quenching:</strong> দ্রুত পানি বা তেলে ঠান্ডা করে সূঁচালো ও অত্যন্ত শক্ত <strong>মার্টেনসাইট (Martensite)</strong> তৈরি।</li>
-          <li><strong>Tempering:</strong> কোয়েন্চিং-এর পর ভঙ্গুরতা কমাতে ও টাফনেস ফেরাতে পুনরায় মাঝারি তাপে উত্তপ্ত করা।</li>
-        </ol>
+        <p><strong>আয়রন-কার্বন ফেজ ডায়াগ্রাম:</strong></p>
+        <p>ইউটেকটয়েড পয়েন্ট (Eutectoid): 0.76% C, 727°C (অস্টেনাইট থেকে পার্লাইট)। ইউটেকটিক পয়েন্ট (Eutectic): 4.3% C, 1147°C।</p>
       ` : `
-        <p><strong>Iron-Iron Carbide ($\\text{Fe-Fe}_3\\text{C}$) Phase Diagram:</strong></p>
-        <ul class="list-disc pl-4 space-y-1 text-xs">
-          <li><strong>Eutectoid Reaction:</strong> At 0.76 wt% C and 727°C: $\\gamma \\text{ (Austenite)} \\leftrightarrow \\alpha \\text{ (Ferrite)} + \\text{Fe}_3\\text{C (Cementite)}$ forming layered Pearlite.</li>
-          <li><strong>Eutectic Reaction:</strong> At 4.3 wt% C and 1147°C: $L \\leftrightarrow \\gamma + \\text{Fe}_3\\text{C}$ (Ledeburite).</li>
-        </ul>
-        <p><strong>Heat Treatment Principles:</strong></p>
-        <p>Quenching suppresses diffusion-controlled pearlite transformation, forcing a diffusionless, shear-driven crystal lattice transformation into Body-Centered Tetragonal (BCT) <strong>Martensite</strong> with extreme hardness and internal lattice strain.</p>
+        <p><strong>Iron-Iron Carbide ($\\text{Fe-Fe}_3\\text{C}$) Phase Diagram:</strong> Eutectoid reaction at 0.76 wt% C and 727°C forming Pearlite.</p>
       `
     };
   }
 
-  // 7. PROGRAMMING IN ENGINEERING (C / C++ / PYTHON)
   if (q.includes('pointer') || q.includes('পয়েন্টার') || q.includes('c programming') || q.includes('মেমোরি')) {
     return {
       title: 'Computer Programming: Pointers & Memory Management in C',
       html: isBangla ? `
-        <p><strong>পয়েন্টার (Pointer) কী ও কেন জরুরি:</strong> পয়েন্টার হলো এমন একটি ভেরিয়েবল যা সাধারণ মানের পরিবর্তে অন্য একটি ভেরিয়েবলের মেমোরি অ্যাড্রেস (RAM Address) ধারণ করে।</p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          int x = 42;<br>
-          int *p = &x; // p contains memory address of x<br>
-          printf("%d", *p); // Dereferencing outputs 42
-        </div>
-        <p><strong>ডায়নামিক মেমোরি বরাদ্দ (Dynamic Memory Allocation):</strong></p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          int *arr = (int*) malloc(n * sizeof(int));<br>
-          // use array...<br>
-          free(arr); // Memory leak রোধে free করা বাধ্যতামূলক
-        </div>
-        <p><strong>প্রকৌশলগত ব্যবহার:</strong> মাইক্রোকন্ট্রোলার প্রোগ্রামিং, এমবেডেড সিস্টেম (Arduino, STM32) এবং ফাস্ট ডেটা স্ট্রাকচার হ্যান্ডলিংয়ে পয়েন্টারের কোনো বিকল্প নেই।</p>
+        <p><strong>পয়েন্টার (Pointer):</strong> মেমোরি অ্যাড্রেস ধারণকারী বিশেষ ভেরিয়েবল। <code>int *p = &x;</code> এর মাধ্যমে ভ্যালু ম্যানিপুলেট করা হয়। ডাইনামিক মেমোরিতে <code>malloc()</code> এবং <code>free()</code> ব্যবহার করা হয়।</p>
       ` : `
-        <p><strong>C Pointer Architecture:</strong> A pointer holds the raw byte memory address of another variable.</p>
-        <div class="p-3 my-2 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-          int val = 250;<br>
-          int *ptr = &val;  // Address-of operator (&)<br>
-          *ptr = 300;       // Dereference operator (*) modifies val directly
-        </div>
-        <p><strong>Dynamic Memory Safety:</strong> <code>malloc()</code> allocates uninitialized heap memory; <code>calloc()</code> allocates zero-initialized heap memory; <code>free()</code> prevents memory leaks.</p>
+        <p><strong>C Pointer Architecture:</strong> A pointer holds the memory address of another variable: <code>int *p = &x;</code>.</p>
       `
     };
   }
 
-  // 8. DYNAMIC GENERAL ENGINEERING & ACADEMIC SYNTHESIZER
-  // For any unseen query, extract core keywords and construct an authoritative, 5-part answer!
-  const topicName = query
-    .replace(/[^\w\s\u0980-\u09FF]/gi, ' ')
-    .trim();
-
+  // 7. HONEST & HELPFUL FALLBACK: NO FAKE TEMPLATES!
+  // Give direct 1-click bridge to ChatGPT & Gemini so users get genuine answers!
   return {
-    title: `${isBangla ? 'বিশ্লেষণ ও পর্যালোচনা' : 'Comprehensive Analysis'}: "${topicName}"`,
+    title: isBangla ? 'রিয়েল-টাইম এআই কানেকশন' : 'Direct AI Assistance',
     html: isBangla ? `
       <div class="space-y-3">
-        <div>
-          <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">১. মৌলিক সংজ্ঞা ও সারসংক্ষেপ</h4>
-          <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-            <strong>${topicName}</strong> প্রকৌশলবিদ্যা ও ফলিত বিজ্ঞানের একটি অত্যন্ত তাৎপর্যপূর্ণ বিষয়। এর মূল ভিত্তিটি তাত্ত্বিক পদার্থবিজ্ঞান, গণিত এবং বাস্তব যান্ত্রিক সিস্টেমের পারস্পরিক ভারসাম্যের ওপর প্রতিষ্ঠিত।
-          </p>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          আপনার প্রশ্ন: <em>"${query}"</em>
+        </p>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          এই প্রশ্নটির সম্পূর্ণ নির্ভুল, গভীর ও রিয়েল-টাইম এআই উত্তর পেতে আপনি সরাসরি <strong>ChatGPT</strong> বা <strong>Google Gemini</strong> ব্যবহার করতে পারেন:
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          <a href="https://chatgpt.com/?q=${encodeURIComponent(query)}" target="_blank" rel="noopener noreferrer" class="p-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 flex items-center justify-between text-xs font-semibold transition-all">
+            <span class="flex items-center gap-1.5"><i data-lucide="bot" class="w-4 h-4 text-emerald-400"></i> <span>ChatGPT-তে সরাসরি উত্তর দেখুন ↗</span></span>
+          </a>
+          <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="p-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 flex items-center justify-between text-xs font-semibold transition-all">
+            <span class="flex items-center gap-1.5"><i data-lucide="sparkles" class="w-4 h-4 text-blue-400"></i> <span>Google Gemini-তে লাইভ দেখুন ↗</span></span>
+          </a>
         </div>
-
-        <div>
-          <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">২. মূল সূত্র ও গাণিতিক সমীকরণ</h4>
-          <div class="p-3 my-1.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs text-slate-200">
-            \\[ \\oint_{\\mathcal{C}} \\vec{F} \\cdot d\\vec{r} = \\iint_{\\mathcal{S}} (\\nabla \\times \\vec{F}) \\cdot d\\vec{A} \\quad \\Longleftrightarrow \\quad \\frac{d}{dt}\\left(\\frac{\\partial L}{\\partial \\dot{q}_j}\\right) - \\frac{\\partial L}{\\partial q_j} = 0 \\]
-          </div>
-          <p class="text-[11px] text-slate-400">
-            বাস্তব সিস্টেমের ক্ষেত্রে শক্তির নিত্যতা (Conservation of Energy) এবং ভরের ধারাবাহিকতা (Continuity Equation) এর মাধ্যমে এই সমীকরণগুলোকে সিমপ্লিফাই করা হয়।
-          </p>
-        </div>
-
-        <div>
-          <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">৩. কার্যপদ্ধতি ও মেকানিজম</h4>
-          <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-            এই প্রক্রিয়াটিতে ইনপুট প্যারামিটারসমূহের পরিবর্তনের সাথে সাথে আউটপুট রেসপন্স লিনিয়ার বা নন-লিনিয়ারভাবে পরিবর্তিত হয়। প্রকৌশলীরা ডাইমেনশনলেস নাম্বার এবং সেফটি ফ্যাক্টর (Factor of Safety) বিবেচনায় নিয়ে বাউন্ডারি কন্ডিশন নির্ধারণ করেন।
-          </p>
-        </div>
-
-        <div>
-          <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">৪. বাস্তব প্রয়োগ ও ইন্ডাস্ট্রিয়াল কেস</h4>
-          <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-            পাওয়ার প্ল্যান্ট, স্বয়ংক্রিয় রোবটিক্স, এরোস্পেস স্ট্রাকচার এবং চুয়েটের ল্যাবরেটরি এক্সপেরিমেন্টে এই ধারণার প্রত্যক্ষ প্রয়োগ রয়েছে।
-          </p>
-        </div>
-
-        <div class="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-200">
-          💡 <strong>পরীক্ষা ও ভাইভা টিপস:</strong> এই বিষয়ে উত্তর লেখার সময় প্রথমে পরিষ্কার ফ্রি-বডি ডায়াগ্রাম (FBD) বা সিস্টেম ব্লক ডায়াগ্রাম আঁকবেন এবং প্রতিটি প্যারামিটারের SI একক উল্লেখ করবেন।
+        <div class="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-purple-300">
+          <span>⚡ <strong>Google AI Studio</strong> থেকে একটি সম্পূর্ণ ফ্রি Gemini API Key যোগ করে এখানেই আনলিমিটেড লাইভ Gemini চালু করতে চান?</span>
+          <button onclick="openGeminiApiKeyModal()" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex-shrink-0 self-start sm:self-auto shadow-sm">
+            ফ্রি কী যোগ করুন
+          </button>
         </div>
       </div>
     ` : `
       <div class="space-y-3">
-        <div>
-          <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">1. Core Definition & Principle</h4>
-          <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-            <strong>${topicName}</strong> represents a key concept within modern engineering and applied physical sciences, connecting mathematical formulation with empirical physical behavior.
-          </p>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Regarding your query: <em>"${query}"</em>
+        </p>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          To receive an immediate, full-depth AI explanation for this question, choose a live AI engine below:
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          <a href="https://chatgpt.com/?q=${encodeURIComponent(query)}" target="_blank" rel="noopener noreferrer" class="p-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 flex items-center justify-between text-xs font-semibold transition-all">
+            <span class="flex items-center gap-1.5"><i data-lucide="bot" class="w-4 h-4 text-emerald-400"></i> <span>Ask Directly on ChatGPT ↗</span></span>
+          </a>
+          <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="p-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 flex items-center justify-between text-xs font-semibold transition-all">
+            <span class="flex items-center gap-1.5"><i data-lucide="sparkles" class="w-4 h-4 text-blue-400"></i> <span>Ask Directly on Gemini ↗</span></span>
+          </a>
         </div>
-
-        <div>
-          <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">2. Governing Formulations</h4>
-          <div class="p-3 my-1.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs text-slate-200">
-            \\[ \\sum \\vec{F} = m \\frac{d\\vec{v}}{dt}, \\quad \\nabla \\cdot \\vec{J} + \\frac{\\partial \\rho}{\\partial t} = 0 \\]
-          </div>
-          <p class="text-[11px] text-slate-400">
-            Solved by applying boundary conditions and conservation laws (mass, momentum, and energy).
-          </p>
-        </div>
-
-        <div>
-          <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">3. Working Mechanism & Physical Behavior</h4>
-          <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-            The mechanism operates under dynamic equilibrium where structural, thermal, or fluid resistance balances the applied generalized forces.
-          </p>
-        </div>
-
-        <div class="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-200">
-          💡 <strong>Exam & Viva Strategy:</strong> Always begin solutions by stating assumptions, sketching a clear schematic diagram, and verifying dimensional homogeneity.
+        <div class="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-purple-300">
+          <span>⚡ Want direct Gemini inside this window? Connect a 100% free Google Gemini API Key:</span>
+          <button onclick="openGeminiApiKeyModal()" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex-shrink-0 self-start sm:self-auto shadow-sm">
+            Connect Free Key
+          </button>
         </div>
       </div>
     `
@@ -5317,6 +5377,7 @@ async function handleAiSubmit(e) {
   const chatBox = document.getElementById('aiChatMessages') || document.getElementById('aiChatBox');
   if (!chatBox) return;
 
+  aiConversationTurnCount++;
   const isBangla = /[\u0980-\u09FF]/.test(query);
 
   // User Message bubble
@@ -5345,7 +5406,7 @@ async function handleAiSubmit(e) {
     <div class="ai-message-card bg-slate-800/80 rounded-2xl rounded-tl-none p-4 text-xs sm:text-sm text-slate-200 border border-slate-700/60 max-w-2xl leading-relaxed shadow-lg space-y-2">
       <div class="flex items-center gap-1.5 text-xs text-purple-400">
         <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
-        <span>${isBangla ? 'ফাহিম নিলয় উত্তর বিশ্লেষণ করছেন...' : 'Fahim Niloy is thinking...'}</span>
+        <span>${isBangla ? 'ফাহিম নিলয় চিন্তা করছেন...' : 'Fahim Niloy is thinking...'}</span>
       </div>
     </div>
   `;
@@ -5450,18 +5511,21 @@ async function handleAiSubmit(e) {
     `;
   }
 
-  // 1. CHECK IF USER CONFIGURED GOOGLE GEMINI API KEY FOR REAL-TIME GEMINI LIVE AI
+  // 1. LIVE AI PROVIDER: GOOGLE GEMINI API (DIRECT CALL WITH MULTI-TURN MEMORY)
   const geminiApiKey = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY);
   if (geminiApiKey) {
     try {
-      const sysInstruction = `You are Fahim Niloy (Mohammad Fahim Ahmed), student of Mechanical Engineering '20 series at CUET (Roll: 2003063) and creator of ClassroomHub. Answer warmly, deeply, and intelligently in ${isBangla ? 'Bengali' : 'English'}—just like Gemini. Provide detailed step-by-step engineering explanations, formulas, derivations, and practical intuitions. Do NOT list or dump courses unless the user explicitly asks if there is a course/file for this topic.`;
+      const sysInstruction = `You are Fahim Niloy (Mohammad Fahim Ahmed), a friendly Mechanical Engineering student ('20 series, Roll: 2003063) at CUET and creator of ClassroomHub. Answer in ${isBangla ? 'Bengali' : 'English'}. Be warm, intelligent, and natural. Give direct, step-by-step engineering explanations with formulas when asked technical questions. When greeting, say a brief polite hello without reciting your entire bio or roll number. Do not dump courses unless explicitly asked.`;
       
+      aiChatHistory.push({ role: 'user', parts: [{ text: query }] });
+      const recentHistory = aiChatHistory.slice(-8);
+
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           system_instruction: { parts: [{ text: sysInstruction }] },
-          contents: [{ role: 'user', parts: [{ text: query }] }]
+          contents: recentHistory
         })
       });
 
@@ -5469,6 +5533,8 @@ async function handleAiSubmit(e) {
         const data = await res.json();
         const geminiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (geminiText) {
+          aiChatHistory.push({ role: 'model', parts: [{ text: geminiText }] });
+
           const formatted = geminiText
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\n\n/g, '<br><br>')
@@ -5484,6 +5550,12 @@ async function handleAiSubmit(e) {
             <div class="ai-prose leading-relaxed space-y-2">${formatted}</div>
             ${videoCardsHtml}
             ${vaultCardsHtml}
+            <div class="mt-3 pt-2 border-t border-slate-800/80 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
+              <span>Open in:</span>
+              <a href="https://chatgpt.com/?q=${encodeURIComponent(query)}" target="_blank" rel="noopener noreferrer" class="hover:text-emerald-400 underline">ChatGPT ↗</a>
+              <span>•</span>
+              <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="hover:text-blue-400 underline">Google Gemini ↗</a>
+            </div>
           `;
           chatBox.scrollTop = chatBox.scrollHeight;
           lucide.createIcons();
@@ -5491,13 +5563,65 @@ async function handleAiSubmit(e) {
         }
       }
     } catch (err) {
-      console.warn('Gemini Live API fallback to built-in knowledge engine:', err);
+      console.warn('Gemini Live API error, checking secondary provider:', err);
     }
   }
 
-  // 2. BUILT-IN MULTI-DOMAIN ACADEMIC KNOWLEDGE ENGINE
+  // 2. LIVE AI PROVIDER: OPENAI (CHATGPT) API
+  const openaiApiKey = localStorage.getItem(STORAGE_KEYS.OPENAI_API_KEY);
+  if (openaiApiKey) {
+    try {
+      const sysInstruction = `You are Fahim Niloy, Mechanical Engineering student at CUET. Answer in ${isBangla ? 'Bengali' : 'English'}. Be helpful, direct, and intelligent like ChatGPT. Do not repeat long personal bios on every greeting.`;
+      const messages = [
+        { role: 'system', content: sysInstruction },
+        { role: 'user', content: query }
+      ];
+
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openaiApiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: messages
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const gptText = data.choices?.[0]?.message?.content;
+        if (gptText) {
+          const formatted = gptText
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n\n/g, '<br><br>')
+            .replace(/\n/g, '<br>');
+
+          botDiv.querySelector('.ai-message-card').innerHTML = `
+            <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+              <span class="font-bold text-xs text-emerald-300">🤖 Fahim Niloy (Powered by ChatGPT Live)</span>
+              <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
+                <i data-lucide="copy" class="w-3 h-3"></i> Copy
+              </button>
+            </div>
+            <div class="ai-prose leading-relaxed space-y-2">${formatted}</div>
+            ${videoCardsHtml}
+            ${vaultCardsHtml}
+          `;
+          chatBox.scrollTop = chatBox.scrollHeight;
+          lucide.createIcons();
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('OpenAI API error:', err);
+    }
+  }
+
+  // 3. BUILT-IN ACADEMIC KNOWLEDGE ASSISTANT (CLEAN, NON-REPETITIVE)
   setTimeout(() => {
-    // A. Persona & Identity
+    // A. Explicit Identity Question
     const isIdentityQuestion = (
       qLower.includes('who are you') ||
       qLower.includes('who r u') ||
@@ -5524,6 +5648,7 @@ async function handleAiSubmit(e) {
       qLower === 'hey' ||
       qLower === 'হাই' ||
       qLower === 'হ্যালো' ||
+      qLower === 'হে' ||
       qLower.includes('assalamu alaikum') ||
       qLower.includes('salam') ||
       qLower.includes('সালাম') ||
@@ -5548,6 +5673,7 @@ async function handleAiSubmit(e) {
     let answerHtml = '';
 
     if (isIdentityQuestion) {
+      // ONLY shown when user explicitly asks for identity!
       answerHtml = `
         <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
           <span class="font-bold text-xs text-indigo-300">🎓 Fahim Niloy</span>
@@ -5556,31 +5682,33 @@ async function handleAiSubmit(e) {
           </button>
         </div>
         <div class="ai-prose space-y-2">
-          <p><strong>${isBangla ? 'আসসালামু আলাইকুম! আমি ফাহিম নিলয় (Mohammad Fahim Ahmed)।' : 'Hello! I am Fahim Niloy (Mohammad Fahim Ahmed).'}</strong></p>
+          <p><strong>${isBangla ? 'আমি ফাহিম নিলয় (Mohammad Fahim Ahmed)।' : 'I am Fahim Niloy (Mohammad Fahim Ahmed).'}</strong></p>
           <p>${isBangla
-            ? 'আমি চট্টগ্রাম প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় (চুয়েট)-এর মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের \'২০ ব্যাচের শিক্ষার্থী (রোল: ২০০৩০৬৩)। আমাদের ব্যাচমেট ও জুনিয়রদের পড়ালেখাকে সহজ করতে ৪ বছরের সব সেমিস্টারের ৩,৮৯৫+ একাডেমিক হ্যান্ডনোট, শিট ও প্রশ্নব্যাংক গুছিয়ে <strong>ClassroomHub</strong> পোর্টালটি তৈরি করেছি।'
-            : 'I am a Mechanical Engineering undergraduate (Batch \'20, Roll: 2003063) at Chittagong University of Engineering and Technology (CUET). I created <strong>ClassroomHub</strong> to organize and preserve our entire undergraduate academic collection.'
-          }</p>
-          <p>${isBangla
-            ? 'আমি এখানে আপনার স্টাডি পার্টনার হিসেবে যেকোনো ইঞ্জিনিয়ারিং থিওরি, গাণিতিক সমাধান, কোডিং বা পরীক্ষার প্রস্তুতি নিয়ে আলোচনা করতে প্রস্তুত। জেমিনির মতোই যেকোনো প্রশ্ন করতে পারেন!'
-            : 'I am right here as your study partner. Feel free to ask me about any engineering theory, math problem, coding question, or exam tips!'
+            ? 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের \'২০ ব্যাচের শিক্ষার্থী (রোল: ২০০৩০৬৩)। আমাদের সকল সেমিস্টারের একাডেমিক রিসোর্স, শিট ও বিগত বছরের প্রশ্ন গুছিয়ে রাখতে এই <strong>ClassroomHub</strong> পোর্টালটি তৈরি করেছি।'
+            : 'Undergraduate student of Mechanical Engineering (\'20 Batch, Roll: 2003063) at CUET. I created <strong>ClassroomHub</strong> to organize and preserve all our undergraduate academic resources.'
           }</p>
         </div>
         ${vaultCardsHtml}
       `;
     } else if (isGreeting) {
+      // NATURAL GREETING - ZERO REPETITIVE BIO!
+      const greetingReply = isBangla
+        ? (aiConversationTurnCount <= 1
+            ? 'হ্যালো! ওয়ালাইকুম আসসালাম। পড়াশোনা কেমন চলছে? আজ কোনো নির্দিষ্ট টপিক বা সূত্র নিয়ে আলোচনা করতে চান?'
+            : 'জি বলুন! আপনার কী প্রশ্ন বা কোন বিষয়ে সাহায্য লাগবে?')
+        : (aiConversationTurnCount <= 1
+            ? 'Hello! How are your studies going? What topic would you like to explore today?'
+            : 'Hey! How can I help you right now? Feel free to ask anything!');
+
       answerHtml = `
         <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-indigo-300">👋 Fahim Niloy</span>
+          <span class="font-bold text-xs text-indigo-300">💬 Fahim Niloy</span>
           <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
             <i data-lucide="copy" class="w-3 h-3"></i> Copy
           </button>
         </div>
         <div class="ai-prose space-y-2">
-          <p>${isBangla
-            ? 'ওয়ালাইকুম আসসালাম! আলহামদুলিল্লাহ, আমি ভালো আছি। আপনার পড়াশোনা কেমন চলছে? আজ কোন টপিক বা বিষয় নিয়ে আলোচনা করতে চান?'
-            : 'Hello! I am doing great, thank you. How are your studies going? Feel free to ask me anything or explore any engineering topic!'
-          }</p>
+          <p>${greetingReply}</p>
         </div>
         ${vaultCardsHtml}
       `;
@@ -5607,7 +5735,7 @@ async function handleAiSubmit(e) {
         ${vaultCardsHtml}
       `;
     } else {
-      // High-Depth Engineering Knowledge Solver
+      // Engineering Knowledge Solver or Honest Live AI Bridge
       const res = getEngineeringConceptResponse(query, isBangla);
 
       answerHtml = `
@@ -5628,7 +5756,7 @@ async function handleAiSubmit(e) {
     botDiv.querySelector('.ai-message-card').innerHTML = answerHtml;
     chatBox.scrollTop = chatBox.scrollHeight;
     lucide.createIcons();
-  }, 300);
+  }, 250);
 }
 
 
