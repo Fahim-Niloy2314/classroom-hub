@@ -412,7 +412,7 @@ html.light [class*="bg-amber-600/"] {
   border-color: #fcd34d !important;
 }
 
-/* 6. Navigation Tabs */
+/* 6. Navigation & Subtabs */
 html.light .nav-tab:not(.bg-indigo-600) {
   color: #334155 !important;
 }
@@ -420,12 +420,29 @@ html.light .nav-tab:not(.bg-indigo-600):hover {
   background-color: #e2e8f0 !important;
   color: #0f172a !important;
 }
+html.light .home-subtab:not(.bg-indigo-600):not(.bg-blue-600) {
+  color: #475569 !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+html.light .home-subtab:not(.bg-indigo-600):not(.bg-blue-600):hover {
+  color: #0f172a !important;
+  background: #e2e8f0 !important;
+}
 
 /* 7. SOLID SATURATED BUTTONS MUST RETAIN CRISP PURE WHITE TEXT */
 html.light button.bg-indigo-600,
 html.light button.bg-indigo-600 *,
 html.light a.bg-indigo-600,
 html.light a.bg-indigo-600 *,
+html.light button.bg-blue-600,
+html.light button.bg-blue-600 *,
+html.light a.bg-blue-600,
+html.light a.bg-blue-600 *,
+html.light button.bg-cyan-600,
+html.light button.bg-cyan-600 *,
+html.light a.bg-cyan-600,
+html.light a.bg-cyan-600 *,
 html.light button.bg-purple-600,
 html.light button.bg-purple-600 *,
 html.light a.bg-purple-600,
