@@ -7,6 +7,16 @@
   <meta name="description" content="Centralized academic archive for CUET Mechanical Engineering ('20 Batch, Roll: 2003063). Complete repository of lecture notes, lab sheets, previous years' questions, and syllabus spanning L1-T1 to L4-T2 curated by Fahim Niloy.">
   <meta name="author" content="Fahim Niloy">
 
+  <!-- PWA & Mobile Web App Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ClassroomHub">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
   <!-- Open Graph Meta Tags -->
   <meta property="og:title" content="ClassroomHub — CUET Mechanical Engineering Academic Vault">
   <meta property="og:description" content="3,893+ verified academic files, lecture notes, question banks, and syllabus spanning all 8 semesters (L1-T1 to L4-T2) curated by Fahim Niloy.">
@@ -45,6 +55,43 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-600 selection:text-white">
+
+  <!-- Maintenance Mode Warning Banner (Shown to Admin when Maintenance Mode is ON) -->
+  <div id="adminMaintenanceAlert" class="hidden bg-amber-500 text-slate-950 px-4 py-1.5 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-sm">
+    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+    <span>⚠️ Maintenance Mode Active: Public visitors see the maintenance screen. Only you (Admin) can browse and manage the site.</span>
+    <button onclick="switchTab('admin'); switchAdminSubTab('security');" class="ml-2 underline text-[11px] font-extrabold hover:text-white">Configure &rarr;</button>
+  </div>
+
+  <!-- Top Urgent Announcement / Marquee Banner (Configured by Fahim Niloy) -->
+  <div id="siteUrgentBanner" class="hidden px-4 py-2 text-xs font-semibold flex items-center justify-between gap-3 border-b transition-all">
+    <div class="flex items-center gap-2 max-w-7xl mx-auto w-full min-w-0">
+      <i id="siteUrgentIcon" data-lucide="megaphone" class="w-4 h-4 flex-shrink-0 animate-pulse"></i>
+      <span id="siteUrgentText" class="truncate flex-1"></span>
+      <a id="siteUrgentLink" href="#" target="_blank" class="underline flex-shrink-0 text-[11px] ml-2">বিস্তারিত &rarr;</a>
+    </div>
+    <button onclick="dismissUrgentBanner()" class="text-xs opacity-75 hover:opacity-100 p-1">✕</button>
+  </div>
+
+  <!-- Fullscreen Maintenance Screen for Public Visitors (Active only when Maintenance Mode enabled & visitor is not Admin) -->
+  <div id="publicMaintenanceScreen" class="hidden fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-6 text-center space-y-6">
+    <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-2xl">
+      <i data-lucide="hammer" class="w-8 h-8 animate-bounce"></i>
+    </div>
+    <div class="max-w-md space-y-3">
+      <h2 class="text-2xl font-bold text-white tracking-tight">Portal Under Scheduled Maintenance</h2>
+      <p id="publicMaintenanceMsg" class="text-sm text-slate-400">ClassroomHub is undergoing routine academic content upgrades by Fahim Niloy. Please check back shortly!</p>
+      <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 font-mono">
+        Curator: Mohammad Fahim Ahmed (CUET ME '20) • Contact: fahimcuet63@gmail.com
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="openAuthModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all flex items-center gap-1.5">
+        <i data-lucide="shield" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span>Admin Login</span>
+      </button>
+    </div>
+  </div>
 
   <!-- ==================== TOP NAVIGATION BAR ==================== -->
   <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
@@ -96,6 +143,12 @@
 
       <!-- Right Header Actions (Compact, Zero Overflow) -->
       <div class="flex items-center gap-2 flex-shrink-0">
+        <!-- PWA Install App Button (Auto-shows when browser allows PWA installation) -->
+        <button id="pwaInstallHeaderBtn" onclick="triggerPwaInstall()" title="Install ClassroomHub App on Mobile / PC" class="hidden px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-indigo-600/30 transition-all flex-shrink-0 animate-pulse">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Install App</span>
+        </button>
+
         <!-- Theme Toggle Button (Light / Dark) -->
         <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme (Light / Dark)" class="p-1.5 sm:px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs font-semibold flex items-center gap-1 transition-all shadow-sm">
           <i data-lucide="sun" id="themeIcon" class="w-3.5 h-3.5 text-amber-400"></i>
@@ -267,6 +320,26 @@
           </div>
 
         </div>
+      </div>
+
+      <!-- PWA Mobile / Desktop App Install Card -->
+      <div id="pwaHomeCard" class="hidden p-4 sm:p-5 rounded-2xl glass-card border border-indigo-500/30 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-indigo-600 flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-indigo-600/40">
+            <i data-lucide="smartphone" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+              <span>ClassroomHub অ্যাপ ইনস্টল করুন (PWA)</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">OFFLINE SUPPORT</span>
+            </h4>
+            <p class="text-xs text-slate-300 mt-0.5">আপনার অ্যান্ড্রয়েড, আইফোন বা কম্পিউটারে সরাসরি অ্যাপের মতো রাখুন। ১-ক্লিকে ওপেন হবে এবং অফলাইনেও ফাস্ট চলবে।</p>
+          </div>
+        </div>
+        <button onclick="triggerPwaInstall()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all flex-shrink-0">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>ইনস্টল করুন (Install App)</span>
+        </button>
       </div>
 
       <!-- CORE VAULT ACTION CARDS -->
@@ -566,112 +639,127 @@
     <!-- ==================== 3. AI STUDY ASSISTANT VIEW ==================== -->
     <section id="view-ai" class="hidden space-y-6">
       
-      <div class="glass-panel p-6 rounded-2xl border border-slate-800">
+      <div class="glass-panel p-5 sm:p-7 rounded-2xl border border-slate-800 shadow-2xl relative overflow-hidden">
         
-        <div class="flex items-start justify-between gap-4 mb-6">
+        <!-- Gemini Studio Ambient Glow -->
+        <div class="absolute -top-24 -right-24 w-72 h-72 bg-gradient-to-br from-blue-600/10 via-purple-600/15 to-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Gemini Studio Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-800/80 relative z-10">
           <div class="space-y-1">
-            <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-400 uppercase tracking-wider">
-              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-              <span>Fahim Niloy AI Chatbot & Study Mentor</span>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-purple-500/30 text-[11px] font-semibold text-purple-300">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-blue-400"></i>
+              <span>Google Gemini 2.0 Flash • ClassroomHub Studio</span>
             </div>
-            <h2 class="text-xl sm:text-2xl font-bold text-white">Talk with Fahim Niloy (AI Academic Companion)</h2>
+            <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+              <span class="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">Google Gemini AI Studio</span>
+              <span class="text-xs px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 font-mono font-normal">v2.0 Flash</span>
+            </h2>
             <p class="text-xs sm:text-sm text-slate-300">
-              Talk normally like Gemini about engineering theories, study life, or ask for course materials & question banks when you need them.
+              পাওয়ার প্ল্যান্ট, ফ্লুইড মেকানিক্স, থার্মোডাইনামিক্স, সলিড মেকানিক্সসহ যেকোনো ইঞ্জিনিয়ারিং থিওরি ও ফর্মুলা নিয়ে সরাসরি কথা বলুন। সম্পূর্ণ সাইটের ভেতরেই রিয়েল-টাইম আলোচনা করুন।
             </p>
           </div>
-          <div class="flex items-center gap-2">
-            <button onclick="openGeminiApiKeyModal()" title="Configure Google Gemini API Key" class="px-2.5 py-1 rounded-xl bg-purple-500/10 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all">
-              <i data-lucide="cpu" class="w-3.5 h-3.5 text-purple-400"></i>
-              <span id="geminiKeyStatusText">Gemini API (Free)</span>
+
+          <!-- Connection & Key Controls (In-Place) -->
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <button onclick="openGeminiApiKeyModal()" title="Google Gemini API Key কনফিগার করুন" class="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+              <i data-lucide="key" class="w-3.5 h-3.5 text-purple-400"></i>
+              <span id="geminiKeyStatusText">Gemini (Connect Key)</span>
             </button>
-            <span class="px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 text-xs font-medium flex items-center gap-1">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Online</span>
-            </span>
+            <button onclick="clearAiChat()" title="চ্যাট পরিষ্কার করুন" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs transition-colors border border-slate-700/60" aria-label="Clear Chat">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
           </div>
         </div>
 
-        <!-- Preset Topic Question Pills -->
-        <div class="mb-6 space-y-2">
-          <div class="text-xs font-medium text-slate-400">Suggested questions (Click to ask):</div>
+        <!-- Curated Interactive Gemini Prompt Chips -->
+        <div class="my-4 space-y-1.5 relative z-10">
+          <div class="text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="compass" class="w-3 h-3 text-indigo-400"></i>
+            <span>দ্রুত প্রশ্ন জিজ্ঞাসা করতে টপিক সিলেক্ট করুন (Click to Ask):</span>
+          </div>
           <div class="flex flex-wrap gap-2 text-xs">
-            <button onclick="askPresetPrompt('কেমন আছো ফাহিম ভাই? আপনার সম্পর্কে বলুন।')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-purple-300 border border-purple-500/30 transition-all text-left">
-              👋 কেমন আছো ফাহিম ভাই?
+            <button onclick="askPresetPrompt('পাওয়ার প্ল্যান্ট ইঞ্জিনিয়ারিং কী? এর মূল সাইকেল, কম্পোনেন্টস ও তাপীয় দক্ষতা বিস্তারিত বোঝাও।')" class="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-amber-300 border border-amber-500/30 transition-all text-left flex items-center gap-1.5 shadow-sm hover:border-amber-400">
+              <span>⚡</span>
+              <span>পাওয়ার প্ল্যান্ট ইঞ্জিনিয়ারিং (Power Plant)</span>
             </button>
-            <button onclick="askPresetPrompt('What is entropy and how does the Second Law of Thermodynamics explain it?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-emerald-300 border border-slate-800 transition-all text-left">
-              🔥 Explain Entropy & 2nd Law
+            <button onclick="askPresetPrompt('Explain 2D Stress Transformation and how to draw Mohr's Circle for finding principal stresses.')" class="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-cyan-300 border border-cyan-500/30 transition-all text-left flex items-center gap-1.5 shadow-sm hover:border-cyan-400">
+              <span>⚙️</span>
+              <span>Mohr's Circle & Principal Stresses</span>
             </button>
-            <button onclick="askPresetPrompt('Why is Mohr Circle used in Stress Analysis and Machine Design?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-800 transition-all text-left">
-              ⚙️ Mohr Circle Concept
+            <button onclick="askPresetPrompt('বার্নৌলির সমীকরণের ডেরিভেশন, মূল শর্ত ও পাইপ ফ্লোতে ঘর্ষণ অপচয় কীভাবে বের করে?')" class="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-blue-300 border border-blue-500/30 transition-all text-left flex items-center gap-1.5 shadow-sm hover:border-blue-400">
+              <span>🌊</span>
+              <span>বার্নৌলির সমীকরণ ও পাইপ ফ্লো</span>
             </button>
-            <button onclick="askPresetPrompt('ME 211 Thermodynamics কোর্সের কি কোনো প্রশ্নব্যাংক বা লেকচার নোট আছে?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-slate-800 transition-all text-left">
-              📁 ME 211 এর কোর্স ফাইল আছে কি?
+            <button onclick="askPresetPrompt('Explain the Second Law of Thermodynamics, Entropy increase principle, and Carnot Cycle efficiency.')" class="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-emerald-300 border border-emerald-500/30 transition-all text-left flex items-center gap-1.5 shadow-sm hover:border-emerald-400">
+              <span>🔥</span>
+              <span>Entropy & 2nd Law of Thermodynamics</span>
             </button>
-            <button onclick="askPresetPrompt('ফ্লুইড মেকানিক্সের জন্য কোনো ভালো ইউটিউব ভিডিও লেকচার আছে?')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-red-300 border border-slate-800 transition-all text-left">
-              📺 ফ্লুইড মেকানিক্সের ভিডিও আছে?
+            <button onclick="askPresetPrompt('ME 415 Power Plant এবং ME 211 Thermodynamics কোর্সের কি কোনো লেকচার নোট বা প্রশ্নব্যাংক আছে?')" class="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-purple-300 border border-purple-500/30 transition-all text-left flex items-center gap-1.5 shadow-sm hover:border-purple-400">
+              <span>📁</span>
+              <span>ME 415 ও ME 211 এর কোর্স ফাইলস</span>
             </button>
           </div>
         </div>
 
-        <!-- Chat Conversation Area -->
-        <div id="aiChatMessages" class="space-y-4 mb-4 max-h-[500px] overflow-y-auto pr-2">
-          <!-- Initial Welcome Message from Fahim Niloy -->
+        <!-- Chat Conversation Messages Viewport -->
+        <div id="aiChatMessages" class="space-y-4 mb-4 max-h-[520px] overflow-y-auto pr-2 relative z-10">
+          <!-- Initial Gemini Welcome Card -->
           <div class="flex items-start gap-3">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
-              <span class="font-bold text-xs">FN</span>
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-500 via-indigo-600 to-purple-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+              <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
             </div>
-            <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed ai-prose shadow-lg">
-              <div class="font-bold text-indigo-300 text-xs mb-1 flex items-center gap-1.5">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
-                <span>Fahim Niloy (CUET ME '20)</span>
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed ai-prose shadow-lg space-y-2">
+              <div class="font-bold text-indigo-300 text-xs flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-blue-400"></i>
+                <span>Google Gemini 2.0 Studio • ClassroomHub CUET Edition</span>
               </div>
               <p>
-                Hello! <strong>I am Fahim Niloy</strong> (Department of Mechanical Engineering, CUET '20 Batch, Roll: 2003063).
+                স্বাগতম! আমি <strong>গুগল জেমিনি ২.০ (Google Gemini 2.0)</strong> এআই স্টুডিও। চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং শিক্ষার্থীদের জন্য ক্লাসরুমহাব প্ল্যাটফর্মের সাথে সরাসরি সংযুক্ত।
               </p>
-              <p class="mt-2 text-slate-300">
-                I built this ClassroomHub repository to preserve all our academic materials from Level 1 Term 1 to Level 4 Term 2. You can chat with me, ask me about any course theories, viva questions, thermodynamics formulas, or ask me to search and give you direct links to any lecture notes or question banks from our 3,893 files!
+              <p class="text-xs text-slate-300">
+                আপনি এখানে আলাদা কোনো ট্যাবে না গিয়ে সরাসরি এই বক্সেই মেকানিক্যাল ইঞ্জিনিয়ারিংয়ের যেকোনো তত্ত্ব (পাওয়ার প্ল্যান্ট, র‍্যাংকিন/ব্রায়টন সাইকেল, বার্নৌলি, মোহর সার্কেল, মেশিন ডিজাইন), সমীকরণ, বা আমাদের ভল্টের ৩,৮৯৩টি ফাইলের যেকোনো লেকচার নোট ও বিগত বছরের প্রশ্নব্যাংক নিয়ে আলোচনা করতে পারেন।
               </p>
-              <p class="text-[11px] text-slate-400 mt-2">
-                Type your question or greeting below, or click any suggested question above to get started!
+              <p class="text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
+                💡 নিচে আপনার প্রশ্ন লিখুন অথবা উপরের যেকোনো টপিক বাটনে ক্লিক করে সরাসরি শুরু করুন!
               </p>
             </div>
           </div>
         </div>
 
-        <!-- Chat Input Form -->
-        <form onsubmit="handleAiSubmit(event)" class="relative flex items-center gap-2">
-          <input 
-            id="aiInput" 
-            type="text" 
-            placeholder="Ask Fahim Niloy anything (e.g., 'Hi Fahim', 'ME 211 questions', 'Lathe machine viva')..." 
-            class="flex-1 px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-xs sm:text-sm text-white placeholder-slate-500 outline-none transition-all"
-          >
+        <!-- Chat Prompt Input Form (Clean In-Place Studio) -->
+        <form onsubmit="handleAiSubmit(event)" class="relative flex items-center gap-2 relative z-10">
+          <div class="relative flex-1">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+            </div>
+            <input 
+              id="aiInput" 
+              type="text" 
+              placeholder="জেমিনিকে যেকোনো প্রশ্ন করুন (e.g. 'পাওয়ার প্ল্যান্ট বোঝাও', 'Explain Mohr circle', 'ME 415 প্রশ্নব্যাংক')..." 
+              class="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-950 border border-slate-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-xs sm:text-sm text-white placeholder-slate-500 outline-none transition-all shadow-inner"
+            >
+          </div>
           <button 
             type="submit" 
-            class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs sm:text-sm transition-all shadow-md flex items-center gap-1.5 flex-shrink-0"
+            class="px-5 sm:px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm transition-all shadow-lg flex items-center gap-2 flex-shrink-0"
           >
-            <span>Ask</span>
+            <span>Ask Gemini</span>
             <i data-lucide="send" class="w-3.5 h-3.5"></i>
           </button>
         </form>
 
-        <!-- Direct AI Launchers & Controls -->
-        <div class="flex flex-wrap items-center justify-between gap-2 pt-2 text-[11px] text-slate-400">
-          <div class="flex flex-wrap items-center gap-1.5">
-            <span class="text-slate-500 font-medium">সরাসরি কথা বলুন:</span>
-            <button type="button" onclick="openDirectChatGPT()" class="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition-all">
-              <i data-lucide="bot" class="w-3.5 h-3.5"></i>
-              <span>ChatGPT-তে সরাসরি লিখুন ↗</span>
-            </button>
-            <button type="button" onclick="openDirectGemini()" class="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1.5 transition-all">
-              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-blue-400"></i>
-              <span>Google Gemini-তে লিখুন ↗</span>
-            </button>
+        <!-- Studio Status Bar -->
+        <div class="flex items-center justify-between pt-2.5 text-[11px] text-slate-500 relative z-10">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1 text-emerald-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>100% In-Place AI (No External Redirects)</span>
+            </span>
+            <span>•</span>
+            <span>KaTeX LaTeX Equations Enabled</span>
           </div>
-          <button type="button" onclick="clearAiChat()" class="text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1">
-            <i data-lucide="trash-2" class="w-3 h-3"></i>
-            <span>চ্যাট পরিষ্কার করুন</span>
-          </button>
+          <div class="text-[10px] text-slate-500">CUET Mechanical Engineering '20</div>
         </div>
 
       </div>
@@ -860,12 +948,27 @@
             <span>Quality Audit</span>
           </button>
 
-                    <button id="adminTabBtn-layout" onclick="switchAdminSubTab('layout')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+          <button id="adminTabBtn-layout" onclick="switchAdminSubTab('layout')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
             <i data-lucide="layout" class="w-3.5 h-3.5 text-indigo-400"></i>
             <span>Site Layout & Navigation</span>
           </button>
 
-<button id="adminTabBtn-backup" onclick="switchAdminSubTab('backup')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+          <button id="adminTabBtn-ai" onclick="switchAdminSubTab('ai')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="bot" class="w-3.5 h-3.5 text-purple-400"></i>
+            <span>AI Knowledge & FAQs</span>
+          </button>
+
+          <button id="adminTabBtn-routine" onclick="switchAdminSubTab('routine')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-400"></i>
+            <span>Class Routine</span>
+          </button>
+
+          <button id="adminTabBtn-security" onclick="switchAdminSubTab('security')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-red-400"></i>
+            <span>Security & Banner</span>
+          </button>
+
+          <button id="adminTabBtn-backup" onclick="switchAdminSubTab('backup')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
             <i data-lucide="hard-drive-download" class="w-3.5 h-3.5 text-purple-400"></i>
             <span>Backup & Restore</span>
           </button>
@@ -1446,6 +1549,337 @@
           </div>
         </div>
 
+        <!-- 14. SUB-TAB: AI ASSISTANT & CAMPUS KNOWLEDGE BASE (TEACH THE BOT) -->
+        <div id="adminPanel-ai" class="hidden space-y-6">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="bot" class="w-4 h-4 text-purple-400"></i>
+                <span>AI Study Assistant & Campus Knowledge Base (বট কন্ট্রোল ও কাস্টম উত্তর)</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">
+                বটের নাম, ওয়েলকাম মেসেজ, জেমিনি এপিআই কি এবং যেকোনো বিষয়ের কাস্টম প্রশ্নোত্তর অ্যাড করুন। স্টুডেন্টরা চ্যাটবটে প্রশ্ন করলেই এই উত্তরগুলো সরাসরি পাবে।
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Bot Persona & Identity -->
+            <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+              <h4 class="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
+                <span>Bot Persona & Identity (বটের পরিচয়)</span>
+              </h4>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">AI Assistant Name (বটের নাম)</label>
+                <input id="cfgAiBotName" type="text" placeholder="Fahim Niloy AI" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Bot Subtitle / Tagline</label>
+                <input id="cfgAiBotSubtitle" type="text" placeholder="CUET Mechanical Engineering Academic Co-pilot" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Welcome / Greeting Message (স্বাগতম বার্তা)</label>
+                <textarea id="cfgAiBotGreeting" rows="3" placeholder="Hello! I am Fahim Niloy..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500 resize-none"></textarea>
+              </div>
+              <button onclick="saveAiBotPersona()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-purple-600/30 transition-all">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                <span>Save Bot Identity</span>
+              </button>
+            </div>
+
+            <!-- API Keys & Live LLM Connection -->
+            <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+              <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="key" class="w-3.5 h-3.5 text-indigo-400"></i>
+                <span>AI Engines & API Keys (জেমিনি ও ওপেনএআই)</span>
+              </h4>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-xs font-medium text-slate-300">Google Gemini API Key (ফ্রি এআই কি)</label>
+                  <span id="geminiKeyStatusBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">Not Checked</span>
+                </div>
+                <div class="flex gap-2">
+                  <input id="cfgAiGeminiKey" type="password" placeholder="AIzaSy..." class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500 font-mono">
+                  <button onclick="toggleKeyVisibility('cfgAiGeminiKey')" type="button" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs">
+                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                  <button onclick="testGeminiKeyLive()" class="px-3.5 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white font-semibold text-xs transition-all flex items-center gap-1.5">
+                    <i data-lucide="zap" class="w-3 h-3 text-indigo-400"></i>
+                    <span>Test Gemini Key Live</span>
+                  </button>
+                  <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-slate-400 hover:text-indigo-400 underline">Get Free Gemini API Key &rarr;</a>
+                </div>
+              </div>
+              <div class="pt-2 border-t border-slate-800/80">
+                <label class="block text-xs font-medium text-slate-300 mb-1">OpenAI API Key (Optional Fallback)</label>
+                <div class="flex gap-2">
+                  <input id="cfgAiOpenAiKey" type="password" placeholder="sk-..." class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500 font-mono">
+                  <button onclick="toggleKeyVisibility('cfgAiOpenAiKey')" type="button" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs">
+                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+              <button onclick="saveAiApiKeys()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-600/30 transition-all">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span>Save API Keys</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Campus Q&A / Custom Knowledge Ingestion (Teach the Bot) -->
+          <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2">
+                  <i data-lucide="database" class="w-3.5 h-3.5 text-amber-400"></i>
+                  <span>Teach The Bot: Custom Q&A / FAQs (কাস্টম প্রশ্ন ও উত্তর যুক্ত করুন)</span>
+                </h4>
+                <p class="text-xs text-slate-400 mt-0.5">যেকোনো প্রশ্ন ও তার উত্তর এখানে সেভ করে দিন। স্টুডেন্টরা চ্যাটবটে এই ধরনের প্রশ্ন করলেই আপনার দেওয়া উত্তরটি আগে দেখাবে।</p>
+              </div>
+              <span id="customFaqCountBadge" class="text-xs font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">0 Q&As</span>
+            </div>
+
+            <!-- Add FAQ Form -->
+            <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Question / Keywords (প্রশ্ন বা ট্রিগার কি-ওয়ার্ড)</label>
+                  <input id="newFaqQuestion" type="text" placeholder="যেমন: টার্ম ফাইনাল ক্যালকুলেটর, পরীক্ষার ডেট, লাইব্রেরি কার্ড..." class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-amber-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Category (ক্যাটেগরি)</label>
+                  <select id="newFaqCategory" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none">
+                    <option value="EXAM">Exam & Routine (পরীক্ষা ও রুটিন)</option>
+                    <option value="COURSE">Course & Syllabus (কোর্স ও সিলেবাস)</option>
+                    <option value="CAMPUS">Campus & Hall (ক্যাম্পাস ও হল)</option>
+                    <option value="GENERAL">General (সাধারণ)</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Detailed Answer (বিস্তারিত উত্তর - সূত্র বা লিঙ্কও দিতে পারেন)</label>
+                <textarea id="newFaqAnswer" rows="3" placeholder="বট স্টুডেন্টদের যে উত্তরটি দেবে তা এখানে লিখুন..." class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-amber-500 resize-none"></textarea>
+              </div>
+              <button onclick="addCustomFaq()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md transition-all">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add Custom Q&A (যুক্ত করুন)</span>
+              </button>
+            </div>
+
+            <!-- Existing FAQs List -->
+            <div id="adminFaqsList" class="space-y-2.5">
+              <!-- Populated dynamically via renderAdminFaqs() -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 15. SUB-TAB: CLASS ROUTINE & TIMETABLE MANAGER -->
+        <div id="adminPanel-routine" class="hidden space-y-6">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="clock" class="w-4 h-4 text-blue-400"></i>
+                <span>Class Schedule & Routine Manager (সাপ্তাহিক ক্লাস রুটিন)</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">
+                প্রতিটি সেমিস্টার ও টার্মের রবিবার থেকে বৃহস্পতিবারের ক্লাস রুটিন, রুম নম্বর ও শিক্ষকের নাম ম্যানুয়ালি আপডেট করুন।
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <select id="adminRoutineSemesterSelect" onchange="renderAdminRoutineTable()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none font-semibold">
+                <option value="L1-T1">Level 1 Term 1 (L1-T1)</option>
+                <option value="L1-T2">Level 1 Term 2 (L1-T2)</option>
+                <option value="L2-T1">Level 2 Term 1 (L2-T1)</option>
+                <option value="L2-T2">Level 2 Term 2 (L2-T2)</option>
+                <option value="L3-T1">Level 3 Term 1 (L3-T1)</option>
+                <option value="L3-T2">Level 3 Term 2 (L3-T2)</option>
+                <option value="L4-T1">Level 4 Term 1 (L4-T1)</option>
+                <option value="L4-T2" selected>Level 4 Term 2 (L4-T2)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Add Routine Slot Form -->
+          <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+            <h4 class="text-xs font-bold text-blue-300 uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-blue-400"></i>
+              <span>Add New Class Slot (ক্লাস টাইম স্লট যুক্ত করুন)</span>
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Day (দিন)</label>
+                <select id="routineDaySelect" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+                  <option value="Sunday">Sunday (রবিবার)</option>
+                  <option value="Monday">Monday (সোমবার)</option>
+                  <option value="Tuesday">Tuesday (মঙ্গলবার)</option>
+                  <option value="Wednesday">Wednesday (বুধবার)</option>
+                  <option value="Thursday">Thursday (বৃহস্পতিবার)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Time Slot (সময়)</label>
+                <input id="routineTimeSlot" type="text" placeholder="08:00 AM - 08:50 AM" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Course Code & Name</label>
+                <input id="routineCourseName" type="text" placeholder="ME 4201 Power Plant" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Room / Lab No.</label>
+                <input id="routineRoomNo" type="text" placeholder="Room 304 / ME Lab" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Teacher / Initial</label>
+                <input id="routineTeacherInit" type="text" placeholder="Prof. Dr. XYZ" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+              </div>
+            </div>
+            <button onclick="addRoutineSlot()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add Class to Routine (রুটিনে যোগ করুন)</span>
+            </button>
+          </div>
+
+          <!-- Routine Timetable Visual Display -->
+          <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+              <span>Weekly Timetable (সাপ্তাহিক রুটিন ভিউ)</span>
+              <button onclick="resetRoutineToDefault()" class="text-xs text-slate-400 hover:text-white underline">ডিফল্ট রুটিন লোড করুন</button>
+            </h4>
+            <div id="adminRoutineTableContainer" class="overflow-x-auto">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 16. SUB-TAB: SECURITY, MAINTENANCE MODE, BANNER & PERMISSIONS -->
+        <div id="adminPanel-security" class="hidden space-y-6">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-4 h-4 text-red-400"></i>
+                <span>Master Security, Banner & Permissions (অ্যাডমিন নিরাপত্তা ও এক্সেস কন্ট্রোল)</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">
+                মেইনটেনেন্স মোড চালু/বন্ধ, ওয়েবসাইটের শীর্ষে আর্জেন্ট নোটিস ব্যানার এবং স্টুডেন্টদের এক্সেস পারমিশন নিয়ন্ত্রণ করুন।
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 1. Maintenance Mode Master Switch -->
+            <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2">
+                  <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-400"></i>
+                  <span>Maintenance Mode (মেইনটেনেন্স মোড)</span>
+                </h4>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="cfgMaintenanceMode" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                </label>
+              </div>
+              <p class="text-xs text-slate-400">
+                চালু করলে সাধারণ ভিজিটরদের কাছে একটি মেইনটেনেন্স স্ক্রিন শো করবে। কিন্তু আপনি অ্যাডমিন হিসেবে স্বাভাবিকভাবে সাইটে কাজ করতে পারবেন।
+              </p>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Public Notice Message (ভিজিটরদের জন্য বার্তা)</label>
+                <textarea id="cfgMaintenanceMsg" rows="3" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-amber-500 resize-none">ClassroomHub is undergoing routine academic content upgrades by Fahim Niloy. Please check back shortly!</textarea>
+              </div>
+            </div>
+
+            <!-- 2. Urgent Announcement / Marquee Banner -->
+            <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-bold text-red-300 uppercase tracking-wider flex items-center gap-2">
+                  <i data-lucide="megaphone" class="w-3.5 h-3.5 text-red-400"></i>
+                  <span>Top Alert / Marquee Banner (শীর্ষ নোটিস ব্যানার)</span>
+                </h4>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="cfgMarqueeActive" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                </label>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Banner Text (ব্যানার টেক্সট)</label>
+                <input id="cfgMarqueeText" type="text" placeholder="জরুরি নোটিস: L4-T2 পরীক্ষা শুরু..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-red-500">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Alert Color / Style</label>
+                  <select id="cfgMarqueeType" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+                    <option value="red">Urgent Alert (লাল)</option>
+                    <option value="amber">Notice / Warning (হলুদ)</option>
+                    <option value="indigo">General / Info (নীল)</option>
+                    <option value="emerald">Announcement (সবুজ)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Link Target URL (ঐচ্ছিক লিঙ্ক)</label>
+                  <input id="cfgMarqueeUrl" type="url" placeholder="https://..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-red-500">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feature Flags & Access Permissions -->
+          <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+            <h4 class="text-xs font-bold text-teal-300 uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="toggle-left" class="w-3.5 h-3.5 text-teal-400"></i>
+              <span>Feature Flags & Portal Permissions (ফিচার সক্রিয় বা নিষ্ক্রিয় করুন)</span>
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-white">Public File Downloads</div>
+                  <div class="text-[11px] text-slate-400">ফাইল সরাসরি ডাউনলোড সুবিধা</div>
+                </div>
+                <input type="checkbox" id="cfgAllowDownloads" checked class="w-4 h-4 accent-indigo-600 rounded">
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-white">Student Submissions</div>
+                  <div class="text-[11px] text-slate-400">স্টুডেন্টদের নোট জমা দেওয়া</div>
+                </div>
+                <input type="checkbox" id="cfgAllowSubmissions" checked class="w-4 h-4 accent-indigo-600 rounded">
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-white">AI Study Assistant Tab</div>
+                  <div class="text-[11px] text-slate-400">এআই চ্যাটবট ব্যবহারের সুযোগ</div>
+                </div>
+                <input type="checkbox" id="cfgEnableAiTab" checked class="w-4 h-4 accent-indigo-600 rounded">
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-white">Video Lectures Section</div>
+                  <div class="text-[11px] text-slate-400">ভিডিও লেকচার ট্যাব</div>
+                </div>
+                <input type="checkbox" id="cfgEnableVideosTab" class="w-4 h-4 accent-indigo-600 rounded">
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-white">Syllabus Tracker</div>
+                  <div class="text-[11px] text-slate-400">সিলেবাস ও প্রোগ্রেস ট্র্যাকার</div>
+                </div>
+                <input type="checkbox" id="cfgEnableTrackerTab" checked class="w-4 h-4 accent-indigo-600 rounded">
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Master Security Settings Bar -->
+          <div class="p-4 rounded-2xl bg-red-950/40 border border-red-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span class="text-xs text-red-300">
+              নিরাপত্তা ও ব্যানার সেটিংস অবিলম্বে সাইটে কার্যকর হবে।
+            </span>
+            <button onclick="saveSecuritySettings()" class="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-red-600/30 transition-all self-end sm:self-auto">
+              <i data-lucide="shield-check" class="w-4 h-4"></i>
+              <span>Save Security & Permissions (সেভ করুন)</span>
+            </button>
+          </div>
+        </div>
       </div>
 
     </section>
