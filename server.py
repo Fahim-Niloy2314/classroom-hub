@@ -22,34 +22,58 @@ CLASSROOM_DIR = r"G:\My Drive\Classroom"
 BASE_DIR = CLASSROOM_DIR if os.path.exists(CLASSROOM_DIR) else os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Security: Expected SHA-256 hash of Niloy2314###
+# Security: Cryptographic SHA-256 hash of administrative secret
 DEFAULT_ADMIN_PWD_HASH = "1c5ee9de39ca7ca5b25e25c7c994cf7b33d131c1ab99437ca2912a2cc4b6f21e"
 
-# In-memory active session tokens
-ACTIVE_SESSIONS = set()
+# Active sessions with expiration timestamps (token -> expiry_time)
+ACTIVE_SESSIONS = {}
+
+# Rate limiting failed logins (ip -> list of failure timestamps)
+FAILED_LOGINS = {}
+
+def is_rate_limited(ip):
+    now = time.time()
+    attempts = [t for t in FAILED_LOGINS.get(ip, []) if now - t < 300]
+    FAILED_LOGINS[ip] = attempts
+    return len(attempts) >= 5
+
+def record_failed_login(ip):
+    now = time.time()
+    FAILED_LOGINS.setdefault(ip, []).append(now)
+
+def clear_failed_login(ip):
+    FAILED_LOGINS.pop(ip, None)
 
 def verify_token(headers):
     auth_header = headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
         token = auth_header[7:].strip()
         if token in ACTIVE_SESSIONS:
-            return True
+            if time.time() < ACTIVE_SESSIONS[token]:
+                return True
+            else:
+                del ACTIVE_SESSIONS[token]
     return False
 
 def resolve_file_path(file_rel):
     if not file_rel:
         return None
+    clean_rel = os.path.normpath(file_rel).lstrip("/\\")
+    if clean_rel.startswith("..") or "/../" in clean_rel or "\\..\\" in clean_rel:
+        return None
     candidates = [
-        os.path.join(BASE_DIR, file_rel),
-        os.path.join(APP_DIR, file_rel),
-        os.path.join(BASE_DIR, file_rel.replace("_", " ")),
-        os.path.join(BASE_DIR, file_rel.replace(" ", "_")),
-        os.path.join(APP_DIR, file_rel.replace("_", " ")),
-        os.path.join(APP_DIR, file_rel.replace(" ", "_")),
+        os.path.join(BASE_DIR, clean_rel),
+        os.path.join(APP_DIR, clean_rel),
+        os.path.join(BASE_DIR, clean_rel.replace("_", " ")),
+        os.path.join(BASE_DIR, clean_rel.replace(" ", "_")),
+        os.path.join(APP_DIR, clean_rel.replace("_", " ")),
+        os.path.join(APP_DIR, clean_rel.replace(" ", "_")),
     ]
+    base_abs = os.path.abspath(BASE_DIR)
+    app_abs = os.path.abspath(APP_DIR)
     for cand in candidates:
         abs_p = os.path.abspath(cand)
-        if os.path.isfile(abs_p):
+        if (abs_p.startswith(base_abs) or abs_p.startswith(app_abs)) and os.path.isfile(abs_p):
             return abs_p
     return None
 
@@ -97,6 +121,14 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         params = urllib.parse.parse_qs(parsed.query)
+
+        # Disallow static access to sensitive files
+        forbidden_files = {"submissions.json", "secrets.json", ".env", ".github_token", "deploy_to_github.py"}
+        rel_req = urllib.parse.unquote(parsed.path).lstrip("/\\").replace("\\", "/")
+        req_basename = os.path.basename(rel_req)
+        if req_basename in forbidden_files:
+            self.send_error(403, "Access forbidden")
+            return
 
         # Health & Backend Status Check
         if parsed.path == "/api/status":
@@ -217,15 +249,31 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
         except Exception:
             body_json = {}
 
-        # 1. Admin Login & Session Generation
+        # 0. Admin Logout
+        if parsed.path == "/api/logout":
+            auth_header = self.headers.get("Authorization", "")
+            if auth_header.startswith("Bearer "):
+                tok = auth_header[7:].strip()
+                ACTIVE_SESSIONS.pop(tok, None)
+            self.send_cors_json(200, {"success": True, "message": "Logged out successfully"})
+            return
+
+        # 1. Admin Login & Session Generation (No hash-bypass, Rate-limited, 2h Expiration)
         if parsed.path == "/api/login":
+            client_ip = self.client_address[0]
+            if is_rate_limited(client_ip):
+                self.send_cors_json(429, {"success": False, "error": "Too many failed attempts. Please wait 5 minutes."})
+                return
             pwd = body_json.get("password", "")
+            if not pwd:
+                record_failed_login(client_ip)
+                self.send_cors_json(401, {"success": False, "error": "Password required"})
+                return
             pwd_hash = hashlib.sha256(pwd.encode("utf-8")).hexdigest()
-            provided_hash = body_json.get("passwordHash", "")
-            
-            if pwd_hash == DEFAULT_ADMIN_PWD_HASH or provided_hash == DEFAULT_ADMIN_PWD_HASH:
+            if pwd_hash == DEFAULT_ADMIN_PWD_HASH:
+                clear_failed_login(client_ip)
                 token = f"ch_sess_{uuid.uuid4().hex}"
-                ACTIVE_SESSIONS.add(token)
+                ACTIVE_SESSIONS[token] = time.time() + 7200  # 2 hours validity
                 self.send_cors_json(200, {
                     "success": True,
                     "token": token,
@@ -233,6 +281,7 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
                     "user": {"name": "Mohammad Fahim Ahmed (Niloy)", "email": "fahimcuet63@gmail.com", "role": "owner"}
                 })
             else:
+                record_failed_login(client_ip)
                 self.send_cors_json(401, {"success": False, "error": "Invalid administrative password"})
             return
 
@@ -300,14 +349,11 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
                 self.send_cors_json(404, {"error": "Submission not found"})
             return
 
-        # 4. Authenticated Publish Live Endpoint
+        # 4. Authenticated Publish Live Endpoint (Requires Active Admin Session)
         if parsed.path == "/api/publish":
             if not verify_token(self.headers):
-                # Also allow local loopback requests if configured
-                is_local = self.client_address[0] in ("127.0.0.1", "localhost", "::1")
-                if not is_local:
-                    self.send_cors_json(401, {"error": "Unauthorized: Admin session required to publish"})
-                    return
+                self.send_cors_json(401, {"error": "Unauthorized: Active admin session required to publish"})
+                return
 
             try:
                 payload = body_json.get("payload", body_json)
@@ -326,7 +372,7 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
 
                 self.send_cors_json(200, {
                     "success": True,
-                    "message": "Published live via authenticated ClassroomHub server backend!",
+                    "message": "Published live via authenticated ClassroomHub server backend!" if deployed else "Saved to portal_sync.json (GitHub deployment not completed)",
                     "deployed": deployed,
                     "deployMsg": deploy_msg
                 })
