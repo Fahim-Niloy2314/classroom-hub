@@ -83,10 +83,9 @@ let courseProgress = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROGRESS) || '
 const DEFAULT_PORTAL_SETTINGS = {
   tabs: [
     { id: 'home', label: 'Home', icon: 'home', visible: true, locked: true },
-    { id: 'resources', label: 'Courses', icon: 'folder', visible: true },
-    { id: 'videos', label: 'Video Lectures', icon: 'youtube', visible: false },
-    { id: 'ai', label: 'AI Assistant', icon: 'sparkles', visible: true },
-    { id: 'tracker', label: 'Tracker', icon: 'check-square', visible: true }
+    { id: 'tools', label: 'Student Tools', icon: 'wrench', visible: true },
+    { id: 'faculty', label: 'Faculty Directory', icon: 'users', visible: true },
+    { id: 'progress', label: 'My Progress', icon: 'check-circle-2', visible: true }
   ],
   heroTitle: "Mechanical Engineering",
   heroSubtitle: "Academic Vault & Archive",
@@ -126,8 +125,17 @@ const DEFAULT_PORTAL_SETTINGS = {
 };
 
 let portalSettings = JSON.parse(localStorage.getItem(STORAGE_KEYS.PORTAL_SETTINGS) || 'null');
-if (!portalSettings || !portalSettings.tabs) {
-  portalSettings = JSON.parse(JSON.stringify(DEFAULT_PORTAL_SETTINGS));
+const REQUIRED_PRIMARY_TABS = [
+  { id: 'home', label: 'Home', icon: 'home', visible: true, locked: true },
+  { id: 'tools', label: 'Student Tools', icon: 'wrench', visible: true },
+  { id: 'faculty', label: 'Faculty Directory', icon: 'users', visible: true },
+  { id: 'progress', label: 'My Progress', icon: 'check-circle-2', visible: true }
+];
+
+// Strict navigation order migration: Home -> Student Tools -> Faculty Directory -> My Progress
+if (!portalSettings || !portalSettings.tabs || !portalSettings.tabs.some(t => t.id === 'faculty') || portalSettings.tabs.some(t => t.id === 'ai')) {
+  portalSettings = Object.assign({}, DEFAULT_PORTAL_SETTINGS, portalSettings || {});
+  portalSettings.tabs = JSON.parse(JSON.stringify(REQUIRED_PRIMARY_TABS));
   localStorage.setItem(STORAGE_KEYS.PORTAL_SETTINGS, JSON.stringify(portalSettings));
 } else {
   portalSettings = Object.assign({}, DEFAULT_PORTAL_SETTINGS, portalSettings);
@@ -582,6 +590,7 @@ const I18N = {
     nav_sub: 'CUET Mechanical Engineering Archive',
     tab_home: 'Home',
     tab_tools: 'Student Tools',
+    tab_faculty: 'Faculty Directory',
     tab_progress: 'My Progress',
     progress_header: 'My Study Progress & Preparation',
     progress_sub: 'Monitor your reading history, bookmarked materials, topic completion checklist, and upcoming study deadlines.',
@@ -702,6 +711,7 @@ const I18N = {
     nav_sub: 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং আর্কাইভ',
     tab_home: 'হোম',
     tab_tools: 'স্টুডেন্ট টুলস',
+    tab_faculty: 'শিক্ষক ও কর্মকর্তা',
     tab_progress: 'মাই প্রগ্রেস',
     progress_header: 'আমার পড়ার প্রগ্রেস ও প্রস্তুতি',
     progress_sub: 'সাম্প্রতিক পড়া ফাইল, বুকমার্ক, টপিক কমপ্লিশন ও স্টাডি ডেডলাইন পর্যবেক্ষণ করুন।',
@@ -1073,17 +1083,25 @@ let activeStudentTool = 'routine';
 let isHandlingHashChange = false;
 
 function navigateTo(route, subRoute = null, updateHash = true) {
+  // If route is 'ai', redirect to tools with 'ai' subworkspace
+  if (route === 'ai') {
+    navigateTo('tools', 'ai', updateHash);
+    return;
+  }
+
   currentTab = route;
-  const views = ['home', 'tools', 'ai', 'progress', 'faculty', 'notices', 'feedback', 'help', 'admin'];
+  const views = ['home', 'tools', 'progress', 'faculty', 'notices', 'feedback', 'help', 'admin'];
   views.forEach(v => {
     const el = document.getElementById(`view-${v}`);
     if (el) el.classList.toggle('hidden', v !== route);
   });
+  const legacyAiView = document.getElementById('view-ai');
+  if (legacyAiView) legacyAiView.classList.add('hidden');
 
   const isUserAdmin = currentUser && typeof isAdmin === 'function' && isAdmin(currentUser);
 
-  // Desktop tab active states
-  const desktopTabs = ['home', 'tools', 'ai', 'progress', 'admin'];
+  // Desktop tab active states: Home -> Student Tools -> Faculty Directory -> My Progress -> Admin
+  const desktopTabs = ['home', 'tools', 'faculty', 'progress', 'admin'];
   desktopTabs.forEach(v => {
     const btn = document.getElementById(`nav-tab-${v}`);
     if (btn) {
@@ -1100,8 +1118,8 @@ function navigateTo(route, subRoute = null, updateHash = true) {
     }
   });
 
-  // Mobile bottom navigation active states
-  const mobileTabs = ['home', 'tools', 'ai', 'progress'];
+  // Mobile bottom navigation active states: Home -> Tools -> Faculty -> Progress
+  const mobileTabs = ['home', 'tools', 'faculty', 'progress'];
   mobileTabs.forEach(v => {
     const mBtn = document.getElementById(`mobileNav-${v}`);
     if (mBtn) {
@@ -1119,8 +1137,6 @@ function navigateTo(route, subRoute = null, updateHash = true) {
     renderExplorer();
   } else if (route === 'tools') {
     switchStudentTool(subRoute || activeStudentTool || 'routine', false);
-  } else if (route === 'ai') {
-    updateAiKeyStatusBadge();
   } else if (route === 'progress') {
     renderProgressDashboard();
   } else if (route === 'faculty') {
@@ -1164,7 +1180,13 @@ function handleHashRouting() {
 
   if (route === 'tools') {
     navigateTo('tools', sub || 'routine', false);
-  } else if (['home', 'ai', 'progress', 'faculty', 'notices', 'feedback', 'help', 'admin'].includes(route)) {
+  } else if (route === 'ai') {
+    // Redirect old #/ai links to #/tools/ai without creating history loops
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', '#/tools/ai');
+    }
+    navigateTo('tools', 'ai', false);
+  } else if (['home', 'progress', 'faculty', 'notices', 'feedback', 'help', 'admin'].includes(route)) {
     navigateTo(route, sub, false);
   } else if (route === 'tracker') {
     navigateTo('progress', null, false);
@@ -1180,12 +1202,10 @@ function switchTab(tab) {
     navigateTo('home');
   } else if (tab === 'tracker') {
     navigateTo('progress');
-  } else if (tab === 'routine') {
-    navigateTo('tools', 'routine');
-  } else if (tab === 'cv') {
-    navigateTo('tools', 'cv');
-  } else if (tab === 'cgpa') {
-    navigateTo('tools', 'cgpa');
+  } else if (tab === 'routine' || tab === 'cv' || tab === 'cgpa' || tab === 'ai') {
+    navigateTo('tools', tab);
+  } else if (tab === 'faculty') {
+    navigateTo('faculty');
   } else {
     navigateTo(tab);
   }
@@ -1193,7 +1213,7 @@ function switchTab(tab) {
 
 function switchStudentTool(toolName, updateHash = true) {
   activeStudentTool = toolName;
-  const tools = ['routine', 'cv', 'cgpa'];
+  const tools = ['routine', 'cv', 'cgpa', 'ai'];
   tools.forEach(t => {
     const ws = document.getElementById(`toolWorkspace-${t}`);
     if (ws) ws.classList.toggle('hidden', t !== toolName);
@@ -1215,6 +1235,8 @@ function switchStudentTool(toolName, updateHash = true) {
   } else if (toolName === 'cgpa') {
     if (typeof renderCgpaRows === 'function') renderCgpaRows();
     if (typeof calculateCgpa === 'function') calculateCgpa();
+  } else if (toolName === 'ai') {
+    if (typeof updateAiKeyStatusBadge === 'function') updateAiKeyStatusBadge();
   }
 
   if (updateHash && currentTab === 'tools') {
@@ -4921,7 +4943,19 @@ function scrollToVideoSection() {
    PORTAL SITE LAYOUT & NAVIGATION CMS (ADMIN CONTROL SUITE)
    ========================================================================= */
 function applyPortalSettings() {
-  if (!portalSettings || !portalSettings.tabs) return;
+  if (!portalSettings) return;
+
+  const REQUIRED_PRIMARY_TABS = [
+    { id: 'home', label: 'Home', icon: 'home', visible: true, locked: true },
+    { id: 'tools', label: 'Student Tools', icon: 'wrench', visible: true },
+    { id: 'faculty', label: 'Faculty Directory', icon: 'users', visible: true },
+    { id: 'progress', label: 'My Progress', icon: 'check-circle-2', visible: true }
+  ];
+
+  if (!portalSettings.tabs || !portalSettings.tabs.some(t => t.id === 'faculty') || portalSettings.tabs.some(t => t.id === 'ai')) {
+    portalSettings.tabs = JSON.parse(JSON.stringify(REQUIRED_PRIMARY_TABS));
+    localStorage.setItem(STORAGE_KEYS.PORTAL_SETTINGS, JSON.stringify(portalSettings));
+  }
 
   const isUserAdmin = currentUser && isAdmin(currentUser);
 
@@ -4936,6 +4970,12 @@ function applyPortalSettings() {
         if (span && tabCfg.label) span.textContent = tabCfg.label;
         desktopNav.appendChild(btn);
       }
+    });
+
+    // Hide any legacy tabs from desktop nav
+    ['ai', 'resources', 'videos', 'tracker'].forEach(legacyId => {
+      const oldBtn = document.getElementById(`nav-tab-${legacyId}`);
+      if (oldBtn) oldBtn.classList.add('hidden');
     });
 
     const adminBtn = document.getElementById('nav-tab-admin');
@@ -4960,6 +5000,12 @@ function applyPortalSettings() {
         if (span && tabCfg.label) span.textContent = tabCfg.label;
         mobileNav.appendChild(mBtn);
       }
+    });
+
+    // Hide any legacy tabs from mobile nav
+    ['ai', 'resources', 'videos', 'tracker'].forEach(legacyId => {
+      const oldMBtn = document.getElementById(`mobileNav-${legacyId}`);
+      if (oldMBtn) oldMBtn.classList.add('hidden');
     });
 
     const mAdminBtn = document.getElementById('mobileNav-admin');
@@ -9774,12 +9820,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Professor",
     "category": "PROFESSOR",
     "room": "ME Building",
-    "email": "bodiussalam@yahoo.com, bsalam@cuet.ac.bd",
+    "email": "bsalam@cuet.ac.bd",
     "phone": "01713109924",
     "tnt": "2704",
     "whatsapp": "8801713109924",
     "specialization": "Thermal Engineering, Solar Energy, Heat Transfer",
-    "order": 1
+    "order": 1,
+    "emails": [
+      {
+        "address": "bsalam@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "bodiussalam@yahoo.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_2",
@@ -9787,12 +9843,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Professor",
     "category": "PROFESSOR",
     "room": "ME Building",
-    "email": "mahbub87@yahoo.com, malam@cuet.ac.bd",
+    "email": "malam@cuet.ac.bd",
     "phone": "01812830127",
     "tnt": "2702",
     "whatsapp": "8801812830127",
     "specialization": "Production & Manufacturing Engineering, Materials",
-    "order": 2
+    "order": 2,
+    "emails": [
+      {
+        "address": "malam@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "mahbub87@yahoo.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_3",
@@ -9805,7 +9871,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "2724",
     "whatsapp": "8801821781459",
     "specialization": "Robotics, Mechatronics, Automation & Control",
-    "order": 3
+    "order": 3,
+    "emails": [
+      {
+        "address": "baniksajal@cuet.ac.bd",
+        "label": "University email"
+      }
+    ]
   },
   {
     "id": "fac_4",
@@ -9813,12 +9885,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Professor",
     "category": "PROFESSOR",
     "room": "ME Building",
-    "email": "jamal293@yahoo.com, jamal@cuet.ac.bd",
+    "email": "jamal@cuet.ac.bd",
     "phone": "01720641636",
     "tnt": "2714",
     "whatsapp": "8801720641636",
     "specialization": "Thermal Power, Energy Conservation, Nanofluids",
-    "order": 4
+    "order": 4,
+    "emails": [
+      {
+        "address": "jamal@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "jamal293@yahoo.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_5",
@@ -9826,12 +9908,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Professor",
     "category": "PROFESSOR",
     "room": "ME Building",
-    "email": "humayun@cuet.ac.bd, daliinuoo@yahoo.com",
+    "email": "humayun@cuet.ac.bd",
     "phone": "01716469972",
     "tnt": "2726",
     "whatsapp": "8801716469972",
     "specialization": "Applied Mechanics, Solid Mechanics & Stress Analysis",
-    "order": 5
+    "order": 5,
+    "emails": [
+      {
+        "address": "humayun@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "daliinuoo@yahoo.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_6",
@@ -9839,12 +9931,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Professor",
     "category": "PROFESSOR",
     "room": "ME Building",
-    "email": "afzalur99@yahoo.com, afzal@cuet.ac.bd",
+    "email": "afzal@cuet.ac.bd",
     "phone": "01680453267",
     "tnt": "2723",
     "whatsapp": "8801680453267",
     "specialization": "Fluid Machinery, CFD & Fluid Dynamics",
-    "order": 6
+    "order": 6,
+    "emails": [
+      {
+        "address": "afzal@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "afzalur99@yahoo.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_7",
@@ -9857,7 +9959,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "2710",
     "whatsapp": "8801864800089",
     "specialization": "Automobile Engineering, IC Engines, Alternate Fuels",
-    "order": 7
+    "order": 7,
+    "emails": [
+      {
+        "address": "mmrahman.cuet@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_8",
@@ -9865,12 +9973,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Head of Department & Professor",
     "category": "HEAD",
     "room": "Department Head Office, ME Building",
-    "email": "mkamalcuet@yahoo.com, mkamal@cuet.ac.bd",
+    "email": "mkamal@cuet.ac.bd",
     "phone": "01784353193",
     "tnt": "2729",
     "whatsapp": "8801784353193",
     "specialization": "Thermal Engineering, Heat Transfer Enhancement, Renewable Energy",
-    "order": 8
+    "order": 8,
+    "emails": [
+      {
+        "address": "mkamal@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "mkamalcuet@yahoo.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_9",
@@ -9883,7 +10001,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801717300305",
     "specialization": "Thermodynamics, Power Plant, Heat Systems",
-    "order": 9
+    "order": 9,
+    "emails": [
+      {
+        "address": "rabbi@cuet.ac.bd",
+        "label": "University email"
+      }
+    ]
   },
   {
     "id": "fac_10",
@@ -9896,7 +10020,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "2727",
     "whatsapp": "8801719416328",
     "specialization": "Materials Science, Metallurgy, Fracture Mechanics",
-    "order": 10
+    "order": 10,
+    "emails": [
+      {
+        "address": "arafat@cuet.ac.bd",
+        "label": "University email"
+      }
+    ]
   },
   {
     "id": "fac_11",
@@ -9904,12 +10034,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Associate Professor",
     "category": "ASSOCIATE",
     "room": "ME Building",
-    "email": "prasanjit12@gmail.com, prasanjit@cuet.ac.bd",
+    "email": "prasanjit@cuet.ac.bd",
     "phone": "01642997909",
     "tnt": "",
     "whatsapp": "8801642997909",
     "specialization": "Combustion, Energy Systems, Thermal Modeling",
-    "order": 11
+    "order": 11,
+    "emails": [
+      {
+        "address": "prasanjit@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "prasanjit12@gmail.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_12",
@@ -9917,12 +10057,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Associate Professor",
     "category": "ASSOCIATE",
     "room": "ME Building",
-    "email": "yessayem@yahoo.com, a.sayem@cuet.ac.bd",
+    "email": "a.sayem@cuet.ac.bd",
     "phone": "01710503692",
     "tnt": "",
     "whatsapp": "8801710503692",
     "specialization": "Fluid Mechanics, Multiphase Flow & Heat Exchangers",
-    "order": 12
+    "order": 12,
+    "emails": [
+      {
+        "address": "a.sayem@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "yessayem@yahoo.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_13",
@@ -9930,12 +10080,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Associate Professor",
     "category": "ASSOCIATE",
     "room": "ME Building",
-    "email": "mamun_cuet2003@yahoo.com, mamuncuet2003@cuet.ac.bd",
+    "email": "mamuncuet2003@cuet.ac.bd",
     "phone": "01818651850",
     "tnt": "",
     "whatsapp": "8801818651850",
     "specialization": "Applied Mechanics, Vibration Analysis, Dynamics",
-    "order": 13
+    "order": 13,
+    "emails": [
+      {
+        "address": "mamuncuet2003@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "mamun_cuet2003@yahoo.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_14",
@@ -9948,7 +10108,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "2722",
     "whatsapp": "8801735530848",
     "specialization": "Manufacturing Engineering, Tool Wear & Metal Cutting",
-    "order": 14
+    "order": 14,
+    "emails": [
+      {
+        "address": "mowazzem@cuet.ac.bd",
+        "label": "University email"
+      }
+    ]
   },
   {
     "id": "fac_15",
@@ -9956,12 +10122,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Associate Professor",
     "category": "ASSOCIATE",
     "room": "ME Building",
-    "email": "tilok_cuet@yahoo.com, tilok@cuet.ac.bd",
+    "email": "tilok@cuet.ac.bd",
     "phone": "01818767625",
     "tnt": "",
     "whatsapp": "8801818767625",
     "specialization": "Renewable Energy, Heat Transfer, Fluid Mechanics",
-    "order": 15
+    "order": 15,
+    "emails": [
+      {
+        "address": "tilok@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "tilok_cuet@yahoo.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_16",
@@ -9974,7 +10150,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "2720",
     "whatsapp": "8801837888835",
     "specialization": "Thermodynamics & Heat Transfer",
-    "order": 16
+    "order": 16,
+    "emails": [
+      {
+        "address": "aislam@cuet.ac.bd",
+        "label": "University email"
+      }
+    ]
   },
   {
     "id": "fac_17",
@@ -9987,7 +10169,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "2712",
     "whatsapp": "8801725554528",
     "specialization": "Machine Design & Stress Analysis",
-    "order": 17
+    "order": 17,
+    "emails": [
+      {
+        "address": "bdmasrur91@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_18",
@@ -10000,7 +10188,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801738263617",
     "specialization": "Nanotechnology & Materials Science",
-    "order": 18
+    "order": 18,
+    "emails": [
+      {
+        "address": "rmostafiz31@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_19",
@@ -10008,12 +10202,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Assistant Professor",
     "category": "ASSOCIATE",
     "room": "ME Building",
-    "email": "afnanhasan@cuet.ac.bd, afnanhasan@gmail.com",
+    "email": "afnanhasan@cuet.ac.bd",
     "phone": "01303042334",
     "tnt": "",
     "whatsapp": "8801303042334",
     "specialization": "Aerodynamics & CFD",
-    "order": 19
+    "order": 19,
+    "emails": [
+      {
+        "address": "afnanhasan@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "afnanhasan@gmail.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_20",
@@ -10021,12 +10225,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Assistant Professor",
     "category": "ASSOCIATE",
     "room": "ME Building",
-    "email": "radheshyamnathjisu@gmail.com, radheshyam@cuet.ac.bd",
+    "email": "radheshyam@cuet.ac.bd",
     "phone": "01521227537",
     "tnt": "",
     "whatsapp": "8801521227537",
     "specialization": "Robotics, Automation & Mechatronics",
-    "order": 20
+    "order": 20,
+    "emails": [
+      {
+        "address": "radheshyam@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "radheshyamnathjisu@gmail.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_21",
@@ -10039,7 +10253,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801812680648",
     "specialization": "Fluid Mechanics & Heat Transfer",
-    "order": 21
+    "order": 21,
+    "emails": [
+      {
+        "address": "tafsir2086@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_22",
@@ -10052,7 +10272,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801882823600",
     "specialization": "Automobile Engineering & Thermal Power",
-    "order": 22
+    "order": 22,
+    "emails": [
+      {
+        "address": "bdnezam15@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_23",
@@ -10065,7 +10291,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801712132762",
     "specialization": "Solid Mechanics & CAD/CAM",
-    "order": 23
+    "order": 23,
+    "emails": [
+      {
+        "address": "meraz@cuet.ac.bd",
+        "label": "University email"
+      }
+    ]
   },
   {
     "id": "fac_24",
@@ -10073,12 +10305,22 @@ const DEFAULT_FACULTY_MEMBERS = [
     "designation": "Assistant Professor",
     "category": "ASSOCIATE",
     "room": "ME Building",
-    "email": "minhaz@cuet.ac.bd, minhaz.ahmed.1603018@gmail.com",
+    "email": "minhaz@cuet.ac.bd",
     "phone": "01537202191",
     "tnt": "",
     "whatsapp": "8801537202191",
     "specialization": "Renewable Energy & Mechanical Design",
-    "order": 24
+    "order": 24,
+    "emails": [
+      {
+        "address": "minhaz@cuet.ac.bd",
+        "label": "University email"
+      },
+      {
+        "address": "minhaz.ahmed.1603018@gmail.com",
+        "label": "Alternate email"
+      }
+    ]
   },
   {
     "id": "fac_25",
@@ -10091,7 +10333,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801747680478",
     "specialization": "Thermodynamics & Heat Transfer",
-    "order": 25
+    "order": 25,
+    "emails": [
+      {
+        "address": "alrifat50@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_26",
@@ -10104,7 +10352,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801824192709",
     "specialization": "Fluid Dynamics & Turbomachinery",
-    "order": 26
+    "order": 26,
+    "emails": [
+      {
+        "address": "Rakibmamun107@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_27",
@@ -10117,7 +10371,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801992880020",
     "specialization": "Control Systems & Robotics",
-    "order": 27
+    "order": 27,
+    "emails": [
+      {
+        "address": "protickchandraghosh123@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_28",
@@ -10130,7 +10390,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801762388882",
     "specialization": "Materials Science & Mechanical Testing",
-    "order": 28
+    "order": 28,
+    "emails": [
+      {
+        "address": "tahsin.me.113@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_29",
@@ -10143,7 +10409,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801876593419",
     "specialization": "Heat Transfer & IC Engines",
-    "order": 29
+    "order": 29,
+    "emails": [
+      {
+        "address": "tanvirmahmud775@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_30",
@@ -10156,7 +10428,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "2186",
     "whatsapp": "8801991945168",
     "specialization": "Laboratory & Practical Session Support",
-    "order": 30
+    "order": 30,
+    "emails": [
+      {
+        "address": "fahmidazahan82@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_31",
@@ -10169,7 +10447,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801713109923",
     "specialization": "Laboratory Instrumentation & Testing Operations",
-    "order": 31
+    "order": 31,
+    "emails": [
+      {
+        "address": "sujoncuet@yahoo.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_32",
@@ -10182,7 +10466,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "2754",
     "whatsapp": "8801714595605",
     "specialization": "Lab Setup & Technical Maintenance",
-    "order": 32
+    "order": 32,
+    "emails": [
+      {
+        "address": "dippdipu@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_33",
@@ -10195,7 +10485,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "2759",
     "whatsapp": "8801782555584",
     "specialization": "Workshop Machines & Testing Services",
-    "order": 33
+    "order": 33,
+    "emails": [
+      {
+        "address": "iswarme2018@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_34",
@@ -10208,7 +10504,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801835508202",
     "specialization": "Academic Administration & Records",
-    "order": 34
+    "order": 34,
+    "emails": [
+      {
+        "address": "mdmonirctg99@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_35",
@@ -10221,7 +10523,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801817725904",
     "specialization": "Administrative Support & Coordination",
-    "order": 35
+    "order": 35,
+    "emails": [
+      {
+        "address": "dastagir88@yahoo.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_36",
@@ -10234,7 +10542,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "2755",
     "whatsapp": "8801811923524",
     "specialization": "Office Affairs & Student Communication",
-    "order": 36
+    "order": 36,
+    "emails": [
+      {
+        "address": "radhacuet@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_37",
@@ -10247,7 +10561,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "2756",
     "whatsapp": "8801914594662",
     "specialization": "Departmental Correspondence & Logistics",
-    "order": 37
+    "order": 37,
+    "emails": [
+      {
+        "address": "mdabdullahcuet@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_38",
@@ -10260,7 +10580,8 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801818557009",
     "specialization": "Laboratory Operations & Maintenance",
-    "order": 38
+    "order": 38,
+    "emails": []
   },
   {
     "id": "fac_39",
@@ -10273,7 +10594,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801627635838",
     "specialization": "Lab Maintenance & Support",
-    "order": 39
+    "order": 39,
+    "emails": [
+      {
+        "address": "emranulhoque@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_42",
@@ -10286,7 +10613,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801811920365",
     "specialization": "Machine Operation & Tooling",
-    "order": 42
+    "order": 42,
+    "emails": [
+      {
+        "address": "rupayandas002@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_43",
@@ -10299,7 +10632,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801818889100",
     "specialization": "Workshop Fabrication & Maintenance",
-    "order": 43
+    "order": 43,
+    "emails": [
+      {
+        "address": "khalilcuet26@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_44",
@@ -10312,7 +10651,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801815185152",
     "specialization": "Laboratory Technical Support",
-    "order": 44
+    "order": 44,
+    "emails": [
+      {
+        "address": "Khrakib85@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_45",
@@ -10325,7 +10670,8 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801825868662",
     "specialization": "Workshop Equipment Support",
-    "order": 45
+    "order": 45,
+    "emails": []
   },
   {
     "id": "fac_46",
@@ -10338,7 +10684,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801987527264",
     "specialization": "Lab Record & Equipment Handling",
-    "order": 46
+    "order": 46,
+    "emails": [
+      {
+        "address": "afrinatasmim.sub@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_47",
@@ -10351,7 +10703,8 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801834058770",
     "specialization": "Laboratory Operations Support",
-    "order": 47
+    "order": 47,
+    "emails": []
   },
   {
     "id": "fac_48",
@@ -10364,7 +10717,8 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801917884470",
     "specialization": "Lab Facilities & Logistics",
-    "order": 48
+    "order": 48,
+    "emails": []
   },
   {
     "id": "fac_49",
@@ -10377,7 +10731,8 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801840219603",
     "specialization": "Equipment Upkeep & Lab Handling",
-    "order": 49
+    "order": 49,
+    "emails": []
   },
   {
     "id": "fac_50",
@@ -10390,7 +10745,13 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801830557462",
     "specialization": "Laboratory Technical Maintenance",
-    "order": 50
+    "order": 50,
+    "emails": [
+      {
+        "address": "mitonshilabeer@gmail.com",
+        "label": "Primary email"
+      }
+    ]
   },
   {
     "id": "fac_51",
@@ -10403,7 +10764,8 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801641416841",
     "specialization": "Departmental Lab Logistics",
-    "order": 51
+    "order": 51,
+    "emails": []
   },
   {
     "id": "fac_52",
@@ -10416,7 +10778,8 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801830108809",
     "specialization": "Workshop & Laboratory Support",
-    "order": 52
+    "order": 52,
+    "emails": []
   },
   {
     "id": "fac_53",
@@ -10429,21 +10792,173 @@ const DEFAULT_FACULTY_MEMBERS = [
     "tnt": "",
     "whatsapp": "8801834575980",
     "specialization": "Departmental Lab Logistics",
-    "order": 53
+    "order": 53,
+    "emails": []
   }
 ];
-
 let facultyCategoryFilter = 'ALL';
 let facultySearchKeyword = '';
+
+function normalizeFacultyEmails(f) {
+  if (f && f.emails && Array.isArray(f.emails) && f.emails.length > 0) {
+    return f.emails.map(e => {
+      if (typeof e === 'string') {
+        const isUniv = e.toLowerCase().includes('@cuet.ac.bd');
+        return { address: e.trim(), label: isUniv ? 'University email' : 'Alternate email' };
+      }
+      return {
+        address: (e.address || '').trim(),
+        label: e.label || ((e.address || '').toLowerCase().includes('@cuet.ac.bd') ? 'University email' : 'Alternate email')
+      };
+    }).filter(e => Boolean(e.address));
+  }
+  const raw = (f && f.email ? f.email : '').trim();
+  if (!raw) return [];
+  const parts = raw.split(/[,;/]+/).map(p => p.trim()).filter(Boolean);
+  if (parts.length === 0) return [];
+  if (parts.length === 1) {
+    const isUniv = parts[0].toLowerCase().includes('@cuet.ac.bd');
+    return [{ address: parts[0], label: isUniv ? 'University email' : 'Primary email' }];
+  }
+  const cuet = parts.filter(p => p.toLowerCase().includes('@cuet.ac.bd'));
+  const ext = parts.filter(p => !p.toLowerCase().includes('@cuet.ac.bd'));
+  const res = [];
+  cuet.forEach((p, i) => {
+    res.push({ address: p, label: cuet.length === 1 ? 'University email' : `University email ${i + 1}` });
+  });
+  ext.forEach((p, i) => {
+    res.push({ address: p, label: ext.length === 1 ? 'Alternate email' : `Alternate email ${i + 1}` });
+  });
+  return res;
+}
+
+function copyFacultyEmail(address, event) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  if (event && event.preventDefault) event.preventDefault();
+  if (!address) return;
+
+  const onCopied = () => {
+    if (typeof showToast === 'function') {
+      showToast(`Copied email to clipboard: ${address}`);
+    }
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(address).then(onCopied).catch(() => {
+      fallbackCopyText(address);
+    });
+  } else {
+    fallbackCopyText(address);
+  }
+}
+
+function fallbackCopyText(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    if (typeof showToast === 'function') showToast(`Copied to clipboard: ${text}`);
+  } catch (e) {
+    if (typeof showToast === 'function') showToast(`Email: ${text}`);
+  }
+  document.body.removeChild(ta);
+}
+
+function openFacultyEmailChooser(id, event) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  const list = getFacultyMembers();
+  const member = list.find(m => m.id === id);
+  if (!member) return;
+  const emails = normalizeFacultyEmails(member);
+  if (emails.length === 0) return;
+
+  const modal = document.getElementById('facultyEmailChooserModal');
+  const title = document.getElementById('facultyEmailChooserTitle');
+  const subtitle = document.getElementById('facultyEmailChooserSubtitle');
+  const container = document.getElementById('facultyEmailChooserList');
+
+  if (title) title.textContent = member.name;
+  if (subtitle) subtitle.textContent = `${member.designation} • ${emails.length} email addresses available`;
+
+  if (container) {
+    container.innerHTML = emails.map(e => {
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(e.address)}`;
+      const isUniv = e.label && e.label.toLowerCase().includes('university');
+      return `
+        <div class="p-3.5 rounded-2xl bg-surface-subtle border border-line space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full ${
+              isUniv ? 'bg-forest-tint text-forest border border-forest/30' : 'bg-surface text-muted border border-line'
+            }">${e.label}</span>
+            <span class="text-xs font-mono font-medium text-main truncate">${e.address}</span>
+          </div>
+          <div class="flex items-center gap-2 pt-1">
+            <a 
+              href="${gmailUrl}" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              onclick="event.stopPropagation()"
+              class="flex-1 py-1.5 px-2.5 rounded-xl btn-forest text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm text-white"
+              title="Compose in Gmail (${e.address})"
+              aria-label="Compose email to ${e.address} in Gmail"
+            >
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>Compose in Gmail</span>
+            </a>
+            <button 
+              type="button" 
+              onclick="copyFacultyEmail('${e.address}', event)" 
+              class="py-1.5 px-2.5 rounded-xl border border-line hover:bg-surface-tint text-xs font-medium text-muted hover:text-main flex items-center gap-1 transition-all"
+              title="Copy email address"
+              aria-label="Copy ${e.address} to clipboard"
+            >
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>Copy</span>
+            </button>
+            <a 
+              href="mailto:${e.address}" 
+              onclick="event.stopPropagation()"
+              class="py-1.5 px-2.5 rounded-xl border border-line hover:bg-surface-tint text-xs font-medium text-muted hover:text-main flex items-center gap-1 transition-all"
+              title="Open in default email app"
+              aria-label="Open ${e.address} in default email app"
+            >
+              <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+              <span>Default App</span>
+            </a>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  if (window.lucide) lucide.createIcons();
+  if (modal) modal.showModal();
+}
+
+function closeFacultyEmailChooser() {
+  const modal = document.getElementById('facultyEmailChooserModal');
+  if (modal) modal.close();
+}
 
 function getFacultyMembers() {
   const saved = localStorage.getItem(STORAGE_KEYS.ADMIN_FACULTY);
   if (saved !== null) {
     try {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) {
-        // Return CMS-managed directory without forcing overrides in rendering code
-        return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Return CMS-managed directory, ensuring .emails array is normalized
+        return parsed.map(f => {
+          if (!f.emails || !Array.isArray(f.emails) || f.emails.length === 0) {
+            f.emails = normalizeFacultyEmails(f);
+            if (!f.email && f.emails.length > 0) f.email = f.emails[0].address;
+          }
+          return f;
+        });
       }
     } catch (e) {
       console.warn('Error reading faculty members:', e);
@@ -10454,7 +10969,12 @@ function getFacultyMembers() {
 }
 
 function saveFacultyMembers(list) {
-  localStorage.setItem(STORAGE_KEYS.ADMIN_FACULTY, JSON.stringify(list));
+  const normalized = (list || []).map(f => {
+    f.emails = normalizeFacultyEmails(f);
+    if (!f.email && f.emails.length > 0) f.email = f.emails[0].address;
+    return f;
+  });
+  localStorage.setItem(STORAGE_KEYS.ADMIN_FACULTY, JSON.stringify(normalized));
 }
 
 function filterFacultyCategory(cat) {
@@ -10482,6 +11002,7 @@ function renderFacultyDirectory() {
   const grid = document.getElementById('facultyDirectoryGrid');
   const countBadge = document.getElementById('facultyDirectoryTotalBadge');
   const homeBadge = document.getElementById('facultyCountBadge');
+  const homeBannerBadge = document.getElementById('homeFacultyCountBadge');
   const adminHeader = document.getElementById('adminFacultyActionHeader');
 
   if (adminHeader) {
@@ -10490,8 +11011,9 @@ function renderFacultyDirectory() {
   }
 
   const allMembers = getFacultyMembers();
-  if (countBadge) if (countBadge) countBadge.textContent = `${allMembers.length} Members`;
+  if (countBadge) countBadge.textContent = `${allMembers.length} Members`;
   if (homeBadge) homeBadge.textContent = allMembers.length;
+  if (homeBannerBadge) homeBannerBadge.textContent = `${allMembers.length} Members`;
 
   if (!grid) return;
 
@@ -10500,15 +11022,19 @@ function renderFacultyDirectory() {
     filtered = filtered.filter(f => f.category === facultyCategoryFilter);
   }
   if (facultySearchKeyword) {
-    filtered = filtered.filter(f => 
-      (f.name && f.name.toLowerCase().includes(facultySearchKeyword)) ||
-      (f.designation && f.designation.toLowerCase().includes(facultySearchKeyword)) ||
-      (f.specialization && f.specialization.toLowerCase().includes(facultySearchKeyword)) ||
-      (f.room && f.room.toLowerCase().includes(facultySearchKeyword)) ||
-      (f.email && f.email.toLowerCase().includes(facultySearchKeyword)) ||
-      (f.phone && f.phone.includes(facultySearchKeyword)) ||
-      (f.tnt && f.tnt.includes(facultySearchKeyword))
-    );
+    filtered = filtered.filter(f => {
+      const emailMatches = (f.emails && f.emails.some(e => (e.address || '').toLowerCase().includes(facultySearchKeyword))) ||
+        (f.email && f.email.toLowerCase().includes(facultySearchKeyword));
+      return (
+        (f.name && f.name.toLowerCase().includes(facultySearchKeyword)) ||
+        (f.designation && f.designation.toLowerCase().includes(facultySearchKeyword)) ||
+        (f.specialization && f.specialization.toLowerCase().includes(facultySearchKeyword)) ||
+        (f.room && f.room.toLowerCase().includes(facultySearchKeyword)) ||
+        emailMatches ||
+        (f.phone && f.phone.includes(facultySearchKeyword)) ||
+        (f.tnt && f.tnt.includes(facultySearchKeyword))
+      );
+    });
   }
 
   if (filtered.length === 0) {
@@ -10520,87 +11046,203 @@ function renderFacultyDirectory() {
     return;
   }
 
-  grid.innerHTML = filtered.map(f => `
-    <div class="p-5 rounded-2xl glass-card border border-slate-800 hover:border-cyan-500/50 flex flex-col justify-between space-y-4 transition-all duration-300 shadow-lg">
-      <div class="space-y-3">
-        <div class="flex items-start justify-between gap-2">
-          <div class="w-10 h-10 rounded-2xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center font-bold text-sm border border-cyan-500/30 flex-shrink-0">
-            ${f.name.split(' ').filter(p => !['Prof.', 'Dr.', 'Engr.', 'Md.'].includes(p))[0]?.[0] || 'ME'}
-          </div>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-            f.category === 'HEAD' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
-            f.category === 'PROFESSOR' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
-            f.category === 'STAFF' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
-            'bg-slate-800 text-slate-300'
-          }">
-            ${f.designation.includes('&') ? f.designation.split('&')[0].trim() : f.designation}
-          </span>
-        </div>
+  grid.innerHTML = filtered.map(f => {
+    const emails = normalizeFacultyEmails(f);
+    const hasEmails = emails.length > 0;
+    const isSingleEmail = emails.length === 1;
+    const isMultiEmail = emails.length > 1;
 
-        <div>
-          <h4 class="text-sm font-bold text-white leading-snug">${f.name}</h4>
-          <p class="text-xs text-cyan-400 font-medium mt-0.5">${f.designation}</p>
-        </div>
-
-        <div class="space-y-1.5 text-xs text-slate-300 pt-2 border-t border-slate-800/80">
-          <div class="flex items-center gap-2">
-            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
-            <span class="truncate">${f.room || 'ME Department'}</span>
+    return `
+      <div class="p-5 rounded-2xl glass-card border border-slate-800 hover:border-cyan-500/50 flex flex-col justify-between space-y-4 transition-all duration-300 shadow-lg">
+        <div class="space-y-3">
+          <div class="flex items-start justify-between gap-2">
+            <div class="w-10 h-10 rounded-2xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center font-bold text-sm border border-cyan-500/30 flex-shrink-0">
+              ${f.name.split(' ').filter(p => !['Prof.', 'Dr.', 'Engr.', 'Md.'].includes(p))[0]?.[0] || 'ME'}
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+              f.category === 'HEAD' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+              f.category === 'PROFESSOR' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
+              f.category === 'STAFF' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
+              'bg-slate-800 text-slate-300'
+            }">
+              ${f.designation.includes('&') ? f.designation.split('&')[0].trim() : f.designation}
+            </span>
           </div>
-          ${f.email ? `
+
+          <div>
+            <h4 class="text-sm font-bold text-white leading-snug">${f.name}</h4>
+            <p class="text-xs text-cyan-400 font-medium mt-0.5">${f.designation}</p>
+          </div>
+
+          <div class="space-y-2 text-xs text-slate-300 pt-2 border-t border-slate-800/80">
             <div class="flex items-center gap-2">
-              <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
-              <a href="mailto:${f.email}" class="text-indigo-300 hover:underline truncate">${f.email}</a>
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
+              <span class="truncate">${f.room || 'ME Department'}</span>
             </div>
-          ` : ''}
-          ${f.phone ? `
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
-                <span class="font-mono text-slate-200 text-xs">${f.phone}</span>
-              </div>
-              ${f.tnt ? `<span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-amber-300 font-mono font-bold border border-slate-700">TNT: ${f.tnt}</span>` : ''}
-            </div>
-          ` : ''}
-          ${f.specialization ? `
-            <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-300 mt-2">
-              <strong class="text-cyan-300">গবেষণা ও স্পেশালাইজেশন:</strong> ${f.specialization}
-            </div>
-          ` : ''}
-        </div>
-      </div>
 
-      <div class="flex items-center justify-between gap-2 pt-3 border-t border-slate-800/80">
-        <div class="flex items-center gap-1.5">
-          ${f.email ? `
-            <a href="mailto:${f.email}" title="ইমেইল পাঠান" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all">
-              <i data-lucide="mail" class="w-3.5 h-3.5"></i>
-            </a>
-          ` : ''}
-          ${f.whatsapp ? `
-            <a href="https://wa.me/${f.whatsapp.replace(/\D/g, '')}" target="_blank" rel="noopener noreferrer" title="WhatsApp বার্তা" class="p-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all">
-              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
-            </a>
-          ` : ''}
-          ${f.phone ? `
-            <a href="tel:${f.phone.replace(/\s+/g, '')}" title="কল করুন" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all">
-              <i data-lucide="phone-call" class="w-3.5 h-3.5"></i>
-            </a>
+            <!-- Distinct Email Addresses List -->
+            ${hasEmails ? `
+              <div class="space-y-1.5 pt-1">
+                <div class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+                  <i data-lucide="mail" class="w-3.5 h-3.5 text-forest"></i>
+                  <span>${isSingleEmail ? 'ইমেইল এড্রেস:' : `ইমেইল এড্রেস (${emails.length}টি):`}</span>
+                </div>
+                <div class="space-y-1.5">
+                  ${emails.map(e => {
+                    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(e.address)}`;
+                    const isUniv = e.label && e.label.toLowerCase().includes('university');
+                    return `
+                      <div class="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs">
+                        <div class="min-w-0 flex-1">
+                          <span class="text-[9px] font-semibold px-1.5 py-0.2 rounded font-mono ${
+                            isUniv ? 'bg-forest-tint text-forest border border-forest/30' : 'bg-slate-800 text-slate-300 border border-slate-700'
+                          }">${e.label}</span>
+                          <a 
+                            href="${gmailUrl}" 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            onclick="event.stopPropagation()"
+                            class="font-mono text-[11px] text-slate-200 hover:text-emerald-400 truncate block mt-0.5"
+                            title="Compose in Gmail (${e.address})"
+                            aria-label="Compose email to ${e.address} in Gmail"
+                          >
+                            ${e.address}
+                          </a>
+                        </div>
+                        <div class="flex items-center gap-1 flex-shrink-0">
+                          <a 
+                            href="${gmailUrl}" 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            onclick="event.stopPropagation()"
+                            class="p-1 rounded-lg bg-slate-800 hover:bg-forest hover:text-white text-slate-300 transition-all"
+                            title="Compose via Gmail"
+                            aria-label="Compose email to ${e.address} in Gmail"
+                          >
+                            <i data-lucide="external-link" class="w-3 h-3"></i>
+                          </a>
+                          <button 
+                            type="button"
+                            onclick="copyFacultyEmail('${e.address}', event)" 
+                            class="p-1 rounded-lg bg-slate-800 hover:bg-forest hover:text-white text-slate-300 transition-all"
+                            title="Copy email address"
+                            aria-label="Copy ${e.address} to clipboard"
+                          >
+                            <i data-lucide="copy" class="w-3 h-3"></i>
+                          </button>
+                          <a 
+                            href="mailto:${e.address}" 
+                            onclick="event.stopPropagation()"
+                            class="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-all"
+                            title="Open in default email app"
+                            aria-label="Open ${e.address} in default email app"
+                          >
+                            <i data-lucide="mail" class="w-3 h-3"></i>
+                          </a>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            ` : `
+              <div class="pt-1 text-[11px] text-slate-500 italic">
+                কোনো সরাসরি ইমেইল এড্রেস সংরক্ষিত নেই
+              </div>
+            `}
+
+            ${f.phone ? `
+              <div class="flex items-center justify-between gap-2 pt-1">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
+                  <span class="font-mono text-slate-200 text-xs">${f.phone}</span>
+                </div>
+                ${f.tnt ? `<span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-amber-300 font-mono font-bold border border-slate-700">TNT: ${f.tnt}</span>` : ''}
+              </div>
+            ` : ''}
+            ${f.specialization ? `
+              <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-300 mt-2">
+                <strong class="text-cyan-300">গবেষণা ও স্পেশালাইজেশন:</strong> ${f.specialization}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 pt-3 border-t border-slate-800/80">
+          <div class="flex items-center gap-1.5">
+            ${isSingleEmail ? `
+              <a 
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emails[0].address)}" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                onclick="event.stopPropagation()" 
+                title="ইমেইল পাঠান (Gmail: ${emails[0].address})" 
+                aria-label="Send email to ${f.name} via Gmail" 
+                class="p-2 rounded-xl bg-slate-800 hover:bg-forest hover:text-white text-slate-300 transition-all"
+              >
+                <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+              </a>
+            ` : isMultiEmail ? `
+              <button 
+                type="button" 
+                onclick="openFacultyEmailChooser('${f.id}', event)" 
+                title="ইমেইল নির্বাচন করুন (${emails.length}টি ইমেইল রয়েছে)" 
+                aria-label="Choose email address for ${f.name} (${emails.length} addresses)" 
+                class="p-2 rounded-xl bg-forest-tint hover:bg-forest hover:text-white text-forest border border-forest/30 transition-all flex items-center gap-1"
+              >
+                <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+                <span class="text-[10px] font-bold font-mono">${emails.length}</span>
+              </button>
+            ` : `
+              <button 
+                type="button" 
+                disabled 
+                title="কোনো ইমেইল এড্রেস নেই" 
+                aria-label="No email available for ${f.name}" 
+                class="p-2 rounded-xl bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed opacity-50"
+              >
+                <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+              </button>
+            `}
+            ${f.whatsapp ? `
+              <a 
+                href="https://wa.me/${f.whatsapp.replace(/\D/g, '')}" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                onclick="event.stopPropagation()" 
+                title="WhatsApp বার্তা" 
+                aria-label="Send WhatsApp message to ${f.name}" 
+                class="p-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all"
+              >
+                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+              </a>
+            ` : ''}
+            ${f.phone ? `
+              <a 
+                href="tel:${f.phone.replace(/\s+/g, '')}" 
+                onclick="event.stopPropagation()" 
+                title="কল করুন" 
+                aria-label="Call ${f.name} at ${f.phone}" 
+                class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all"
+              >
+                <i data-lucide="phone-call" class="w-3.5 h-3.5"></i>
+              </a>
+            ` : ''}
+          </div>
+          ${isUserAdmin ? `
+            <div class="flex items-center gap-1">
+              <button onclick="openEditFacultyModal('${f.id}')" aria-label="Edit faculty member" class="px-2.5 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[11px] font-semibold transition-all">
+                Edit
+              </button>
+              <button onclick="deleteFacultyMember('${f.id}')" aria-label="Delete faculty member" class="px-2.5 py-1 rounded-lg bg-red-600/30 hover:bg-red-600 text-red-300 hover:text-white text-[11px] font-semibold transition-all">
+                Del
+              </button>
+            </div>
           ` : ''}
         </div>
-        ${isUserAdmin ? `
-          <div class="flex items-center gap-1">
-            <button onclick="openEditFacultyModal('${f.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[11px] font-semibold transition-all">
-              Edit
-            </button>
-            <button onclick="deleteFacultyMember('${f.id}')" class="px-2.5 py-1 rounded-lg bg-red-600/30 hover:bg-red-600 text-red-300 hover:text-white text-[11px] font-semibold transition-all">
-              Del
-            </button>
-          </div>
-        ` : ''}
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   if (window.lucide) lucide.createIcons();
 }
@@ -10630,7 +11272,9 @@ function openEditFacultyModal(id) {
   document.getElementById('facultyDesignationInput').value = member.designation || '';
   document.getElementById('facultyCategoryInput').value = member.category || 'PROFESSOR';
   document.getElementById('facultyRoomInput').value = member.room || '';
-  document.getElementById('facultyEmailInput').value = member.email || '';
+  
+  const emails = normalizeFacultyEmails(member);
+  document.getElementById('facultyEmailInput').value = emails.length > 0 ? emails.map(e => e.address).join(', ') : (member.email || '');
   document.getElementById('facultyPhoneInput').value = member.phone || '';
   document.getElementById('facultyWhatsappInput').value = member.whatsapp || '';
   document.getElementById('facultySpecializationInput').value = member.specialization || '';
@@ -10648,6 +11292,8 @@ function handleSaveFaculty(e) {
   if (e && e.preventDefault) e.preventDefault();
   const list = getFacultyMembers();
   const editId = document.getElementById('facultyEditId')?.value;
+  const rawEmail = document.getElementById('facultyEmailInput')?.value.trim() || '';
+  const parsedEmails = normalizeFacultyEmails({ email: rawEmail });
 
   const newEntry = {
     id: editId || ('fac_' + Date.now()),
@@ -10655,7 +11301,8 @@ function handleSaveFaculty(e) {
     designation: document.getElementById('facultyDesignationInput')?.value.trim() || '',
     category: document.getElementById('facultyCategoryInput')?.value || 'PROFESSOR',
     room: document.getElementById('facultyRoomInput')?.value.trim() || '',
-    email: document.getElementById('facultyEmailInput')?.value.trim() || '',
+    email: parsedEmails[0]?.address || rawEmail,
+    emails: parsedEmails,
     phone: document.getElementById('facultyPhoneInput')?.value.trim() || '',
     whatsapp: document.getElementById('facultyWhatsappInput')?.value.trim() || '',
     specialization: document.getElementById('facultySpecializationInput')?.value.trim() || '',
