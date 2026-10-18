@@ -24,6 +24,9 @@ let explorerState = {
 
 // LocalStorage Keys
 const STORAGE_KEYS = {
+  RECENT_FILES: 'classroom_recent_files',
+  COMPLETED_ITEMS: 'classroom_completed_items',
+  STUDY_TASKS: 'classroom_study_tasks',
   USER: 'classroom_user',
   BOOKMARKS: 'classroom_bookmarks',
   PROGRESS: 'classroom_progress',
@@ -578,6 +581,10 @@ const I18N = {
   en: {
     nav_sub: 'CUET Mechanical Engineering Archive',
     tab_home: 'Home',
+    tab_tools: 'Student Tools',
+    tab_progress: 'My Progress',
+    progress_header: 'My Study Progress & Preparation',
+    progress_sub: 'Monitor your reading history, bookmarked materials, topic completion checklist, and upcoming study deadlines.',
     tab_resources: 'Course Explorer',
     tab_videos: 'Video Lectures',
     tab_ai: 'AI Assistant',
@@ -694,6 +701,10 @@ const I18N = {
   bn: {
     nav_sub: 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং আর্কাইভ',
     tab_home: 'হোম',
+    tab_tools: 'স্টুডেন্ট টুলস',
+    tab_progress: 'মাই প্রগ্রেস',
+    progress_header: 'আমার পড়ার প্রগ্রেস ও প্রস্তুতি',
+    progress_sub: 'সাম্প্রতিক পড়া ফাইল, বুকমার্ক, টপিক কমপ্লিশন ও স্টাডি ডেডলাইন পর্যবেক্ষণ করুন।',
     tab_resources: 'কোর্স এক্সপ্লোরার',
     tab_videos: 'ভিডিও লেকচার',
     tab_ai: 'AI সাহায্যকারী',
@@ -830,6 +841,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderTracker();
   renderAdminWorkspace();
   initCvBuilder();
+  window.addEventListener('hashchange', handleHashRouting);
+  handleHashRouting();
   lucide.createIcons();
 });
 
@@ -945,7 +958,7 @@ function enrichAppDataCategories() {
    2.1 THEME SWITCHER (Dark & Light Mode)
    ========================================================================= */
 function initTheme() {
-  const savedTheme = localStorage.getItem('classroom_theme') || 'dark';
+  const savedTheme = localStorage.getItem('classroom_theme') || 'light';
   applyTheme(savedTheme);
 }
 
@@ -1056,18 +1069,22 @@ function setupDialogLightDismiss() {
 /* =========================================================================
    5. TAB NAVIGATION
    ========================================================================= */
-function switchTab(tab) {
-  currentTab = tab;
-  const views = ['home', 'resources', 'videos', 'ai', 'tracker', 'admin'];
+let activeStudentTool = 'routine';
+let isHandlingHashChange = false;
+
+function navigateTo(route, subRoute = null, updateHash = true) {
+  currentTab = route;
+  const views = ['home', 'tools', 'ai', 'progress', 'faculty', 'notices', 'feedback', 'help', 'admin'];
   views.forEach(v => {
     const el = document.getElementById(`view-${v}`);
-    if (el) el.classList.toggle('hidden', v !== tab);
+    if (el) el.classList.toggle('hidden', v !== route);
   });
 
-  const isUserAdmin = currentUser && isAdmin(currentUser);
+  const isUserAdmin = currentUser && typeof isAdmin === 'function' && isAdmin(currentUser);
 
   // Desktop tab active states
-  views.forEach(v => {
+  const desktopTabs = ['home', 'tools', 'ai', 'progress', 'admin'];
+  desktopTabs.forEach(v => {
     const btn = document.getElementById(`nav-tab-${v}`);
     if (btn) {
       if (v === 'admin' && !isUserAdmin) {
@@ -1075,44 +1092,137 @@ function switchTab(tab) {
         return;
       }
       if (v === 'admin') btn.classList.remove('hidden');
-      if (v === tab) {
-        btn.className = 'nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-white bg-indigo-600 shadow-sm';
+      if (v === route) {
+        btn.className = 'nav-tab nav-item-active px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 shadow-sm';
       } else {
-        btn.className = 'nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50';
+        btn.className = 'nav-tab nav-item-inactive px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5';
       }
     }
   });
 
   // Mobile bottom navigation active states
-  views.forEach(v => {
+  const mobileTabs = ['home', 'tools', 'ai', 'progress'];
+  mobileTabs.forEach(v => {
     const mBtn = document.getElementById(`mobileNav-${v}`);
     if (mBtn) {
-      if (v === 'admin' && !isUserAdmin) {
-        mBtn.classList.add('hidden');
-        return;
-      }
-      if (v === 'admin') mBtn.classList.remove('hidden');
-      if (v === tab) {
-        mBtn.className = 'flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-indigo-400 font-bold bg-indigo-500/15 shadow-sm';
+      if (v === route) {
+        mBtn.className = 'flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all mobile-nav-active';
       } else {
-        mBtn.className = 'flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white';
+        mBtn.className = 'flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all mobile-nav-inactive';
       }
     }
   });
 
-  if (tab === 'home') {
+  // Route specific initializations
+  if (route === 'home') {
     renderHomeNotices();
+    renderExplorer();
+  } else if (route === 'tools') {
+    switchStudentTool(subRoute || activeStudentTool || 'routine', false);
+  } else if (route === 'ai') {
+    updateAiKeyStatusBadge();
+  } else if (route === 'progress') {
+    renderProgressDashboard();
+  } else if (route === 'faculty') {
+    renderFacultyDirectory();
+  } else if (route === 'notices') {
+    renderHomeNotices();
+  } else if (route === 'help') {
+    renderPublicFaqs();
+  } else if (route === 'admin') {
+    renderAdminWorkspace();
   }
-  else if (tab === 'resources') renderExplorer();
-  else if (tab === 'videos') renderVideoVault();
-  else if (tab === 'tracker') renderTracker();
-  else if (tab === 'admin') renderAdminWorkspace();
-  initCvBuilder();
 
-  lucide.createIcons();
+  // Update hash if requested
+  if (updateHash) {
+    isHandlingHashChange = true;
+    if (route === 'home') {
+      window.location.hash = '#/home';
+    } else if (route === 'tools') {
+      window.location.hash = `#/tools/${activeStudentTool || 'routine'}`;
+    } else {
+      window.location.hash = `#/${route}`;
+    }
+    setTimeout(() => { isHandlingHashChange = false; }, 60);
+  }
+
+  if (window.lucide) lucide.createIcons();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function handleHashRouting() {
+  if (isHandlingHashChange) return;
+  const hash = window.location.hash || '';
+  if (!hash || hash === '#' || hash === '#/' || hash === '#/home') {
+    navigateTo('home', null, false);
+    return;
+  }
+  const clean = hash.replace(/^#\/?/, '');
+  const parts = clean.split('/');
+  const route = parts[0];
+  const sub = parts[1] || null;
+
+  if (route === 'tools') {
+    navigateTo('tools', sub || 'routine', false);
+  } else if (['home', 'ai', 'progress', 'faculty', 'notices', 'feedback', 'help', 'admin'].includes(route)) {
+    navigateTo(route, sub, false);
+  } else if (route === 'tracker') {
+    navigateTo('progress', null, false);
+  } else if (route === 'resources' || route === 'videos') {
+    navigateTo('home', null, false);
+  } else {
+    navigateTo('home', null, false);
+  }
+}
+
+function switchTab(tab) {
+  if (tab === 'resources' || tab === 'videos') {
+    navigateTo('home');
+  } else if (tab === 'tracker') {
+    navigateTo('progress');
+  } else if (tab === 'routine') {
+    navigateTo('tools', 'routine');
+  } else if (tab === 'cv') {
+    navigateTo('tools', 'cv');
+  } else if (tab === 'cgpa') {
+    navigateTo('tools', 'cgpa');
+  } else {
+    navigateTo(tab);
+  }
+}
+
+function switchStudentTool(toolName, updateHash = true) {
+  activeStudentTool = toolName;
+  const tools = ['routine', 'cv', 'cgpa'];
+  tools.forEach(t => {
+    const ws = document.getElementById(`toolWorkspace-${t}`);
+    if (ws) ws.classList.toggle('hidden', t !== toolName);
+
+    const btn = document.getElementById(`toolSubtab-${t}`);
+    if (btn) {
+      if (t === toolName) {
+        btn.className = 'tool-subtab-active px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap shadow-sm';
+      } else {
+        btn.className = 'tool-subtab-inactive px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap';
+      }
+    }
+  });
+
+  if (toolName === 'routine') {
+    if (typeof renderMyRoutineStudio === 'function') renderMyRoutineStudio();
+  } else if (toolName === 'cv') {
+    if (typeof initCvBuilder === 'function') initCvBuilder();
+  } else if (toolName === 'cgpa') {
+    if (typeof renderCgpaRows === 'function') renderCgpaRows();
+    if (typeof calculateCgpa === 'function') calculateCgpa();
+  }
+
+  if (updateHash && currentTab === 'tools') {
+    window.location.hash = `#/tools/${toolName}`;
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
 /* =========================================================================
    6. USER AUTHENTICATION & ACCESS CONTROL (Clean, Modern, Reliable)
    ========================================================================= */
@@ -1766,13 +1876,15 @@ function navigateExplorerUp() {
 }
 
 function openSemesterFolder(termCode) {
-  switchTab('resources');
+  navigateTo('home');
   explorerState.level = 'courses';
   explorerState.selectedTerm = termCode;
   explorerState.selectedCourse = null;
   explorerState.selectedSubfolder = null;
   setupSemesterPills();
   renderExplorer();
+  const el = document.getElementById('homeExplorerContainer') || document.getElementById('explorerGrid');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function openCourseFolder(courseName) {
@@ -2175,16 +2287,16 @@ function renderFileList(files, container) {
         </div>
 
         <div class="pt-3 border-t border-slate-800/80 flex items-center gap-2">
-          <a href="${f.drive_view_url || f.url || 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h'}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+          <a href="${f.drive_view_url || f.url || 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h'}" onclick="trackRecentFileById('${f.id}')" target="_blank" rel="noopener noreferrer" class="flex-1 py-2 px-3 rounded-xl btn-forest hover:bg-indigo-500 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm">
             <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
             <span>${currentLang === 'en' ? 'Read File' : 'ফাইল পড়ুন'}</span>
             <i data-lucide="external-link" class="w-3 h-3 opacity-70"></i>
           </a>
-          <a href="${f.drive_download_url || f.drive_view_url || '#'}" target="_blank" rel="noopener noreferrer" title="${currentLang === 'en' ? 'Direct Download' : 'ডাউনলোড'}" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all flex items-center gap-1 border border-slate-700">
+          <a href="${f.drive_download_url || f.drive_view_url || '#'}" onclick="trackRecentFileById('${f.id}')" target="_blank" rel="noopener noreferrer" title="${currentLang === 'en' ? 'Direct Download' : 'ডাউনলোড'}" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all flex items-center gap-1 border border-slate-700">
             <i data-lucide="download" class="w-3.5 h-3.5"></i>
           </a>
           ${isLocalHost() ? `
-            <button onclick="openFileLocally('${encodeURIComponent(f.path)}')" title="Open in Windows Default App" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all flex items-center gap-1 border border-slate-700">
+            <button onclick="trackRecentFileById('${f.id}'); openFileLocally('${encodeURIComponent(f.path)}')" title="Open in Windows Default App" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all flex items-center gap-1 border border-slate-700">
               <i data-lucide="laptop" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">${dict.btn_open_system}</span>
             </button>
@@ -2268,6 +2380,9 @@ function handleFileDownload(encPath, encName) {
 }
 
 function previewFile(encPath, encName) {
+  const decodedPath = decodeURIComponent(encPath || '');
+  const decodedName = decodeURIComponent(encName || '');
+  trackRecentFile({ name: decodedName, path: decodedPath, term_code: 'ME' });
   const path = decodeURIComponent(encPath || '');
   const name = decodeURIComponent(encName || '');
   currentPreviewPath = path;
@@ -10796,6 +10911,78 @@ function downloadPortalSyncJsonFile(customPayload) {
 let cvCurrentTemplate = 'template_job';
 let cvCurrentDraftName = 'default';
 
+const CUET_SAMPLE_CV_DATA = {
+  fullName: 'Mohammad Fahim Ahmed',
+  title: 'Mechanical Engineer | CAD & Thermal Systems Specialist',
+  email: 'fahimcuet63@gmail.com',
+  phone: '+880 1850-162261',
+  location: 'Chittagong, Bangladesh',
+  linkedin: 'linkedin.com/in/fahim-niloy',
+  github: 'github.com/Fahim-Niloy2314',
+  portfolio: 'mohammad-fahim-ahmed.netlify.app',
+  showPhoto: false,
+  photoUrl: '',
+  summary: 'Motivated Mechanical Engineering undergraduate at CUET (Roll: 2003063, ME \'20) with strong foundations in thermo-fluid dynamics, CAD/CAM 3D modeling, FEA simulation, and digital systems. Passionate about sustainable energy, mechanical design optimization, and automotive engineering.',
+  education: [
+    {
+      degree: 'B.Sc. in Mechanical Engineering',
+      institution: 'Chittagong University of Engineering and Technology (CUET)',
+      period: '2020 – 2025',
+      gpa: 'CGPA: 3.82 / 4.00',
+      honors: "Dean's List Award"
+    },
+    {
+      degree: 'Higher Secondary Certificate (HSC) - Science',
+      institution: 'Chittagong College',
+      period: '2019',
+      gpa: 'GPA: 5.00 / 5.00',
+      honors: 'Board Scholarship'
+    }
+  ],
+  experience: [
+    {
+      role: 'Engineering Industrial Trainee',
+      company: 'Eastern Refinery Limited / Industrial Plant',
+      period: '2024 (4 Weeks)',
+      description: 'Hands-on experience in boiler operation, steam turbines, heat exchanger maintenance, and process piping instrumentation.'
+    }
+  ],
+  projects: [
+    {
+      title: 'Automated Waste Heat Recovery & HVAC System',
+      tools: 'SolidWorks, ANSYS Fluent, Arduino, MATLAB',
+      period: '2024 – 2025',
+      description: 'Designed and simulated a shell-and-tube waste heat recovery system for industrial exhaust with 18% thermal recovery in CFD simulation.',
+      link: 'github.com/Fahim-Niloy2314'
+    },
+    {
+      title: 'Aerodynamic Drag Optimization of High-Speed Ground Vehicle',
+      tools: 'ANSYS Fluent, SolidWorks Flow Simulation',
+      period: '2024',
+      description: 'Parametric rear spoiler and diffuser aerodynamic modeling. Reduced vehicle drag coefficient by 14.2% through mesh-independent CFD runs.',
+      link: ''
+    }
+  ],
+  research: [
+    {
+      title: 'Experimental Investigation on Thermo-Physical Properties of Hybrid Nanofluids in Heat Exchangers',
+      authors: 'Mohammad Fahim Ahmed, Prof. Dr. Advisor',
+      journal: 'Undergraduate Thesis, CUET Department of Mechanical Engineering',
+      year: '2025',
+      doi: ''
+    }
+  ],
+  skills: [
+    { category: 'CAD & 3D Modeling', items: 'SolidWorks (CSWA Level), AutoCAD Mechanical, PTC Creo, Fusion 360' },
+    { category: 'CFD & FEA Simulation', items: 'ANSYS Fluent (Mesh, Setup, Post), ANSYS Mechanical FEA, COMSOL' },
+    { category: 'Programming & Data', items: 'Python (NumPy, SciPy), MATLAB & Simulink, C++, Arduino' },
+    { category: 'Manufacturing & Workshop', items: 'CNC Machining, Lathe, Milling, TIG/MIG Welding Inspection, 3D Printing' }
+  ],
+  certifications: 'Certified SolidWorks Associate in Mechanical Design (CSWA) — Dassault Systèmes\nApplied Computational Fluid Dynamics (CFD) with ANSYS Fluent Certification\nIndustrial Automation & PLC Basics — CUET Engineering Workshop',
+  awards: "Dean's Honor Award (Academic Excellence, 6 Semesters, CUET)\nCUET Inter-Department CAD Design Olympiad — Champion (2024)\nNational Science & Technology Fellowship (NSTF) Grantee",
+  references: 'Prof. Dr. Head of Department, Department of Mechanical Engineering, CUET. Email: headme@cuet.ac.bd\nProf. Dr. Thesis Supervisor, Dept. of ME, CUET. Email: supervisor@cuet.ac.bd'
+};
+
 const DEFAULT_BLANK_CV_DATA = {
   fullName: '',
   title: '',
@@ -10808,50 +10995,64 @@ const DEFAULT_BLANK_CV_DATA = {
   showPhoto: false,
   photoUrl: '',
   summary: '',
-  education: [
-    {
-      degree: 'B.Sc. in Mechanical Engineering',
-      institution: 'Chittagong University of Engineering and Technology (CUET)',
-      period: '2020 – 2025',
-      gpa: 'CGPA: 3.80 / 4.00',
-      honors: "Dean's List Award"
-    }
-  ],
-  experience: [
-    {
-      role: 'Engineering Intern',
-      company: 'Industrial Training / Engineering Firm',
-      period: '2024',
-      description: 'Assisted in mechanical maintenance, thermo-fluid system inspection, and equipment operation.'
-    }
-  ],
-  projects: [
-    {
-      title: 'Capstone Design / Thermal System Project',
-      tools: 'SolidWorks, ANSYS Fluent, MATLAB',
-      period: '2024 – 2025',
-      description: 'Designed and simulated aerodynamic and thermal characteristics. Performed FEA and CFD validation.',
-      link: ''
-    }
-  ],
-  research: [
-    {
-      title: 'Undergraduate Thesis / Research Investigation',
-      authors: 'Student Name, Advisor Name',
-      journal: 'CUET Dept of Mechanical Engineering',
-      year: '2025',
-      doi: ''
-    }
-  ],
-  skills: [
-    { category: 'CAD & 3D Modeling', items: 'SolidWorks, AutoCAD, PTC Creo' },
-    { category: 'Simulation & Analysis', items: 'ANSYS Fluent, FEA Structural, MATLAB' },
-    { category: 'Programming & Data', items: 'Python, C++, Arduino' }
-  ],
-  certifications: 'Certified SolidWorks Associate (CSWA) — Dassault Systèmes\nIndustrial Automation Training — CUET',
-  awards: "Dean's Honor List (6 Semesters)\nInter-University CAD Modeling Challenge — Finalist",
-  references: 'Available upon request'
+  education: [],
+  experience: [],
+  projects: [],
+  research: [],
+  skills: [],
+  certifications: '',
+  awards: '',
+  references: ''
 };
+
+function loadCvSampleTemplate() {
+  const sampleCopy = JSON.parse(JSON.stringify(CUET_SAMPLE_CV_DATA));
+  saveActiveCvData(sampleCopy);
+  initCvBuilder();
+  showToast(currentLang === 'en' ? 'Loaded CUET Mechanical Engineering sample template!' : 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং স্যাম্পল সিভি লোড হয়েছে!');
+}
+
+function resetCvToBlank() {
+  if (confirm(currentLang === 'en' ? 'Are you sure you want to clear this CV and start fresh with blank fields?' : 'আপনি কি নিশ্চিত যে বর্তমান সিভি ক্লিয়ার করে নতুন ব্ল্যাঙ্ক শুরু করতে চান?')) {
+    const blankCopy = JSON.parse(JSON.stringify(DEFAULT_BLANK_CV_DATA));
+    saveActiveCvData(blankCopy);
+    initCvBuilder();
+    showToast(currentLang === 'en' ? 'CV reset to blank template' : 'সিভি সম্পূর্ণ ব্ল্যাঙ্ক করা হয়েছে');
+  }
+}
+
+function toggleCvMobileView(view) {
+  const formCol = document.getElementById('cvFormEditorCol');
+  const prevCol = document.getElementById('cvLivePreviewCol');
+  const btnForm = document.getElementById('cvMobileBtn-form');
+  const btnPrev = document.getElementById('cvMobileBtn-prev');
+  if (!formCol || !prevCol) return;
+
+  if (view === 'preview') {
+    formCol.classList.add('hidden');
+    formCol.classList.remove('block');
+    prevCol.classList.remove('hidden');
+    prevCol.classList.add('block');
+    if (btnPrev) {
+      btnPrev.className = 'flex-1 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition-all text-center shadow-sm';
+    }
+    if (btnForm) {
+      btnForm.className = 'flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all text-center font-medium';
+    }
+    updateCvLivePreview();
+  } else {
+    formCol.classList.remove('hidden');
+    formCol.classList.add('block');
+    prevCol.classList.add('hidden');
+    prevCol.classList.remove('block');
+    if (btnForm) {
+      btnForm.className = 'flex-1 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition-all text-center shadow-sm';
+    }
+    if (btnPrev) {
+      btnPrev.className = 'flex-1 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all text-center font-medium';
+    }
+  }
+}
 
 function getStoredCvDrafts() {
   try {
@@ -10882,13 +11083,7 @@ function saveActiveCvData(data) {
 }
 
 function scrollToolSection(toolName) {
-  let el = null;
-  if (toolName === 'routine') el = document.getElementById('routineStudioMainCard');
-  else if (toolName === 'cv') el = document.getElementById('cvBuilderMainCard');
-  else if (toolName === 'cgpa') el = document.querySelector('#homeSubPanel-tools .glass-card:last-of-type');
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  navigateTo('tools', toolName);
 }
 
 function initCvBuilder() {
@@ -11741,3 +11936,434 @@ function openCvBackupModal() {
   showToast('সিভি JSON ব্যাকআপ ডাউনলোড হয়েছে!');
 }
 
+
+
+/* =========================================================================
+   MY PROGRESS DASHBOARD ENGINE & LOCAL STUDY TRACKER
+   ========================================================================= */
+
+function trackRecentFile(file) {
+  if (!file) return;
+  try {
+    let recents = JSON.parse(localStorage.getItem('classroom_recent_files') || '[]');
+    recents = recents.filter(item => {
+      if (file.id && item.id === file.id) return false;
+      if (file.name && item.name === file.name) return false;
+      return true;
+    });
+    recents.unshift({
+      id: file.id || ('file_' + Date.now()),
+      name: file.name || file.title || 'Academic File',
+      course: file.course || '',
+      term_code: file.term_code || file.term || 'ME',
+      size_str: file.size_str || '',
+      drive_view_url: file.drive_view_url || file.url || '',
+      drive_download_url: file.drive_download_url || file.drive_view_url || '',
+      timestamp: Date.now()
+    });
+    if (recents.length > 30) recents = recents.slice(0, 30);
+    localStorage.setItem('classroom_recent_files', JSON.stringify(recents));
+
+    if (currentTab === 'progress') {
+      renderProgressRecentList();
+      const badge = document.getElementById('progressStatRecent');
+      if (badge) badge.textContent = recents.length;
+    }
+  } catch (e) {
+    console.warn('Error tracking recent file:', e);
+  }
+}
+
+function trackRecentFileById(fileId) {
+  const allFiles = getAllFlatFiles();
+  const file = allFiles.find(f => f.id === fileId);
+  if (file) {
+    trackRecentFile(file);
+  }
+}
+
+function clearRecentFiles() {
+  if (confirm(currentLang === 'en' ? 'Clear recent reading history on this device?' : 'এই ডিভাইসের সাম্প্রতিক পড়ার হিস্ট্রি ক্লিয়ার করতে চান?')) {
+    localStorage.removeItem('classroom_recent_files');
+    renderProgressRecentList();
+    showToast(currentLang === 'en' ? 'Recent history cleared' : 'সাম্প্রতিক পড়ার হিস্ট্রি ক্লিয়ার করা হয়েছে');
+  }
+}
+
+function renderProgressRecentList() {
+  const container = document.getElementById('progressRecentList');
+  const countBadge = document.getElementById('progressStatRecent');
+  if (!container) return;
+
+  const recents = JSON.parse(localStorage.getItem('classroom_recent_files') || '[]');
+  if (countBadge) countBadge.textContent = recents.length;
+
+  if (recents.length === 0) {
+    container.innerHTML = `
+      <div class="p-6 text-center text-muted rounded-xl bg-surface-subtle border border-line text-xs">
+        <i data-lucide="book-open" class="w-7 h-7 mx-auto mb-2 text-forest/40"></i>
+        <p class="font-medium">${currentLang === 'en' ? 'No files viewed yet on this device' : 'এখনও কোনো ফাইল পড়া হয়নি'}</p>
+        <p class="text-[11px] text-subtle mt-0.5">${currentLang === 'en' ? 'Open any lecture note or sheet from Home to continue studying here.' : 'হোম পেজ থেকে যে কোনো লেকচার নোট বা শিট ওপেন করলে তা দ্রুত পড়ার জন্য এখানে জমা থাকবে।'}</p>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = recents.slice(0, 10).map(f => {
+    const ext = f.name ? ('.' + f.name.split('.').pop().toLowerCase()) : '.pdf';
+    const iconName = typeof getFileIcon === 'function' ? getFileIcon(ext) : 'file-text';
+    const timeAgo = formatTimeAgo(f.timestamp);
+
+    return `
+      <div class="p-3 rounded-xl border border-line bg-surface hover:border-forest transition-all flex items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="p-2 rounded-lg bg-surface-subtle text-forest flex-shrink-0">
+            <i data-lucide="${iconName}" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0">
+            <h4 class="font-semibold text-main truncate" title="${f.name}">${f.name}</h4>
+            <div class="flex items-center gap-2 text-[10px] text-muted mt-0.5">
+              <span class="font-mono text-forest font-bold">${f.term_code}</span>
+              ${f.course ? `<span>• ${f.course}</span>` : ''}
+              <span>• ${timeAgo}</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          ${f.drive_view_url ? `
+            <a href="${f.drive_view_url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg btn-forest text-[11px] font-semibold flex items-center gap-1">
+              <span>Read</span>
+              <i data-lucide="external-link" class="w-3 h-3"></i>
+            </a>
+          ` : ''}
+          ${f.drive_download_url ? `
+            <a href="${f.drive_download_url}" target="_blank" rel="noopener noreferrer" class="p-1 rounded-lg border border-line text-muted hover:text-main" title="Download">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            </a>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function removeBookmarkFromProgress(fileId) {
+  if (typeof toggleBookmark === 'function') {
+    toggleBookmark(fileId);
+    renderProgressBookmarksList();
+  }
+}
+
+function renderProgressBookmarksList() {
+  const container = document.getElementById('progressBookmarksList');
+  const countBadge = document.getElementById('progressStatBookmarks');
+  const badgeLabel = document.getElementById('progressBookmarkBadge');
+  if (!container) return;
+
+  const currentBookmarks = JSON.parse(localStorage.getItem(STORAGE_KEYS.BOOKMARKS) || '[]');
+  if (countBadge) countBadge.textContent = currentBookmarks.length;
+  if (badgeLabel) badgeLabel.textContent = `${currentBookmarks.length} ${currentLang === 'en' ? 'files' : 'ফাইল'}`;
+
+  if (currentBookmarks.length === 0) {
+    container.innerHTML = `
+      <div class="p-6 text-center text-muted rounded-xl bg-surface-subtle border border-line text-xs">
+        <i data-lucide="star" class="w-7 h-7 mx-auto mb-2 text-forest/40"></i>
+        <p class="font-medium">${currentLang === 'en' ? 'No bookmarked materials yet' : 'এখনও কোনো বুকমার্ক সেভ করা হয়নি'}</p>
+        <p class="text-[11px] text-subtle mt-0.5">${currentLang === 'en' ? 'Click the Save ⭐ button on any course file to pin it here for rapid access.' : 'যে কোনো ফাইলে সেভ ⭐ বাটনে ক্লিক করলে তা দ্রুত পড়ার জন্য এখানে জমা থাকবে।'}</p>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  const allFiles = getAllFlatFiles();
+  container.innerHTML = currentBookmarks.map(id => {
+    const f = allFiles.find(item => item.id === id);
+    if (!f) return '';
+    const ext = f.ext || ('.' + f.name.split('.').pop().toLowerCase());
+    const iconName = typeof getFileIcon === 'function' ? getFileIcon(ext) : 'file-text';
+
+    return `
+      <div class="p-3 rounded-xl border border-line bg-surface hover:border-forest transition-all flex items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="p-2 rounded-lg bg-amber-500/10 text-amber-500 flex-shrink-0">
+            <i data-lucide="${iconName}" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0">
+            <h4 class="font-semibold text-main truncate" title="${f.name}">${f.name}</h4>
+            <div class="flex items-center gap-2 text-[10px] text-muted mt-0.5">
+              <span class="font-mono text-forest font-bold">${f.term_code}</span>
+              ${f.course ? `<span>• ${f.course}</span>` : ''}
+              ${f.size_str ? `<span>• ${f.size_str}</span>` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          <a href="${f.drive_view_url || f.url || '#'}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg btn-forest text-[11px] font-semibold flex items-center gap-1">
+            <span>Read</span>
+            <i data-lucide="external-link" class="w-3 h-3"></i>
+          </a>
+          <button onclick="removeBookmarkFromProgress('${f.id}')" class="p-1 rounded-lg border border-line text-amber-500 hover:text-red-500" title="Remove bookmark">
+            <i data-lucide="star-off" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).filter(Boolean).join('');
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function toggleTopicCompletion(termCode, courseCode, topicName) {
+  const key = `${termCode}::${courseCode}::${topicName}`;
+  const completed = JSON.parse(localStorage.getItem('classroom_completed_items') || '{}');
+  if (completed[key]) {
+    delete completed[key];
+  } else {
+    completed[key] = true;
+  }
+  localStorage.setItem('classroom_completed_items', JSON.stringify(completed));
+  renderProgressCompletionList();
+  showToast(completed[key] ? (currentLang === 'en' ? 'Topic marked complete!' : 'টপিক সম্পন্ন হিসেবে মার্ক করা হয়েছে!') : (currentLang === 'en' ? 'Topic unchecked (Undone)' : 'টপিক আনচেক করা হয়েছে'));
+}
+
+function renderProgressCompletionList() {
+  const container = document.getElementById('progressCompletionContainer');
+  const semSelect = document.getElementById('progressSemesterSelect');
+  const countBadge = document.getElementById('progressStatCompleted');
+  if (!container) return;
+
+  const selectedSem = semSelect ? semSelect.value : 'L4-T2';
+  const completed = JSON.parse(localStorage.getItem('classroom_completed_items') || '{}');
+
+  const totalCompletedAcrossAll = Object.keys(completed).length;
+  if (countBadge) countBadge.textContent = totalCompletedAcrossAll;
+
+  // Find courses for this semester from registry or appData
+  let courses = [];
+  if (window.CUET_COURSE_REGISTRY && window.CUET_COURSE_REGISTRY[selectedSem]) {
+    courses = window.CUET_COURSE_REGISTRY[selectedSem];
+  } else if (appData && appData.terms) {
+    const termObj = appData.terms.find(t => t.code === selectedSem);
+    if (termObj && termObj.courses) {
+      courses = termObj.courses.map(c => ({
+        code: c.name.split(' - ')[0] || c.name.split(' ')[0] || 'ME',
+        name: c.name.includes(' - ') ? c.name.split(' - ').slice(1).join(' - ') : c.name,
+        type: c.name.toLowerCase().includes('sessional') || c.name.toLowerCase().includes('lab') ? 'sessional' : 'theory',
+        credits: 3.0
+      }));
+    }
+  }
+
+  if (courses.length === 0) {
+    container.innerHTML = `<p class="text-xs text-muted py-4 text-center">No courses found for ${selectedSem}.</p>`;
+    return;
+  }
+
+  const standardModules = [
+    { id: 'theory', name: 'Lecture Notes & Fundamental Concepts' },
+    { id: 'practice', name: 'Numerical Problems, Tutorials & Lab Reports' },
+    { id: 'questions', name: 'Past 5-Year Questions & Model Solutions' },
+    { id: 'exam', name: 'Term-Final Formula Sheet & Revision' }
+  ];
+
+  container.innerHTML = courses.map(course => {
+    let courseDoneCount = 0;
+    standardModules.forEach(mod => {
+      const key = `${selectedSem}::${course.code}::${mod.id}`;
+      if (completed[key]) courseDoneCount++;
+    });
+    const percent = Math.round((courseDoneCount / standardModules.length) * 100);
+
+    return `
+      <div class="p-3.5 rounded-xl border border-line bg-surface space-y-2.5">
+        <div class="flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-mono text-xs font-bold text-forest">${course.code}</span>
+              <span class="text-xs font-semibold text-main truncate">${course.name}</span>
+              <span class="px-1.5 py-0.2 rounded text-[10px] font-mono ${course.type === 'sessional' ? 'bg-amber-500/10 text-amber-500' : 'bg-forest-tint text-forest'}">${course.type || 'course'}</span>
+            </div>
+          </div>
+          <span class="text-xs font-mono font-bold ${percent === 100 ? 'text-emerald-500' : 'text-muted'}">${percent}%</span>
+        </div>
+
+        <!-- Course Progress Bar -->
+        <div class="w-full h-1.5 bg-surface-subtle rounded-full overflow-hidden border border-line/60">
+          <div class="h-full bg-forest transition-all duration-300" style="width: ${percent}%;"></div>
+        </div>
+
+        <!-- Topic Checkbox List (With Full Undo) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 text-xs">
+          ${standardModules.map(mod => {
+            const key = `${selectedSem}::${course.code}::${mod.id}`;
+            const isDone = !!completed[key];
+            return `
+              <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-surface-subtle cursor-pointer select-none transition-colors border ${isDone ? 'border-forest/30 bg-forest-tint/30' : 'border-transparent'}">
+                <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleTopicCompletion('${selectedSem}', '${course.code}', '${mod.id}')" class="rounded border-line text-forest focus:ring-0">
+                <span class="${isDone ? 'line-through text-muted font-medium' : 'text-main font-normal'} text-[11px] truncate" title="${mod.name}">
+                  ${mod.name}
+                </span>
+              </label>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function getStudyTasks() {
+  try {
+    const saved = localStorage.getItem('classroom_study_tasks');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return [];
+}
+
+function saveStudyTasks(tasks) {
+  localStorage.setItem('classroom_study_tasks', JSON.stringify(tasks));
+}
+
+function handleNewStudyTaskSubmit(e) {
+  if (e) e.preventDefault();
+  const titleInp = document.getElementById('newTaskTitleInput');
+  const dateInp = document.getElementById('newTaskDateInput');
+  if (!titleInp) return;
+  const title = titleInp.value.trim();
+  if (!title) return;
+  const dueDate = dateInp ? dateInp.value : '';
+
+  const tasks = getStudyTasks();
+  tasks.unshift({
+    id: 'task_' + Date.now(),
+    title: title,
+    dueDate: dueDate,
+    done: false,
+    createdAt: Date.now()
+  });
+  saveStudyTasks(tasks);
+  titleInp.value = '';
+  if (dateInp) dateInp.value = '';
+
+  renderProgressTasksList();
+  showToast(currentLang === 'en' ? 'Study task added!' : 'স্টাডি টাস্ক যুক্ত হয়েছে!');
+}
+
+function toggleStudyTask(taskId) {
+  const tasks = getStudyTasks();
+  const task = tasks.find(t => t.id === taskId);
+  if (task) {
+    task.done = !task.done;
+    saveStudyTasks(tasks);
+    renderProgressTasksList();
+  }
+}
+
+function deleteStudyTask(taskId) {
+  let tasks = getStudyTasks();
+  tasks = tasks.filter(t => t.id !== taskId);
+  saveStudyTasks(tasks);
+  renderProgressTasksList();
+  showToast(currentLang === 'en' ? 'Task deleted' : 'টাস্ক মুছে ফেলা হয়েছে');
+}
+
+function renderProgressTasksList() {
+  const container = document.getElementById('progressTasksList');
+  const countBadge = document.getElementById('progressStatTasks');
+  const badgeLabel = document.getElementById('progressTasksBadge');
+  if (!container) return;
+
+  const tasks = getStudyTasks();
+  const activeCount = tasks.filter(t => !t.done).length;
+  if (countBadge) countBadge.textContent = activeCount;
+  if (badgeLabel) badgeLabel.textContent = `${activeCount} ${currentLang === 'en' ? 'active' : 'সক্রিয়'}`;
+
+  if (tasks.length === 0) {
+    container.innerHTML = `
+      <div class="p-6 text-center text-muted rounded-xl bg-surface-subtle border border-line text-xs">
+        <i data-lucide="calendar-check" class="w-7 h-7 mx-auto mb-2 text-forest/40"></i>
+        <p class="font-medium">${currentLang === 'en' ? 'No pending study tasks' : 'কোনো পেন্ডিং স্টাডি টাস্ক নেই'}</p>
+        <p class="text-[11px] text-subtle mt-0.5">${currentLang === 'en' ? 'Add assignment deadlines, lab reports or exam revision targets above.' : 'অ্যাসাইনমেন্টের ডেডলাইন, ল্যাব রিপোর্ট বা পরীক্ষার রিভিশন গোল যোগ করুন।'}</p>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = tasks.map(t => `
+    <div class="p-2.5 rounded-xl border border-line bg-surface flex items-center justify-between gap-3 text-xs transition-all ${t.done ? 'opacity-60 bg-surface-subtle' : ''}">
+      <label class="flex items-center gap-2.5 min-w-0 cursor-pointer select-none">
+        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleStudyTask('${t.id}')" class="rounded border-line text-forest focus:ring-0">
+        <span class="${t.done ? 'line-through text-muted' : 'text-main font-medium'} truncate">${t.title}</span>
+      </label>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        ${t.dueDate ? `
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-forest-tint text-forest border border-forest/20">
+            <i data-lucide="calendar" class="w-3 h-3"></i>
+            <span>${t.dueDate}</span>
+          </span>
+        ` : ''}
+        <button onclick="deleteStudyTask('${t.id}')" class="p-1 rounded text-muted hover:text-red-600 transition-colors" title="Delete task">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function renderProgressDashboard() {
+  renderProgressRecentList();
+  renderProgressBookmarksList();
+  renderProgressCompletionList();
+  renderProgressTasksList();
+}
+
+function formatTimeAgo(timestamp) {
+  if (!timestamp) return '';
+  const diffSec = Math.floor((Date.now() - timestamp) / 1000);
+  if (diffSec < 60) return 'Just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}h ago`;
+  const diffDay = Math.floor(diffHour / 24);
+  return `${diffDay}d ago`;
+}
+
+function renderPublicFaqs() {
+  const container = document.getElementById('publicFaqsList');
+  if (!container) return;
+  const faqs = typeof getStoredFaqs === 'function' ? getStoredFaqs() : [];
+  if (faqs.length === 0) {
+    container.innerHTML = `
+      <div class="p-8 text-center text-muted rounded-xl bg-surface-subtle border border-line text-xs">
+        <p>No FAQs currently published.</p>
+      </div>
+    `;
+    return;
+  }
+  container.innerHTML = faqs.map(faq => `
+    <details class="group p-4 rounded-xl border border-line bg-surface-subtle transition-all">
+      <summary class="font-bold text-xs sm:text-sm text-main flex items-center justify-between cursor-pointer select-none">
+        <span class="flex items-center gap-2">
+          <i data-lucide="help-circle" class="w-4 h-4 text-forest flex-shrink-0"></i>
+          <span>${faq.question}</span>
+        </span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-muted group-open:rotate-180 transition-transform flex-shrink-0"></i>
+      </summary>
+      <div class="pt-3 border-t border-line mt-3 text-xs leading-relaxed text-muted space-y-2">
+        <p>${faq.answer}</p>
+        ${faq.category ? `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-mono bg-forest-tint text-forest border border-forest/20">${faq.category}</span>` : ''}
+      </div>
+    </details>
+  `).join('');
+  if (window.lucide) lucide.createIcons();
+}
