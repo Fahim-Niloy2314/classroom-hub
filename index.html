@@ -45,6 +45,7 @@
   </script>
   
   <!-- Lucide Icons CDN -->
+  <script src="jszip.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   
   <!-- KaTeX Mathematical Typography CDN -->
@@ -500,7 +501,7 @@
         <button id="homeSubTabBtn-tools" onclick="switchHomeSubTab('tools')" class="home-subtab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/80 whitespace-nowrap">
           <i data-lucide="wrench" class="w-4 h-4 text-amber-400"></i>
           <span>Student Hub & Tools</span>
-          <span class="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono">Routine & CGPA</span>
+          <span class="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono">My Routine & CGPA</span>
         </button>
         <button id="homeSubTabBtn-faculty" onclick="switchHomeSubTab('faculty')" class="home-subtab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/80 whitespace-nowrap">
           <i data-lucide="users" class="w-4 h-4 text-cyan-400"></i>
@@ -709,42 +710,202 @@
           </button>
         </div>
 
-        <!-- Class Routine Viewer -->
-        <div class="p-5 sm:p-6 rounded-3xl glass-card border border-slate-800 space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-            <div>
-              <h3 class="text-base font-bold text-white flex items-center gap-2">
-                <i data-lucide="clock" class="w-4.5 h-4.5 text-blue-400"></i>
-                <span>Department Class Routine Viewer</span>
+        <!-- ==================== BUILD MY ROUTINE & TIMETABLE STUDIO ==================== -->
+        <div id="routineStudioMainCard" class="p-5 sm:p-7 rounded-3xl glass-card border border-slate-800 space-y-5">
+          <!-- Top Header & Action Row -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-indigo-400 uppercase tracking-wider">
+                  <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i>
+                  <span>Timetable Studio & Planner</span>
+                </span>
+                <span id="myRoutineDeviceStorageBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-medium" title="This routine is saved securely in your browser's local storage.">
+                  <i data-lucide="hard-drive" class="w-3 h-3"></i>
+                  <span>Saved on this device</span>
+                </span>
+              </div>
+              <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                <span id="myRoutineMainTitleDisplay">My Routine (আমার ক্লাস রুটিন)</span>
               </h3>
-              <p class="text-xs text-slate-400 mt-0.5">সেমিস্টার ও বার অনুযায়ী ক্লাস, ল্যাব রুম এবং শিক্ষকের সময়সূচী দেখুন</p>
+              <p class="text-xs text-slate-400">
+                প্রত্যেক শিক্ষার্থীর নিজস্ব সেমিস্টার, সেকশন ও রুটিন কাস্টমাইজ করুন। ওয়ার্ড (.docx) ফরম্যাটে ডাউনলোড বা প্রিন্ট করুন।
+              </p>
             </div>
-            <div class="flex items-center gap-2">
-              <select id="routineTermSelect" onchange="renderHomeRoutineViewer()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-semibold text-indigo-300 outline-none">
-                <option value="L4-T2" selected>Level 4 Term 2 (ME '20)</option>
-                <option value="L4-T1">Level 4 Term 1</option>
-                <option value="L3-T2">Level 3 Term 2</option>
-                <option value="L3-T1">Level 3 Term 1</option>
-                <option value="L2-T2">Level 2 Term 2</option>
-                <option value="L2-T1">Level 2 Term 1</option>
-                <option value="L1-T2">Level 1 Term 2</option>
-                <option value="L1-T1">Level 1 Term 1</option>
-              </select>
+
+            <!-- Global Routine Actions: Download Word / Export / Print / Backup -->
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- Download Word Routine Template (.docx) -->
+              <button onclick="openRoutineDocxDownloadModal()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md transition-all" title="Download official editable Word routine table">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                <span>Download Routine Template (.docx)</span>
+              </button>
+
+              <!-- Export My Custom Routine as .docx -->
+              <button onclick="exportMyRoutineDocx()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-white border border-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-all" title="Export your customized timetable as a real editable Word (.docx) document">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Export My Routine (.docx)</span>
+              </button>
+
+              <!-- Print / PDF -->
+              <button onclick="printMyRoutine()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-all" title="Print timetable in landscape layout or save as PDF">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                <span>Print / PDF</span>
+              </button>
+
+              <!-- Backup / Transfer JSON -->
+              <button onclick="openRoutineBackupModal()" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1 transition-all" title="Backup or transfer timetable across devices">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                <span>Backup</span>
+              </button>
             </div>
           </div>
 
-          <!-- Days Tabs -->
-          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
-            <button onclick="setRoutineDay('Sunday')" id="routineDayBtn-Sunday" class="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-semibold transition-all">Sunday (রবিবার)</button>
-            <button onclick="setRoutineDay('Monday')" id="routineDayBtn-Monday" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-all">Monday (সোমবার)</button>
-            <button onclick="setRoutineDay('Tuesday')" id="routineDayBtn-Tuesday" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-all">Tuesday (মঙ্গলবার)</button>
-            <button onclick="setRoutineDay('Wednesday')" id="routineDayBtn-Wednesday" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-all">Wednesday (বুধবার)</button>
-            <button onclick="setRoutineDay('Thursday')" id="routineDayBtn-Thursday" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-all">Thursday (বৃহস্পতিবার)</button>
+          <!-- Segmented Navigation: Personal vs Published -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+            <div class="inline-flex p-1 rounded-2xl bg-slate-950 border border-slate-800 self-start">
+              <button id="routineModeBtn-personal" onclick="switchRoutineMode('personal')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-sm">
+                <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                <span>My Personal Routine</span>
+                <span id="personalSlotsCountBadge" class="px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[10px] font-mono">0</span>
+              </button>
+              <button id="routineModeBtn-published" onclick="switchRoutineMode('published')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white">
+                <i data-lucide="book-open" class="w-3.5 h-3.5 text-blue-400"></i>
+                <span>Published Department Templates</span>
+              </button>
+            </div>
+
+            <!-- View Mode Switcher (Desktop Weekly Grid vs Mobile Day View) -->
+            <div id="routineViewToggleContainer" class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 self-start sm:self-auto text-xs">
+              <button id="routineViewMode-grid" onclick="setRoutineViewMode('grid')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 text-white font-semibold flex items-center gap-1 transition-all" title="Full weekly grid timetable">
+                <i data-lucide="grid" class="w-3.5 h-3.5"></i>
+                <span>Weekly Grid</span>
+              </button>
+              <button id="routineViewMode-day" onclick="setRoutineViewMode('day')" class="px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white font-medium flex items-center gap-1 transition-all" title="Day-by-day readable cards">
+                <i data-lucide="list" class="w-3.5 h-3.5"></i>
+                <span>Day View</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Routine Cards Output -->
-          <div id="homeRoutineCardsContainer" class="space-y-2.5">
-            <!-- Populated via JS renderHomeRoutineViewer() -->
+          <!-- ================= SECTION A: MY PERSONAL ROUTINE ================= -->
+          <div id="routineSection-personal" class="space-y-4">
+            <!-- Metadata & Quick Action Controls -->
+            <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1">
+                <div>
+                  <label class="text-[10px] font-semibold text-slate-400 block mb-1">Routine Title</label>
+                  <input type="text" id="myRoutineTitleInput" onchange="updateMyRoutineMeta()" placeholder="e.g. My Semester Routine" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-medium text-xs focus:border-indigo-500 outline-none">
+                </div>
+                <div>
+                  <label class="text-[10px] font-semibold text-slate-400 block mb-1">Semester / Term</label>
+                  <select id="myRoutineSemesterSelect" onchange="updateMyRoutineMeta()" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-indigo-300 font-semibold text-xs outline-none">
+                    <option value="L4-T2">Level 4 Term 2 (L4-T2)</option>
+                    <option value="L4-T1">Level 4 Term 1 (L4-T1)</option>
+                    <option value="L3-T2">Level 3 Term 2 (L3-T2)</option>
+                    <option value="L3-T1">Level 3 Term 1 (L3-T1)</option>
+                    <option value="L2-T2">Level 2 Term 2 (L2-T2)</option>
+                    <option value="L2-T1">Level 2 Term 1 (L2-T1)</option>
+                    <option value="L1-T2">Level 1 Term 2 (L1-T2)</option>
+                    <option value="L1-T1">Level 1 Term 1 (L1-T1)</option>
+                    <option value="Custom">Custom Semester</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[10px] font-semibold text-slate-400 block mb-1">Section</label>
+                  <input type="text" id="myRoutineSectionInput" onchange="updateMyRoutineMeta()" placeholder="e.g. Sec B" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-medium text-xs focus:border-indigo-500 outline-none">
+                </div>
+                <div>
+                  <label class="text-[10px] font-semibold text-slate-400 block mb-1">Batch / Roll</label>
+                  <input type="text" id="myRoutineBatchInput" onchange="updateMyRoutineMeta()" placeholder="e.g. ME '20 (2003063)" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-medium text-xs focus:border-indigo-500 outline-none">
+                </div>
+              </div>
+
+              <!-- Quick Action Buttons -->
+              <div class="flex items-center gap-1.5 flex-wrap flex-shrink-0 self-end md:self-center pt-2 md:pt-0">
+                <button onclick="openAddRoutineSlotModal()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-1 shadow-sm transition-all">
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                  <span>+ Add Class</span>
+                </button>
+                <button onclick="openCopyTemplateModal()" class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-blue-300 border border-slate-700 font-medium flex items-center gap-1 transition-all" title="Copy an existing semester schedule into your personal timetable">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  <span>Copy Template</span>
+                </button>
+                <button onclick="startBlankRoutinePrompt()" class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700 font-medium flex items-center gap-1 transition-all" title="Start with a blank timetable">
+                  <i data-lucide="file-plus" class="w-3.5 h-3.5"></i>
+                  <span>Blank</span>
+                </button>
+                <button onclick="openRoutineDaysConfigModal()" class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 border border-slate-700 font-medium flex items-center gap-1 transition-all" title="Configure teaching days and time slots">
+                  <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                  <span>Days & Times</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Overlapping Conflicts Warning Banner (Dynamically shown if conflict exists) -->
+            <div id="routineConflictBanner" class="hidden p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
+                <span id="routineConflictBannerText">⚠️ Overlapping class detected! Review your time slots.</span>
+              </div>
+              <span class="text-[11px] text-amber-400 underline cursor-pointer" onclick="highlightConflictingSlots()">View Overlaps</span>
+            </div>
+
+            <!-- Days Filter / Tab Selector for Day View -->
+            <div id="routinePersonalDaysBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
+              <!-- Dynamically populated day tabs (Sun, Mon, etc.) -->
+            </div>
+
+            <!-- Container for Weekly Grid / Day View Output -->
+            <div id="myRoutineOutputContainer" class="space-y-3">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- ================= SECTION B: PUBLISHED DEPARTMENT TEMPLATES ================= -->
+          <div id="routineSection-published" class="hidden space-y-4">
+            <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-400 font-medium">Select Semester Template:</span>
+                  <select id="publishedRoutineTermSelect" onchange="renderPublishedRoutineViewer()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-semibold text-blue-300 outline-none">
+                    <option value="L4-T2" selected>Level 4 Term 2 (ME '20 Sec B — Official Source)</option>
+                    <option value="L4-T1">Level 4 Term 1 (Example Template)</option>
+                    <option value="L3-T2">Level 3 Term 2 (Example Template)</option>
+                    <option value="L3-T1">Level 3 Term 1 (Example Template)</option>
+                    <option value="L2-T2">Level 2 Term 2 (Example Template)</option>
+                    <option value="L2-T1">Level 2 Term 1 (Example Template)</option>
+                    <option value="L1-T2">Level 1 Term 2 (Example Template)</option>
+                    <option value="L1-T1">Level 1 Term 1 (Example Template)</option>
+                  </select>
+                </div>
+                <div id="publishedRoutineSourceLabel" class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                  <i data-lucide="info" class="w-3.5 h-3.5 text-blue-400"></i>
+                  <span>Official departmental source for ME '20 Section B. Other semesters serve as example templates.</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <button onclick="copyCurrentPublishedToPersonal()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow transition-all">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  <span>Copy to My Personal Routine</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Published Routine Day Tabs -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
+              <button onclick="setPublishedRoutineDay('Sunday')" id="pubDayBtn-Sunday" class="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-semibold transition-all">Sunday (রবিবার)</button>
+              <button onclick="setPublishedRoutineDay('Monday')" id="pubDayBtn-Monday" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-all">Monday (সোমবার)</button>
+              <button onclick="setPublishedRoutineDay('Tuesday')" id="pubDayBtn-Tuesday" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-all">Tuesday (মঙ্গলবার)</button>
+              <button onclick="setPublishedRoutineDay('Wednesday')" id="pubDayBtn-Wednesday" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-all">Wednesday (বুধবার)</button>
+              <button onclick="setPublishedRoutineDay('Thursday')" id="pubDayBtn-Thursday" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-all">Thursday (বৃহস্পতিবার)</button>
+            </div>
+
+            <!-- Published Cards Output -->
+            <div id="publishedRoutineCardsContainer" class="space-y-2.5">
+              <!-- Populated via JS renderPublishedRoutineViewer() -->
+            </div>
           </div>
         </div>
 
@@ -3375,7 +3536,7 @@
           <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
             <i data-lucide="check-circle" class="w-5 h-5"></i>
           </div>
-          <h3 class="text-base font-bold text-white">ফিডব্যাক সফলভাবে গৃহীত হয়েছে!</h3>
+          <h3 class="text-base font-bold text-white">ফিডব্যাক ড্রাফট প্রস্তুত — পাঠানোর চূড়ান্ত ধাপ</h3>
         </div>
         <button onclick="document.getElementById('feedbackReceiptDialog').close()" class="text-slate-400 hover:text-white p-1 rounded-lg">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -3384,7 +3545,7 @@
 
       <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
         <p>
-          ধন্যবাদ! আপনার মেসেজটি আমাদের ডেটাবেসে নিবন্ধিত হয়েছে। আপনি চাইলে সরাসরি <strong>ফাহিম নিলয় (Mohammad Fahim Ahmed)</strong>-এর হোয়াটসঅ্যাপ বা ইমেইলে ১-ক্লিকে পাঠিয়ে দিতে পারেন যাতে দ্রুততম সময়ে নোটস আপলোড বা ব্যবস্থা নেওয়া হয়:
+          আপনার বার্তার ড্রাফট প্রস্তুত করা হয়েছে এবং এই ডিভাইসে সুরক্ষিত আছে। বার্তাটি সরাসরি <strong>ফাহিম নিলয় (Mohammad Fahim Ahmed)</strong>-এর কাছে পৌঁছাতে অনুগ্রহ করে নিচের <strong>WhatsApp</strong> বা <strong>Email</strong> বাটনে ক্লিক করে পাঠিয়ে দিন। যতক্ষণ না আপনি নিচের বাটনে ট্যাপ করছেন, মেসেজটি ফাহিম নিলয়ের ইনবক্সে পৌঁছাবে না:
         </p>
         <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 space-y-1">
           <div id="receiptSummaryCategory" class="text-indigo-300 font-bold"></div>
@@ -3405,6 +3566,312 @@
       </div>
     </div>
   </dialog>
+
+  
+  <!-- ==================== ROUTINE STUDIO DIALOGS & MODALS ==================== -->
+  <!-- 1. ADD / EDIT CLASS SLOT MODAL -->
+  <dialog id="routineSlotModal" closedby="any" class="rounded-2xl shadow-2xl p-0 w-full max-w-lg">
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 space-y-4 text-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+            <i data-lucide="book-open" class="w-4 h-4"></i>
+          </div>
+          <h3 id="routineSlotModalTitle" class="text-base font-bold text-white">Add Class Entry</h3>
+        </div>
+        <button onclick="closeRoutineSlotModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="routineSlotForm" onsubmit="handleRoutineSlotFormSubmit(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="slotEditId" value="">
+
+        <!-- Day Selection -->
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Teaching Day *</label>
+          <select id="slotDaySelect" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium outline-none focus:border-indigo-500">
+            <option value="Sunday">Sunday (রবিবার)</option>
+            <option value="Monday">Monday (সোমবার)</option>
+            <option value="Tuesday">Tuesday (মঙ্গলবার)</option>
+            <option value="Wednesday">Wednesday (বুধবার)</option>
+            <option value="Thursday">Thursday (বৃহস্পতিবার)</option>
+            <option value="Friday">Friday (শুক্রবার)</option>
+            <option value="Saturday">Saturday (শনিবার)</option>
+          </select>
+        </div>
+
+        <!-- Time Range (Start & End Time) -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Start Time *</label>
+            <input type="time" id="slotStartTime" required onchange="validateSlotTimes()" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">End Time *</label>
+            <input type="time" id="slotEndTime" required onchange="validateSlotTimes()" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <div id="slotTimeValidationAlert" class="hidden text-[11px] text-red-400 font-semibold flex items-center gap-1">
+          <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+          <span>End time must be later than start time!</span>
+        </div>
+
+        <!-- Course Code & Name -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Course Code *</label>
+            <input type="text" id="slotCourseCode" required placeholder="e.g. ME 4201" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs outline-none focus:border-indigo-500">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-semibold text-slate-300 mb-1">Course Name / Title *</label>
+            <input type="text" id="slotCourseName" required placeholder="e.g. Power Plant Engineering" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium text-xs outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <!-- Teacher Selection (Faculty convenience dropdown + manual input) -->
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Course Teacher / Instructor</label>
+          <div class="space-y-1.5">
+            <select id="slotTeacherSelect" onchange="handleTeacherSelectChange()" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 text-xs outline-none focus:border-indigo-500">
+              <option value="">-- Choose from CUET ME Faculty / Staff List --</option>
+              <!-- Populated dynamically via JS -->
+            </select>
+            <input type="text" id="slotTeacherManual" placeholder="Or enter teacher name / initials manually (e.g. Prof. Dr. XYZ / Lab Team)" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium text-xs outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <!-- Room / Lab & Notes -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Room or Laboratory</label>
+            <input type="text" id="slotRoom" placeholder="e.g. ME-304 / Thermal Lab" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium text-xs outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Optional Notes</label>
+            <input type="text" id="slotNotes" placeholder="e.g. Bring lab coat / alternate week" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 font-medium text-xs outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeRoutineSlotModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs">
+            Cancel
+          </button>
+          <button type="submit" id="slotSubmitBtn" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md">
+            Save Entry
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 2. CONFIGURE TEACHING DAYS & CUSTOM TIME PERIODS MODAL -->
+  <dialog id="routineDaysConfigModal" closedby="any" class="rounded-2xl shadow-2xl p-0 w-full max-w-md">
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 space-y-4 text-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4 text-amber-400"></i>
+          <span>Configure Teaching Days & Times</span>
+        </h3>
+        <button onclick="document.getElementById('routineDaysConfigModal').close()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-300 mb-2">Active Teaching Days in Timetable</label>
+          <div class="grid grid-cols-2 gap-2 text-slate-300">
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800 cursor-pointer">
+              <input type="checkbox" id="cfgDay-Sunday" checked class="rounded border-slate-700 text-indigo-600">
+              <span>Sunday (রবিবার)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800 cursor-pointer">
+              <input type="checkbox" id="cfgDay-Monday" checked class="rounded border-slate-700 text-indigo-600">
+              <span>Monday (সোমবার)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800 cursor-pointer">
+              <input type="checkbox" id="cfgDay-Tuesday" checked class="rounded border-slate-700 text-indigo-600">
+              <span>Tuesday (মঙ্গলবার)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800 cursor-pointer">
+              <input type="checkbox" id="cfgDay-Wednesday" checked class="rounded border-slate-700 text-indigo-600">
+              <span>Wednesday (বুধবার)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800 cursor-pointer">
+              <input type="checkbox" id="cfgDay-Thursday" checked class="rounded border-slate-700 text-indigo-600">
+              <span>Thursday (বৃহস্পতিবার)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800 cursor-pointer">
+              <input type="checkbox" id="cfgDay-Friday" class="rounded border-slate-700 text-indigo-600">
+              <span>Friday (শুক্রবার)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800 cursor-pointer">
+              <input type="checkbox" id="cfgDay-Saturday" class="rounded border-slate-700 text-indigo-600">
+              <span>Saturday (শনিবার)</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Standard Time Slot Labels</label>
+          <p class="text-[11px] text-slate-400 mb-2">Supports morning classes, afternoon sessional, and custom breaks.</p>
+          <textarea id="cfgTimeSlotsTextarea" rows="4" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs outline-none focus:border-indigo-500 leading-relaxed"></textarea>
+          <span class="text-[10px] text-slate-500">Enter each slot on a new line (e.g. 08:00 - 08:50)</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+        <button onclick="document.getElementById('routineDaysConfigModal').close()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold text-xs">
+          Cancel
+        </button>
+        <button onclick="saveDaysAndTimesConfig()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow">
+          Apply & Save
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 3. DOWNLOAD EDITABLE WORD ROUTINE MODAL -->
+  <dialog id="routineDocxDownloadModal" closedby="any" class="rounded-2xl shadow-2xl p-0 w-full max-w-md">
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 space-y-4 text-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+          </div>
+          <h3 class="text-base font-bold text-white">Download Word Routine (.docx)</h3>
+        </div>
+        <button onclick="document.getElementById('routineDocxDownloadModal').close()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300 leading-relaxed">
+        মাইক্রোসফট ওয়ার্ড (.docx) ফরম্যাটে এডিটেবল টেবিল ডাউনলোড করুন। যে কোনো সেমিস্টার ও সেকশনের জন্য সহজে প্রিন্ট ও কাস্টমাইজ করা যাবে:
+      </p>
+
+      <div class="space-y-2.5">
+        <!-- Option 1: Clean Blank Template -->
+        <a href="cuet_routine_template_blank.docx" download="CUET_ME_Routine_Template_Blank.docx" class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-blue-500/50 flex items-start gap-3 transition-all group block">
+          <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all">
+            <i data-lucide="file-plus" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-white group-hover:text-blue-300">Blank Routine Template (.docx)</div>
+            <div class="text-[11px] text-slate-400">খালি ব্ল্যাঙ্ক ওয়ার্ড টেবিল — যে কোনো ব্যাচ ও সেমিস্টারের শিক্ষার্থী পূরণ করতে পারবেন।</div>
+          </div>
+        </a>
+
+        <!-- Option 2: Sample Filled Template -->
+        <a href="cuet_routine_template_sample.docx" download="CUET_ME_Routine_Template_Sample.docx" class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 flex items-start gap-3 transition-all group block">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+            <i data-lucide="file-check" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-white group-hover:text-indigo-300">Example Filled Template (.docx)</div>
+            <div class="text-[11px] text-slate-400">উদাহরণস্বরূপ পূর্ণ করা নমুনা রুটিন (Level 4 Term 2 Section B layout)।</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex justify-end">
+        <button onclick="document.getElementById('routineDocxDownloadModal').close()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold text-xs">
+          Close
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 4. ROUTINE BACKUP & RESTORE (JSON) MODAL -->
+  <dialog id="routineBackupModal" closedby="any" class="rounded-2xl shadow-2xl p-0 w-full max-w-md">
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 space-y-4 text-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="save" class="w-4 h-4 text-indigo-400"></i>
+          <span>Backup & Device Transfer</span>
+        </h3>
+        <button onclick="document.getElementById('routineBackupModal').close()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-start gap-2 leading-relaxed">
+        <i data-lucide="info" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+        <div>
+          <strong>ডিভাইস লোকাল স্টোরেজ নোটিস:</strong> সাধারণ গেস্ট ভিজিটরদের রুটিন ব্রাউজারের লোকাল স্টোরেজে সেভ থাকে। অন্য ডিভাইসে নিতে বা ব্যাকআপ রাখতে নিচের <strong>Export JSON</strong> ফাইলটি ডাউনলোড করে রাখুন।
+        </div>
+      </div>
+
+      <div class="space-y-3 text-xs pt-1">
+        <button onclick="exportRoutineBackupJson()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center justify-center gap-2 shadow">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>Export Routine Backup (JSON)</span>
+        </button>
+
+        <div class="relative">
+          <label class="w-full py-2.5 rounded-xl bg-slate-950 border border-slate-700 hover:border-slate-500 text-slate-300 font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all">
+            <i data-lucide="upload" class="w-4 h-4 text-indigo-400"></i>
+            <span>Import / Restore Routine (JSON)</span>
+            <input type="file" id="routineBackupFileInput" accept=".json" onchange="importRoutineBackupJson(event)" class="hidden">
+          </label>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800 flex justify-end">
+        <button onclick="document.getElementById('routineBackupModal').close()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold text-xs">
+          Close
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 5. COPY PUBLISHED TEMPLATE TO PERSONAL MODAL -->
+  <dialog id="copyTemplateModal" closedby="any" class="rounded-2xl shadow-2xl p-0 w-full max-w-md">
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 space-y-4 text-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="copy" class="w-4 h-4 text-blue-400"></i>
+          <span>Copy Published Template</span>
+        </h3>
+        <button onclick="document.getElementById('copyTemplateModal').close()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300">
+        কোন সেমিস্টারের টেমপ্লেটটি আপনি আপনার ব্যক্তিগত রুটিনে কপি করতে চান? (এটি আপনার আগের এন্ট্রিগুলোর উপর নতুন কপি তৈরি করবে)
+      </p>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Select Semester</label>
+        <select id="modalCopySemesterSelect" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium text-xs outline-none">
+          <option value="L4-T2">Level 4 Term 2 (ME '20 Sec B — Official Schedule)</option>
+          <option value="L4-T1">Level 4 Term 1 (Example Template)</option>
+          <option value="L3-T2">Level 3 Term 2 (Example Template)</option>
+          <option value="L3-T1">Level 3 Term 1 (Example Template)</option>
+          <option value="L2-T2">Level 2 Term 2 (Example Template)</option>
+          <option value="L2-T1">Level 2 Term 1 (Example Template)</option>
+          <option value="L1-T2">Level 1 Term 2 (Example Template)</option>
+          <option value="L1-T1">Level 1 Term 1 (Example Template)</option>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800 text-xs">
+        <button onclick="document.getElementById('copyTemplateModal').close()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-semibold">
+          Cancel
+        </button>
+        <button onclick="executeCopyTemplateToPersonal()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow">
+          Copy to My Routine
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- PRINTABLE ROUTINE CONTAINER (Used strictly for @media print) -->
+  <div id="printableRoutineContainer" class="hidden print-only">
+    <!-- Populated dynamically right before window.print() -->
+  </div>
 
   <!-- FIXED MOBILE BOTTOM NAVIGATION BAR -->
   <nav id="mobileBottomNav" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-2 py-1.5 flex items-center justify-around text-[10px] shadow-2xl">
