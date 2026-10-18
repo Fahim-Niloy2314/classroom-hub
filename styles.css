@@ -359,24 +359,32 @@ dialog[open] {
   text-decoration: underline;
 }
 
-/* ==================== PRINT STYLESHEET (CLEAN PDF & PRINT OUTPUT) ==================== */
+/* ==================== PRINT STYLESHEET (ISOLATED ROUTINE & CV MODES) ==================== */
 @media print {
-  @page {
-    size: landscape;
-    margin: 8mm;
+  /* Hide all normal application UI */
+  header, footer, nav, #mobileBottomNav, #desktopNavBar, #authHeaderContainer,
+  .no-print, button, input, select, dialog, #aiChatFloatingWindow, #appRootView, .view-container, main {
+    display: none !important;
   }
+
   body {
     background: #ffffff !important;
     color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  header, footer, nav, #mobileBottomNav, #desktopNavBar, #authHeaderContainer,
-  .no-print, button, input, select, dialog, #aiChatFloatingWindow {
+
+  /* Default hide all printable containers unless their explicit mode is active */
+  #printableRoutineContainer,
+  #printableCvContainer {
     display: none !important;
   }
-  .print-only {
-    display: block !important;
+
+  /* 1. ROUTINE PRINT MODE: Timetable in Landscape */
+  body.printing-routine {
+    background: #ffffff !important;
   }
-  #printableRoutineContainer {
+  body.printing-routine #printableRoutineContainer {
     display: block !important;
     width: 100% !important;
     margin: 0 !important;
@@ -384,30 +392,37 @@ dialog[open] {
     background: #ffffff !important;
     color: #000000 !important;
   }
-  #printableRoutineContainer * {
+  body.printing-routine #printableRoutineContainer * {
     color: #000000 !important;
     background: transparent !important;
     border-color: #333333 !important;
     box-shadow: none !important;
   }
-  #printableRoutineContainer table {
+  body.printing-routine #printableRoutineContainer table {
     width: 100% !important;
     border-collapse: collapse !important;
     margin-top: 10px !important;
   }
-  #printableRoutineContainer th,
-  #printableRoutineContainer td {
+  body.printing-routine #printableRoutineContainer th,
+  body.printing-routine #printableRoutineContainer td {
     border: 1px solid #000000 !important;
     padding: 6px 8px !important;
     text-align: center !important;
     font-size: 11px !important;
   }
-  #printableRoutineContainer th {
+  body.printing-routine #printableRoutineContainer th {
     font-weight: bold !important;
     background: #f0f0f0 !important;
   }
+  body.printing-routine #printableCvContainer {
+    display: none !important;
+  }
 
-  #printableCvContainer {
+  /* 2. CV PRINT MODE: CV & Resume in Portrait */
+  body.printing-cv {
+    background: #ffffff !important;
+  }
+  body.printing-cv #printableCvContainer {
     display: block !important;
     width: 100% !important;
     margin: 0 !important;
@@ -416,18 +431,44 @@ dialog[open] {
     color: #1a202c !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
   }
-  #printableCvContainer * {
+  body.printing-cv #printableCvContainer * {
     color: #1a202c !important;
     background: transparent !important;
     box-shadow: none !important;
   }
-  #printableCvContainer a {
+  body.printing-cv #printableCvContainer a {
     color: #193b31 !important;
     text-decoration: underline !important;
   }
-  .cv-section-block {
+  body.printing-cv .cv-section-block {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     margin-bottom: 12px !important;
   }
+  body.printing-cv #printableRoutineContainer {
+    display: none !important;
+  }
+}
+
+/* Page orientation rules per mode */
+@page {
+  margin: 8mm;
+}
+
+body.printing-routine {
+  page: routinePage;
+}
+
+@page routinePage {
+  size: landscape;
+  margin: 8mm;
+}
+
+body.printing-cv {
+  page: cvPage;
+}
+
+@page cvPage {
+  size: portrait;
+  margin: 10mm;
 }
