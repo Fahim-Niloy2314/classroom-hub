@@ -554,3 +554,56 @@ html.light .katex-display {
   background: #f1f5f9 !important;
   border: 1px solid #cbd5e1 !important;
 }
+
+/* =========================================================================
+   12. Landscape Print Engine for Timetable / Routine (Clean PDF/Print Output)
+   ========================================================================= */
+@media print {
+  @page {
+    size: landscape;
+    margin: 8mm;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  /* Hide non-printable app UI elements during print */
+  header, footer, nav, #authHeaderContainer,
+  .no-print, button, input, select, dialog, #aiChatFloatingWindow {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  #printableRoutineContainer {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  #printableRoutineContainer * {
+    color: #000000 !important;
+    background: transparent !important;
+    border-color: #333333 !important;
+    box-shadow: none !important;
+  }
+  #printableRoutineContainer table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 10px !important;
+  }
+  #printableRoutineContainer th,
+  #printableRoutineContainer td {
+    border: 1px solid #000000 !important;
+    padding: 6px 8px !important;
+    text-align: center !important;
+    font-size: 11px !important;
+  }
+  #printableRoutineContainer th {
+    font-weight: bold !important;
+    background: #f0f0f0 !important;
+  }
+}
+
