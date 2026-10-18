@@ -121,9 +121,9 @@
           <i data-lucide="wrench" class="w-3.5 h-3.5"></i>
           <span data-i18n="tab_tools">Student Tools</span>
         </button>
-        <button id="nav-tab-ai" onclick="navigateTo('ai')" class="nav-tab nav-item-inactive px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-forest"></i>
-          <span data-i18n="tab_ai">AI Assistant</span>
+        <button id="nav-tab-faculty" onclick="navigateTo('faculty')" class="nav-tab nav-item-inactive px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5">
+          <i data-lucide="users" class="w-3.5 h-3.5 text-forest"></i>
+          <span data-i18n="tab_faculty">Faculty Directory</span>
         </button>
         <button id="nav-tab-progress" onclick="navigateTo('progress')" class="nav-tab nav-item-inactive px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5">
           <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
@@ -242,6 +242,26 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Prominent Faculty Directory Quick Access Shortcut -->
+      <div class="academic-card p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface-subtle border border-line">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-forest-tint text-forest flex items-center justify-center flex-shrink-0 border border-forest/20">
+            <i data-lucide="users" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs sm:text-sm font-bold text-main flex items-center gap-2">
+              <span>Faculty &amp; Staff Directory</span>
+              <span id="homeFacultyCountBadge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-forest-tint text-forest border border-forest/30">51 Members</span>
+            </div>
+            <p class="text-[11px] sm:text-xs text-muted">Direct contact details, university emails, rooms, TNT and research specializations of ME faculty.</p>
+          </div>
+        </div>
+        <button onclick="navigateTo('faculty')" class="px-4 py-2 rounded-xl btn-forest text-xs font-semibold flex items-center gap-1.5 self-start sm:self-auto shadow-sm whitespace-nowrap" aria-label="Open CUET ME Faculty Directory">
+          <span>Open Directory</span>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </button>
       </div>
 
       <!-- Prominent Search Field with Category Filter Chips -->
@@ -441,6 +461,10 @@
         <button id="toolSubtab-cgpa" onclick="switchStudentTool('cgpa')" class="tool-subtab-inactive px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap">
           <i data-lucide="calculator" class="w-4 h-4"></i>
           <span>GPA / CGPA Calculator</span>
+        </button>
+        <button id="toolSubtab-ai" onclick="switchStudentTool('ai')" class="tool-subtab-inactive px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap">
+          <i data-lucide="sparkles" class="w-4 h-4 text-forest"></i>
+          <span>AI Study Assistant</span>
         </button>
       </div>
 
@@ -1071,98 +1095,101 @@
         </div>
       </div>
 
-    </section>
-
-    <!-- ==================== 3. AI STUDY ASSISTANT VIEW ==================== -->
-    <section id="view-ai" class="hidden space-y-6">
-      <div class="academic-card p-5 sm:p-7 space-y-5">
-        
-        <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-line">
-          <div>
-            <div class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-forest">
-              <i data-lucide="sparkles" class="w-4 h-4 text-forest"></i>
-              <span>Mechanical Engineering AI Study Companion</span>
+      <!-- WORKSPACE 4: AI Study Assistant -->
+      <div id="toolWorkspace-ai" class="hidden space-y-6">
+        <div class="academic-card p-5 sm:p-7 space-y-5">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-line">
+            <div>
+              <div class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-forest">
+                <i data-lucide="sparkles" class="w-4 h-4 text-forest"></i>
+                <span>Mechanical Engineering AI Study Companion</span>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-bold text-main mt-0.5" data-i18n="ai_header">
+                Engineering Study Assistant
+              </h2>
+              <p class="text-xs sm:text-sm text-muted mt-1" data-i18n="ai_sub">
+                Ask questions about mechanical formulas, theories, exam derivations, and lab calculations.
+              </p>
             </div>
-            <h2 class="text-xl sm:text-2xl font-bold text-main mt-0.5" data-i18n="ai_header">
-              Engineering Study Assistant
-            </h2>
-            <p class="text-xs sm:text-sm text-muted mt-1" data-i18n="ai_sub">
-              Ask questions about mechanical formulas, theories, exam derivations, and lab calculations.
-            </p>
+
+            <!-- Controls -->
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+              <button onclick="clearAiChat()" class="px-3 py-1.5 rounded-xl border border-line hover:bg-surface-tint text-xs font-medium text-muted hover:text-main flex items-center gap-1 transition-all" title="Clear conversation">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                <span>Clear Chat</span>
+              </button>
+              <button onclick="openAiSettingsModal()" class="px-3 py-1.5 rounded-xl border border-line hover:bg-surface-tint text-xs font-medium text-muted hover:text-main flex items-center gap-1 transition-all" title="Configure Gemini API Key">
+                <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                <span id="aiKeyStatusBadge">API Key</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Controls -->
-          <div class="flex items-center gap-2 self-start sm:self-auto">
-            <button onclick="clearAiChat()" class="px-3 py-1.5 rounded-xl border border-line hover:bg-surface-tint text-xs font-medium text-muted hover:text-main flex items-center gap-1 transition-all" title="Clear conversation">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-              <span>Clear Chat</span>
-            </button>
-            <button onclick="openAiSettingsModal()" class="px-3 py-1.5 rounded-xl border border-line hover:bg-surface-tint text-xs font-medium text-muted hover:text-main flex items-center gap-1 transition-all" title="Configure Gemini API Key">
-              <i data-lucide="settings" class="w-3.5 h-3.5"></i>
-              <span id="aiKeyStatusBadge">API Key</span>
-            </button>
+          <!-- Grounded Honesty Notice Banner -->
+          <div class="p-3 rounded-xl bg-surface-subtle border border-line flex items-center gap-2.5 text-xs text-muted">
+            <i data-lucide="info" class="w-4 h-4 text-forest flex-shrink-0"></i>
+            <span><strong>Study Assistant Scope:</strong> Answers engineering formulas, derivations, and exam concepts. Does not access private Google Drive files unless content is explicitly provided.</span>
           </div>
+
+          <!-- Context Selector & Starter Prompt Chips -->
+          <div class="space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+              <label class="text-xs font-semibold text-muted whitespace-nowrap">Study Context / Subject:</label>
+              <select id="aiSubjectContextSelect" class="w-full sm:w-auto px-3 py-1.5 rounded-xl text-xs border border-line bg-surface text-main font-medium">
+                <option value="general">General Mechanical Engineering</option>
+                <option value="L4-T2">Level 4 Term 2: Power Plant, Automobile, Operations Research</option>
+                <option value="L4-T1">Level 4 Term 1: ICE, RAC, Finite Element Analysis</option>
+                <option value="L3-T2">Level 3 Term 2: Heat &amp; Mass Transfer II, Machine Design II, Mechatronics</option>
+                <option value="L3-T1">Level 3 Term 1: Heat &amp; Mass Transfer I, Fluid Mechanics II, Machine Design I</option>
+                <option value="L2-T2">Level 2 Term 2: Fluid Mechanics I, Mechanics of Solids II, Manufacturing</option>
+                <option value="L2-T1">Level 2 Term 1: Thermodynamics II, Mechanics of Solids I, Math</option>
+                <option value="L1-T2">Level 1 Term 2: Thermodynamics I, Physics, Electrical Technology</option>
+                <option value="L1-T1">Level 1 Term 1: Engineering Mechanics, Chemistry, Calculus</option>
+              </select>
+            </div>
+
+            <!-- Quick Starter Prompts -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
+              <button onclick="askPresetPrompt('Explain the Rankine cycle with reheat and regeneration with T-s diagram concepts.')" class="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-line hover:border-forest hover:bg-surface-tint text-muted hover:text-main whitespace-nowrap transition-all">
+                Rankine cycle with reheat &amp; regeneration
+              </button>
+              <button onclick="askPresetPrompt('Explain the working principle and thermal efficiency differences between 4-stroke and 2-stroke diesel engines.')" class="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-line hover:border-forest hover:bg-surface-tint text-muted hover:text-main whitespace-nowrap transition-all">
+                4-stroke vs 2-stroke diesel engine
+              </button>
+              <button onclick="askPresetPrompt('What is Macaulay method for beam deflection? Give standard boundary condition rules.')" class="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-line hover:border-forest hover:bg-surface-tint text-muted hover:text-main whitespace-nowrap transition-all">
+                Macaulay method for beam deflection
+              </button>
+              <button onclick="askPresetPrompt('Explain Navier-Stokes equation physical significance and key assumptions.')" class="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-line hover:border-forest hover:bg-surface-tint text-muted hover:text-main whitespace-nowrap transition-all">
+                Navier-Stokes equation
+              </button>
+            </div>
+          </div>
+
+          <!-- Chat Messages Stream Container -->
+          <div id="aiChatStreamContainer" class="p-4 rounded-2xl border border-line bg-surface-subtle min-h-[380px] max-h-[550px] overflow-y-auto space-y-4">
+            <!-- Populated via JS -->
+          </div>
+
+          <!-- Question Input Form -->
+          <form id="aiChatForm" onsubmit="handleAiQuestionSubmit(event)" class="space-y-2">
+            <div class="flex items-end gap-2 p-1.5 rounded-2xl border border-line bg-surface focus-within:border-forest transition-all">
+              <textarea id="aiInputPrompt" rows="2" placeholder="Ask any mechanical engineering question (formulas, derivations, exam concepts)..." class="flex-1 p-2 text-xs sm:text-sm bg-transparent text-main placeholder-muted resize-none outline-none"></textarea>
+              <button type="submit" id="aiSubmitBtn" class="px-4 py-2.5 rounded-xl btn-forest text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                <span>Send</span>
+              </button>
+            </div>
+          </form>
+
         </div>
-
-        <!-- Grounded Honesty Notice Banner -->
-        <div class="p-3 rounded-xl bg-surface-subtle border border-line flex items-center gap-2.5 text-xs text-muted">
-          <i data-lucide="info" class="w-4 h-4 text-forest flex-shrink-0"></i>
-          <span><strong>Study Assistant Scope:</strong> Answers engineering formulas, derivations, and exam concepts. Does not access private Google Drive files unless content is explicitly provided.</span>
-        </div>
-
-        <!-- Context Selector & Starter Prompt Chips -->
-        <div class="space-y-2">
-          <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-            <label class="text-xs font-semibold text-muted whitespace-nowrap">Study Context / Subject:</label>
-            <select id="aiSubjectContextSelect" class="w-full sm:w-auto px-3 py-1.5 rounded-xl text-xs border border-line bg-surface text-main font-medium">
-              <option value="general">General Mechanical Engineering</option>
-              <option value="L4-T2">Level 4 Term 2: Power Plant, Automobile, Operations Research</option>
-              <option value="L4-T1">Level 4 Term 1: ICE, RAC, Finite Element Analysis</option>
-              <option value="L3-T2">Level 3 Term 2: Heat &amp; Mass Transfer II, Machine Design II, Mechatronics</option>
-              <option value="L3-T1">Level 3 Term 1: Heat &amp; Mass Transfer I, Fluid Mechanics II, Machine Design I</option>
-              <option value="L2-T2">Level 2 Term 2: Fluid Mechanics I, Mechanics of Solids II, Manufacturing</option>
-              <option value="L2-T1">Level 2 Term 1: Thermodynamics II, Mechanics of Solids I, Math</option>
-              <option value="L1-T2">Level 1 Term 2: Thermodynamics I, Physics, Electrical Technology</option>
-              <option value="L1-T1">Level 1 Term 1: Engineering Mechanics, Chemistry, Calculus</option>
-            </select>
-          </div>
-
-          <!-- Quick Starter Prompts -->
-          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
-            <button onclick="askPresetPrompt('Explain the Rankine cycle with reheat and regeneration with T-s diagram concepts.')" class="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-line hover:border-forest hover:bg-surface-tint text-muted hover:text-main whitespace-nowrap transition-all">
-              Rankine cycle with reheat &amp; regeneration
-            </button>
-            <button onclick="askPresetPrompt('Explain the working principle and thermal efficiency differences between 4-stroke and 2-stroke diesel engines.')" class="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-line hover:border-forest hover:bg-surface-tint text-muted hover:text-main whitespace-nowrap transition-all">
-              4-stroke vs 2-stroke diesel engine
-            </button>
-            <button onclick="askPresetPrompt('What is Macaulay method for beam deflection? Give standard boundary condition rules.')" class="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-line hover:border-forest hover:bg-surface-tint text-muted hover:text-main whitespace-nowrap transition-all">
-              Macaulay method for beam deflection
-            </button>
-            <button onclick="askPresetPrompt('Explain Navier-Stokes equation physical significance and key assumptions.')" class="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-line hover:border-forest hover:bg-surface-tint text-muted hover:text-main whitespace-nowrap transition-all">
-              Navier-Stokes equation
-            </button>
-          </div>
-        </div>
-
-        <!-- Chat Messages Stream Container -->
-        <div id="aiChatStreamContainer" class="p-4 rounded-2xl border border-line bg-surface-subtle min-h-[380px] max-h-[550px] overflow-y-auto space-y-4">
-          <!-- Populated via JS -->
-        </div>
-
-        <!-- Question Input Form -->
-        <form id="aiChatForm" onsubmit="handleAiQuestionSubmit(event)" class="space-y-2">
-          <div class="flex items-end gap-2 p-1.5 rounded-2xl border border-line bg-surface focus-within:border-forest transition-all">
-            <textarea id="aiInputPrompt" rows="2" placeholder="Ask any mechanical engineering question (formulas, derivations, exam concepts)..." class="flex-1 p-2 text-xs sm:text-sm bg-transparent text-main placeholder-muted resize-none outline-none"></textarea>
-            <button type="submit" id="aiSubmitBtn" class="px-4 py-2.5 rounded-xl btn-forest text-xs font-semibold flex items-center gap-1.5 shadow-sm">
-              <i data-lucide="send" class="w-3.5 h-3.5"></i>
-              <span>Send</span>
-            </button>
-          </div>
-        </form>
-
       </div>
+
     </section>
+
+    <!-- Legacy view-ai alias container to prevent null references -->
+    <div id="view-ai" class="hidden"></div>
 
     <!-- ==================== 4. MY PROGRESS VIEW ==================== -->
     <section id="view-progress" class="hidden space-y-6">
@@ -2670,9 +2697,9 @@
       <i data-lucide="wrench" class="w-4 h-4"></i>
       <span data-i18n="tab_tools">Tools</span>
     </button>
-    <button onclick="navigateTo('ai')" id="mobileNav-ai" class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all mobile-nav-inactive">
-      <i data-lucide="sparkles" class="w-4 h-4 text-forest"></i>
-      <span data-i18n="tab_ai">AI</span>
+    <button onclick="navigateTo('faculty')" id="mobileNav-faculty" class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all mobile-nav-inactive">
+      <i data-lucide="users" class="w-4 h-4 text-forest"></i>
+      <span data-i18n="tab_faculty">Faculty</span>
     </button>
     <button onclick="navigateTo('progress')" id="mobileNav-progress" class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all mobile-nav-inactive">
       <i data-lucide="check-circle-2" class="w-4 h-4"></i>
@@ -3040,6 +3067,34 @@
         </button>
         <button onclick="executeCopyTemplateToPersonal()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow">
           Copy to My Routine
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 6. FACULTY EMAIL ADDRESS CHOOSER MODAL -->
+  <dialog id="facultyEmailChooserModal" closedby="any" class="rounded-2xl shadow-2xl p-0 w-full max-w-md">
+    <div class="glass-panel bg-surface border border-line rounded-2xl w-full p-6 space-y-4 text-main">
+      <div class="flex items-center justify-between pb-3 border-b border-line">
+        <div class="space-y-0.5">
+          <h3 id="facultyEmailChooserTitle" class="text-base font-bold text-main flex items-center gap-2">
+            <i data-lucide="mail" class="w-4 h-4 text-forest"></i>
+            <span>Faculty Email Addresses</span>
+          </h3>
+          <p id="facultyEmailChooserSubtitle" class="text-xs text-muted">Choose an address to compose via Gmail or copy</p>
+        </div>
+        <button onclick="closeFacultyEmailChooser()" aria-label="Close dialog" class="text-muted hover:text-main p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div id="facultyEmailChooserList" class="space-y-3">
+        <!-- Dynamically populated with email address cards -->
+      </div>
+
+      <div class="flex items-center justify-end pt-3 border-t border-line text-xs">
+        <button onclick="closeFacultyEmailChooser()" class="px-4 py-2 rounded-xl bg-surface-subtle hover:bg-surface text-muted hover:text-main font-semibold border border-line transition-all">
+          Close
         </button>
       </div>
     </div>
