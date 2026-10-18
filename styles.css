@@ -175,27 +175,33 @@ dialog[open] {
 /* =========================================================================
    LIGHT MODE THEME OVERRIDES (High Contrast, Deep Typography & Readability)
    ========================================================================= */
-html.light, body.light {
+html.light {
+  color-scheme: light;
+}
+
+html.light body,
+html.light body[class*="bg-slate-950"],
+html.light body.bg-slate-950 {
   background-color: #f8fafc !important;
   color: #0f172a !important;
 }
 
-/* 1. All Dark Slate Backgrounds (including Tailwind slash opacity classes like bg-slate-900/90, bg-slate-950/95) */
-html.light [class*="bg-slate-950"],
-html.light [class*="bg-slate-900"],
+/* 1. All Dark Slate Backgrounds inside containers turn into clean white surfaces */
+html.light [class*="bg-slate-950"]:not(body),
+html.light [class*="bg-slate-900"]:not(button):not(a),
 html.light [class*="bg-slate-850"] {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
   color: #0f172a !important;
 }
 
-html.light [class*="bg-slate-800"] {
+html.light [class*="bg-slate-800"]:not(button):not(a) {
   background-color: #f1f5f9 !important;
   border-color: #cbd5e1 !important;
   color: #1e293b !important;
 }
 
-html.light [class*="bg-slate-700"] {
+html.light [class*="bg-slate-700"]:not(button):not(a) {
   background-color: #e2e8f0 !important;
   border-color: #cbd5e1 !important;
   color: #1e293b !important;
@@ -217,7 +223,7 @@ html.light .glass-card {
 }
 
 html.light .glass-card:hover {
-  background: #f8fafc !important;
+  background: #ffffff !important;
   border-color: #6366f1 !important;
   box-shadow: 0 12px 28px -4px rgba(99, 102, 241, 0.15) !important;
 }
@@ -254,7 +260,7 @@ html.light h6 {
   color: #0f172a !important;
 }
 
-html.light .text-white {
+html.light .text-white:not([class*="bg-indigo"]):not([class*="bg-purple"]):not([class*="bg-red"]):not([class*="bg-emerald"]):not([class*="bg-blue"]) {
   color: #0f172a !important;
 }
 
@@ -275,7 +281,7 @@ html.light .text-slate-500 {
   color: #64748b !important;
 }
 
-/* 5. Deep Pastel Color Enhancements (No More Faded/Invisible Text on White) */
+/* 5. Deep Pastel Color Enhancements */
 html.light .text-indigo-200,
 html.light .text-indigo-300 {
   color: #4338ca !important;
@@ -346,42 +352,24 @@ html.light .text-cyan-400 {
   color: #0891b2 !important;
 }
 
-html.light .text-sky-200,
-html.light .text-sky-300 {
-  color: #0369a1 !important;
-  font-weight: 600;
-}
-
-html.light .text-sky-400 {
-  color: #0284c7 !important;
-}
-
 /* 6. CRITICAL: Preserve Crisp Pure White Text on Saturated Solid Buttons and Badges! */
 html.light [class*="bg-indigo-600"],
 html.light [class*="bg-indigo-600"] *,
 html.light [class*="bg-indigo-500"],
 html.light [class*="bg-indigo-500"] *,
-html.light [class*="bg-indigo-700"],
-html.light [class*="bg-indigo-700"] *,
 html.light [class*="bg-purple-600"],
 html.light [class*="bg-purple-600"] *,
 html.light [class*="bg-red-600"],
 html.light [class*="bg-red-600"] *,
 html.light [class*="bg-emerald-600"],
 html.light [class*="bg-emerald-600"] *,
-html.light [class*="bg-amber-600"],
-html.light [class*="bg-amber-600"] *,
-html.light [class*="bg-teal-600"],
-html.light [class*="bg-teal-600"] *,
 html.light button.bg-indigo-600,
 html.light button.bg-red-600,
 html.light button.bg-purple-600,
 html.light button.bg-emerald-600,
 html.light a.bg-indigo-600,
 html.light a.bg-red-600,
-html.light a.bg-purple-600,
-html.light .nav-tab.bg-indigo-600,
-html.light .nav-tab.bg-indigo-600 * {
+html.light a.bg-purple-600 {
   color: #ffffff !important;
 }
 
@@ -396,7 +384,7 @@ html.light textarea {
 
 html.light input::placeholder,
 html.light textarea::placeholder {
-  color: #94a3b8 !important;
+  color: #64748b !important;
 }
 
 html.light input:focus,
@@ -421,21 +409,22 @@ html.light dialog .glass-panel {
   box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18) !important;
 }
 
-/* 9. Code Blocks and AI Chat Prose in Light Mode */
+/* 9. AI Message Card in Light Mode */
 html.light .ai-message-card {
-  background-color: #f8fafc !important;
+  background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
   color: #0f172a !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05) !important;
 }
 
 html.light .ai-prose code {
-  background: #e2e8f0 !important;
+  background: #f1f5f9 !important;
   color: #0284c7 !important;
   border-color: #cbd5e1 !important;
 }
 
 html.light .ai-prose pre {
-  background: #f1f5f9 !important;
+  background: #f8fafc !important;
   border-color: #cbd5e1 !important;
   color: #0f172a !important;
 }
@@ -466,7 +455,7 @@ html.light [class*="border-slate-900"] {
   color: #f8fafc;
 }
 
-/* KaTeX Light Mode Formatting: Black Crisp Math on Slate-100 */
+/* KaTeX Light Mode Formatting */
 html.light .katex {
   color: #0f172a !important;
 }
@@ -474,4 +463,3 @@ html.light .katex-display {
   background: #f1f5f9 !important;
   border: 1px solid #cbd5e1 !important;
 }
-
