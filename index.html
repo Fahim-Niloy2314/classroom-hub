@@ -58,7 +58,7 @@
       </div>
 
       <!-- Navigation Tabs (Desktop) -->
-      <nav class="hidden lg:flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 flex-shrink-0">
+      <nav id="desktopNavBar" class="hidden lg:flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 flex-shrink-0">
         <button id="nav-tab-home" onclick="switchTab('home')" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-white bg-indigo-600 shadow-sm">
           <i data-lucide="home" class="w-3.5 h-3.5"></i>
           <span data-i18n="tab_home">Home</span>
@@ -66,6 +66,10 @@
         <button id="nav-tab-resources" onclick="switchTab('resources')" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
           <i data-lucide="folder" class="w-3.5 h-3.5"></i>
           <span data-i18n="tab_resources">Courses</span>
+        </button>
+        <button id="nav-tab-videos" onclick="switchTab('videos')" class="hidden nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
+          <i data-lucide="youtube" class="w-3.5 h-3.5 text-red-500"></i>
+          <span data-i18n="tab_videos">Video Lectures</span>
         </button>
 
         <button id="nav-tab-ai" onclick="switchTab('ai')" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60">
@@ -268,7 +272,7 @@
         </div>
 
         <!-- Action Card 2: Curated YouTube Video Lectures -->
-        <div onclick="scrollToVideoSection()" class="p-5 rounded-2xl glass-card border border-slate-800 hover:border-red-500/50 cursor-pointer group transition-all duration-300 flex flex-col justify-between space-y-3 shadow-lg hover:shadow-red-500/10">
+        <div onclick="switchTab('videos')" class="p-5 rounded-2xl glass-card border border-slate-800 hover:border-red-500/50 cursor-pointer group transition-all duration-300 flex flex-col justify-between space-y-3 shadow-lg hover:shadow-red-500/10">
           <div class="space-y-2.5">
             <div class="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center border border-red-500/20 group-hover:scale-105 transition-transform">
               <i data-lucide="youtube" class="w-5 h-5 text-red-500"></i>
@@ -276,13 +280,13 @@
             <div>
               <h3 class="text-base font-bold text-white group-hover:text-red-300 transition-colors">Video Lectures</h3>
               <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                সেমিস্টার ও কোর্স অনুযায়ী ভেরিফাইড ভিডিও লেকচার (বাংলা, হিন্দি ও ইংলিশ)।
+                সেমিস্টার ও টার্ম অনুযায়ী ফোল্ডার আকারে সাজানো ভেরিফাইড ভিডিও লেকচার।
               </p>
             </div>
           </div>
           <div class="flex items-center gap-1.5 text-xs font-semibold text-red-400 group-hover:text-red-300 pt-2 border-t border-slate-800/80">
-            <span>নিচে দেখুন</span>
-            <i data-lucide="arrow-down" class="w-3.5 h-3.5 group-hover:translate-y-1 transition-transform"></i>
+            <span>ফোল্ডার খুলুন</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
           </div>
         </div>
 
@@ -322,63 +326,6 @@
             <span>Start Chatting</span>
             <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
           </div>
-        </div>
-
-      </div>
-
-      <!-- ==================== CURATED VIDEO LECTURES & PLAYLISTS (ORGANIZED BY SEMESTER/TERM) ==================== -->
-      <div id="homeVideoSection" class="p-6 sm:p-8 rounded-3xl glass-card border border-slate-800 space-y-6">
-        
-        <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
-          <div class="space-y-1">
-            <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 uppercase tracking-wider">
-              <i data-lucide="youtube" class="w-4 h-4 text-red-500"></i>
-              <span>Academic Video Vault</span>
-            </div>
-            <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-              <span>Engineering Video Lectures & Playlists</span>
-              <span id="homeVideoCountBadge" class="text-xs font-normal px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">Verified</span>
-            </h2>
-            <p class="text-xs sm:text-sm text-slate-400">
-              CUET মেকানিক্যাল ইঞ্জিনিয়ারিং ও জেনারেল কোর্সের জন্য অনলাইন সেরা ও ভেরিফাইড ভিডিও প্লেলিস্ট (বাংলা, হিন্দি ও ইংলিশ)।
-            </p>
-          </div>
-          
-          <!-- Language Filters -->
-          <div class="flex flex-wrap items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
-            <button onclick="setHomeVideoLang('ALL')" id="homeVidLang-ALL" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-600 text-white shadow-sm transition-all">All</button>
-            <button onclick="setHomeVideoLang('bn')" id="homeVidLang-bn" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all flex items-center gap-1">🇧🇩 বাংলা</button>
-            <button onclick="setHomeVideoLang('hi')" id="homeVidLang-hi" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all flex items-center gap-1">🇮🇳 হিন্দি</button>
-            <button onclick="setHomeVideoLang('en')" id="homeVidLang-en" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all flex items-center gap-1">🇬🇧 English</button>
-          </div>
-        </div>
-
-        <!-- Filter Controls: Semester/Term Pills & Live Search -->
-        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          <!-- Term folder selector pills -->
-          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-            <button onclick="setHomeVideoTerm('ALL')" id="homeVidTerm-ALL" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white shadow-sm transition-all">সব টার্ম (All)</button>
-            <button onclick="setHomeVideoTerm('L1-T1')" id="homeVidTerm-L1-T1" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L1-T1</button>
-            <button onclick="setHomeVideoTerm('L1-T2')" id="homeVidTerm-L1-T2" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L1-T2</button>
-            <button onclick="setHomeVideoTerm('L2-T1')" id="homeVidTerm-L2-T1" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L2-T1</button>
-            <button onclick="setHomeVideoTerm('L2-T2')" id="homeVidTerm-L2-T2" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L2-T2</button>
-            <button onclick="setHomeVideoTerm('L3-T1')" id="homeVidTerm-L3-T1" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L3-T1</button>
-            <button onclick="setHomeVideoTerm('L3-T2')" id="homeVidTerm-L3-T2" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L3-T2</button>
-            <button onclick="setHomeVideoTerm('L4-T1')" id="homeVidTerm-L4-T1" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L4-T1</button>
-            <button onclick="setHomeVideoTerm('L4-T2')" id="homeVidTerm-L4-T2" class="whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all">L4-T2</button>
-          </div>
-
-          <!-- Search input -->
-          <div class="relative w-full md:w-64">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input id="homeVideoSearchInput" oninput="renderHomeVideos()" type="text" placeholder="টপিক বা কোর্স খুঁজুন..." class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-red-500 outline-none transition-all">
-          </div>
-        </div>
-
-        <!-- Video Cards Grid -->
-        <div id="homeVideosContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- Populated dynamically via renderHomeVideos() -->
         </div>
 
       </div>
@@ -537,77 +484,61 @@
     </section>
 
     <!-- ==================== 2.5 CURATED VIDEO LECTURES VIEW ==================== -->
+        <!-- ==================== DEDICATED VIDEO LECTURES & FOLDER EXPLORER VIEW ==================== -->
     <section id="view-videos" class="hidden space-y-6">
       
+      <!-- Video Vault Header & Controls Panel -->
       <div class="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4">
         
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
           <div class="space-y-1">
             <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 uppercase tracking-wider">
               <i data-lucide="youtube" class="w-4 h-4 text-red-500"></i>
-              <span>Curated Educational Video Hub</span>
+              <span>Academic Video Vault & Playlists</span>
             </div>
-            <h2 class="text-xl sm:text-2xl font-bold text-white">Curated YouTube Video Lectures (হিন্দি, বাংলা ও ইংলিশ)</h2>
+            <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+              <span>Engineering Video Lectures</span>
+              <span id="videoVaultCountBadge" class="text-xs font-normal px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">Verified</span>
+            </h2>
             <p class="text-xs sm:text-sm text-slate-300">
-              Top-rated video lectures and complete topic playlists from verified educators (Tikle's Academy, Gate Smashers, Saurabh Dahivadkar, Engineering Classroom Bangla, Lesics/Learn Engineering, Manas Patnaik, NPTEL).
+              চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং পাঠ্যক্রম অনুযায়ী সেমিস্টার ভিত্তিক ফোল্ডারে সাজানো ভেরিফাইড ভিডিও লেকচার (বাংলা, হিন্দি ও ইংলিশ)।
             </p>
           </div>
-          <span class="px-3 py-1 rounded-full bg-red-500/10 text-red-300 border border-red-500/30 text-xs font-medium flex items-center gap-1.5 self-start sm:self-auto">
-            <i data-lucide="play-circle" class="w-3.5 h-3.5 text-red-400"></i>
-            <span id="publicVideoCountBadge">10 Curated Playlists</span>
-          </span>
+
+          <!-- Language Filters -->
+          <div class="flex flex-wrap items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
+            <button onclick="setVideoVaultLang('ALL')" id="vaultLang-ALL" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-600 text-white shadow-sm transition-all">All</button>
+            <button onclick="setVideoVaultLang('bn')" id="vaultLang-bn" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all flex items-center gap-1">🇧🇩 বাংলা</button>
+            <button onclick="setVideoVaultLang('hi')" id="vaultLang-hi" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all flex items-center gap-1">🇮🇳 হিন্দি</button>
+            <button onclick="setVideoVaultLang('en')" id="vaultLang-en" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all flex items-center gap-1">🇬🇧 English</button>
+          </div>
         </div>
 
-        <!-- Video Filter & Search Controls -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <!-- Search input -->
-          <div class="sm:col-span-2 relative">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <!-- Breadcrumbs Navigation & Search Bar -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+          <!-- Interactive Breadcrumb -->
+          <div id="videoVaultBreadcrumbs" class="flex items-center gap-2 text-xs font-medium text-slate-300 overflow-x-auto py-1">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Live Search Bar -->
+          <div class="relative w-full sm:w-72">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
             <input 
-              id="publicVideoSearch" 
+              id="videoVaultSearchInput" 
               type="text" 
-              placeholder="Search tutorials (e.g. Thermodynamics, Fluid, Tikle, Mohr, Lathe)..." 
-              oninput="renderPublicVideos()"
-              class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 focus:border-red-500 text-xs sm:text-sm text-white placeholder-slate-500 outline-none transition-all"
+              placeholder="টপিক বা প্লেলিস্ট খুঁজুন (e.g. Calculus, SOM, Thermo)..." 
+              oninput="handleVideoVaultSearch(this.value)" 
+              class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-red-500 outline-none transition-all"
             >
           </div>
-
-          <!-- Semester dropdown filter -->
-          <div>
-            <select id="publicVideoTermFilter" onchange="renderPublicVideos()" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-slate-200 outline-none focus:border-red-500">
-              <option value="ALL">All Semesters (L1 - L4)</option>
-              <option value="L1-T1">Level 1 Term 1 (L1-T1)</option>
-              <option value="L1-T2">Level 1 Term 2 (L1-T2)</option>
-              <option value="L2-T1">Level 2 Term 1 (L2-T1)</option>
-              <option value="L2-T2">Level 2 Term 2 (L2-T2)</option>
-              <option value="L3-T1">Level 3 Term 1 (L3-T1)</option>
-              <option value="L3-T2">Level 3 Term 2 (L3-T2)</option>
-              <option value="L4-T1">Level 4 Term 1 (L4-T1)</option>
-              <option value="L4-T2">Level 4 Term 2 (L4-T2)</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Language Filter Pills -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-          <span class="text-slate-400 font-medium mr-1 text-[11px]">Filter by Language:</span>
-          <button onclick="setPublicVideoLang('ALL')" id="videoLangBtn-ALL" class="px-3 py-1 rounded-xl bg-red-600 text-white font-semibold shadow-sm transition-all">All Languages</button>
-          <button onclick="setPublicVideoLang('hi')" id="videoLangBtn-hi" class="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-all flex items-center gap-1">
-            <span>🇮🇳 Hindi (হিন্দি)</span>
-          </button>
-          <button onclick="setPublicVideoLang('bn')" id="videoLangBtn-bn" class="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-all flex items-center gap-1">
-            <span>🇧🇩 Bangla (বাংলা)</span>
-          </button>
-          <button onclick="setPublicVideoLang('en')" id="videoLangBtn-en" class="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-all flex items-center gap-1">
-            <span>🇬🇧 English</span>
-          </button>
         </div>
 
       </div>
 
-      <!-- Public Video Cards Container -->
-      <div id="publicVideosContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Populated via renderPublicVideos() -->
+      <!-- Video Content Viewport (Root Semester Folders View OR Inside Specific Term Folder) -->
+      <div id="videoVaultContent" class="space-y-4">
+        <!-- Rendered dynamically via renderVideoVault() -->
       </div>
 
     </section>
@@ -890,7 +821,12 @@
             <span>Quality Audit</span>
           </button>
 
-          <button id="adminTabBtn-backup" onclick="switchAdminSubTab('backup')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+                    <button id="adminTabBtn-layout" onclick="switchAdminSubTab('layout')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
+            <i data-lucide="layout" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span>Site Layout & Navigation</span>
+          </button>
+
+<button id="adminTabBtn-backup" onclick="switchAdminSubTab('backup')" class="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 flex items-center gap-1.5 transition-all whitespace-nowrap">
             <i data-lucide="hard-drive-download" class="w-3.5 h-3.5 text-purple-400"></i>
             <span>Backup & Restore</span>
           </button>
@@ -1298,6 +1234,63 @@
               <button onclick="saveAdminSeoSettings()" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs transition-all shadow-md flex items-center gap-2">
                 <i data-lucide="save" class="w-3.5 h-3.5"></i>
                 <span>Save SEO Metadata</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 13. SUB-TAB: SITE LAYOUT & NAVIGATION CMS -->
+        <div id="adminPanel-layout" class="hidden space-y-6">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="layout" class="w-4 h-4 text-indigo-400"></i>
+                <span>Portal Navigation & Orientation Settings</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">
+                হেডার নেভিগেশন বার এবং মোবাইল বারে কোন ট্যাব দেখাবেন, কোন ট্যাব লুকাবেন, ট্যাবের ক্রম এবং সাইটের টেক্সট নিজের মতো কনফিগার করুন।
+              </p>
+            </div>
+            <button onclick="resetPortalSettings()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
+              ডিফল্ট রিসেট
+            </button>
+          </div>
+
+          <!-- Tab Visibility and Ordering Table -->
+          <div class="space-y-3">
+            <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">Navigation Tabs Manager (শো / হাইড ও রি-অর্ডার)</h4>
+            <div id="adminNavTabsList" class="space-y-2">
+              <!-- Rendered dynamically via renderAdminLayoutSettings() -->
+            </div>
+          </div>
+
+          <!-- Hero and Text Customizer -->
+          <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+            <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider">Homepage Banner & Contact Text</h4>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Hero Title (মূল শিরোনাম)</label>
+                <input id="cfgHeroTitle" type="text" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Hero Subtitle / Tagline</label>
+                <input id="cfgHeroSubtitle" type="text" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Department / Institution Label</label>
+                <input id="cfgDeptDesc" type="text" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Primary Email (হোমপেজ ইমেইল)</label>
+                <input id="cfgPrimaryEmail" type="email" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+              </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+              <button onclick="savePortalSettingsFromForm()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span>Save Portal Settings (সেভ করুন)</span>
               </button>
             </div>
           </div>
@@ -2040,6 +2033,10 @@
     <button onclick="switchTab('resources')" id="mobileNav-resources" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
       <i data-lucide="folder" class="w-4 h-4"></i>
       <span data-i18n="tab_resources">Courses</span>
+    </button>
+    <button onclick="switchTab('videos')" id="mobileNav-videos" class="hidden flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
+      <i data-lucide="youtube" class="w-4 h-4 text-red-500"></i>
+      <span data-i18n="tab_videos">Videos</span>
     </button>
 
     <button onclick="openBulletinModal()" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
