@@ -1,7 +1,8 @@
 /* =========================================================================
-   ClassroomHub - Modern Academic UI Stylesheet
-   Design System: Minimalist Slate & Indigo (Linear / MIT OCW / Vercel Aesthetic)
-   Author: Fahim Niloy (CUET ME '20, Roll: 2003063)
+   ClassroomHub - Academic UI Design System
+   Visual Reference: Mohammad Fahim Ahmed Portfolio (https://mohammad-fahim-ahmed.netlify.app/)
+   Palette: Warm Off-White (#fcfcf8), Deep Forest Green (#193b31 / #152c28), Sage (#cbdcb7), Subtle Lines (#dce1d8)
+   Author: Mohammad Fahim Ahmed (Niloy) • CUET ME '20 (Roll: 2003063)
    ========================================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
@@ -9,6 +10,42 @@
 :root {
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  
+  /* Light Theme (Signature Academic Paper & Forest Green) */
+  --bg-canvas: #fcfcf8;
+  --bg-surface: #ffffff;
+  --bg-surface-subtle: #f6f8f4;
+  --bg-surface-tint: #edf3ec;
+  --text-main: #14221b;
+  --text-muted: #586960;
+  --text-subtle: #798a81;
+  --border-line: #dce1d8;
+  --border-subtle: #e8ede4;
+  --forest-green: #193b31;
+  --forest-dark: #152c28;
+  --forest-light: #2b5648;
+  --sage-accent: #cbdcb7;
+  --shadow-subtle: 0 1px 3px rgba(25, 59, 49, 0.04), 0 4px 12px rgba(25, 59, 49, 0.02);
+  --shadow-hover: 0 4px 16px rgba(25, 59, 49, 0.08), 0 1px 3px rgba(25, 59, 49, 0.05);
+}
+
+/* Coordinated Dark Theme (Academic Forest Night) */
+html.dark {
+  --bg-canvas: #0e1713;
+  --bg-surface: #15231e;
+  --bg-surface-subtle: #1b2c25;
+  --bg-surface-tint: #1e332b;
+  --text-main: #e8efe9;
+  --text-muted: #8ba296;
+  --text-subtle: #6b8276;
+  --border-line: #233830;
+  --border-subtle: #1d2e27;
+  --forest-green: #3ea882;
+  --forest-dark: #328f6d;
+  --forest-light: #4ebb94;
+  --sage-accent: #33594b;
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 *, *::before, *::after {
@@ -21,11 +58,13 @@ html, body {
   width: 100%;
   margin: 0;
   padding: 0;
-  background-color: #090d16;
-  color: #f1f5f9;
+  background-color: var(--bg-canvas);
+  color: var(--text-main);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 img, video, iframe, canvas, svg {
@@ -33,26 +72,153 @@ img, video, iframe, canvas, svg {
   height: auto;
 }
 
-/* Glassmorphism & Panel Styling */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
+/* Typography & Color Utility Helpers */
+.font-mono { font-family: var(--font-mono); }
+.text-main { color: var(--text-main) !important; }
+.text-muted { color: var(--text-muted) !important; }
+.text-subtle { color: var(--text-subtle) !important; }
+.text-forest { color: var(--forest-green) !important; }
+.bg-canvas { background-color: var(--bg-canvas) !important; }
+.bg-surface { background-color: var(--bg-surface) !important; }
+.bg-surface-subtle { background-color: var(--bg-surface-subtle) !important; }
+.bg-surface-tint { background-color: var(--bg-surface-tint) !important; }
+.bg-forest-tint { background-color: var(--bg-surface-tint) !important; }
+.border-line { border-color: var(--border-line) !important; }
 
-.glass-card {
-  background: #0f172a;
-  border: 1px solid #1e293b;
+/* Clean Academic Panels and Cards */
+.academic-card, .glass-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-line);
   border-radius: 1rem;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-subtle);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-.glass-card:hover {
-  background: #131d35;
-  border-color: rgba(99, 102, 241, 0.4);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.1);
+.academic-card:hover, .glass-card:hover {
+  border-color: var(--forest-green);
+  box-shadow: var(--shadow-hover);
+}
+
+.glass-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-line);
+  box-shadow: var(--shadow-subtle);
+}
+
+/* Primary Top Navigation Active States */
+.nav-item-active {
+  background-color: var(--forest-green) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(25, 59, 49, 0.2) !important;
+}
+
+html.dark .nav-item-active {
+  background-color: var(--forest-green) !important;
+  color: #0e1713 !important;
+  font-weight: 700 !important;
+}
+
+.nav-item-inactive {
+  color: var(--text-muted);
+}
+.nav-item-inactive:hover {
+  background-color: var(--bg-surface-tint);
+  color: var(--text-main);
+}
+
+/* Mobile Bottom Navigation Bar */
+#mobileBottomNav {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-line);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.mobile-nav-active {
+  color: var(--forest-green) !important;
+  font-weight: 700;
+}
+
+.mobile-nav-inactive {
+  color: var(--text-muted);
+}
+
+/* Clean Secondary Tabs */
+.tool-subtab-active {
+  background-color: var(--forest-green) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(25, 59, 49, 0.15) !important;
+}
+
+html.dark .tool-subtab-active {
+  background-color: var(--forest-green) !important;
+  color: #0e1713 !important;
+  font-weight: 700 !important;
+}
+
+.tool-subtab-inactive {
+  background-color: var(--bg-surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border-line);
+}
+.tool-subtab-inactive:hover {
+  background-color: var(--bg-surface-subtle);
+  color: var(--text-main);
+}
+
+/* Form Controls & Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="url"],
+input[type="tel"],
+input[type="time"],
+select,
+textarea {
+  background-color: var(--bg-surface);
+  color: var(--text-main);
+  border: 1px solid var(--border-line);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--forest-green) !important;
+  box-shadow: 0 0 0 2px rgba(25, 59, 49, 0.15) !important;
+}
+
+/* Clean Button System */
+.btn-forest {
+  background-color: var(--forest-green);
+  color: #ffffff;
+  border: 1px solid transparent;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+.btn-forest:hover {
+  background-color: var(--forest-dark);
+  color: #ffffff;
+}
+
+html.dark .btn-forest {
+  background-color: var(--forest-green);
+  color: #0e1713;
+}
+html.dark .btn-forest:hover {
+  background-color: var(--forest-light);
+  color: #0e1713;
+}
+
+.btn-forest-outline {
+  background-color: transparent;
+  color: var(--forest-green);
+  border: 1px solid var(--border-line);
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+.btn-forest-outline:hover {
+  background-color: var(--bg-surface-tint);
+  border-color: var(--forest-green);
 }
 
 /* Dialog & Modal */
@@ -68,15 +234,15 @@ dialog {
 }
 
 dialog::backdrop {
-  background-color: rgba(3, 7, 18, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(14, 23, 19, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 @keyframes modalFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.97) translateY(4px);
+    transform: scale(0.98) translateY(4px);
   }
   to {
     opacity: 1;
@@ -85,43 +251,37 @@ dialog::backdrop {
 }
 
 dialog[open] {
-  animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Custom Clean Scrollbar */
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
+  background: var(--bg-canvas);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(71, 85, 105, 0.5);
+  background: var(--border-line);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.8);
+  background: var(--text-subtle);
 }
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
-
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* Typography & Accent Badges */
-.font-mono {
-  font-family: var(--font-mono);
-}
-
-/* AI Chat Prose */
+/* AI Prose Formatting */
 .ai-prose p {
   margin-bottom: 0.5rem;
 }
@@ -141,22 +301,22 @@ dialog[open] {
 .ai-prose h3 {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #a5b4fc;
+  color: var(--forest-green);
   margin-top: 0.75rem;
   margin-bottom: 0.25rem;
 }
 .ai-prose code {
-  background: rgba(15, 23, 42, 0.9);
+  background: var(--bg-surface-tint);
   padding: 0.15rem 0.35rem;
   border-radius: 0.25rem;
   font-family: var(--font-mono);
   font-size: 0.85em;
-  color: #38bdf8;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--forest-green);
+  border: 1px solid var(--border-line);
 }
 .ai-prose pre {
-  background: #0b0f19;
-  border: 1px solid #1e293b;
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-line);
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   overflow-x: auto;
@@ -164,400 +324,42 @@ dialog[open] {
   margin-bottom: 0.5rem;
   font-family: var(--font-mono);
   font-size: 0.85em;
-  color: #e2e8f0;
+  color: var(--text-main);
 }
 
-/* Branch content animation */
-.branch-content {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* =========================================================================
-   LIGHT MODE THEME OVERRIDES (High Contrast, Deep Typography & Readability)
-   ========================================================================= */
-html.light {
-  color-scheme: light;
-}
-
-html.light body,
-html.light body[class*="bg-slate-950"],
-html.light body.bg-slate-950 {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
-}
-
-/* 1. All Dark Containers become clean white/light slate surfaces */
-html.light [class*="bg-slate-950"]:not(body),
-html.light [class*="bg-slate-900"]:not(button):not(a):not([class*="bg-indigo"]):not([class*="bg-red"]),
-html.light [class*="bg-slate-850"] {
-  background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-}
-
-html.light [class*="bg-slate-800"]:not(button):not(a):not([class*="bg-indigo"]):not([class*="bg-red"]) {
-  background-color: #f1f5f9 !important;
-  border-color: #cbd5e1 !important;
-  color: #1e293b !important;
-}
-
-html.light [class*="bg-slate-700"]:not(button):not(a) {
-  background-color: #e2e8f0 !important;
-  border-color: #cbd5e1 !important;
-  color: #1e293b !important;
-}
-
-/* 2. Glass Panels and Cards */
-html.light .glass-panel {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-  box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.06) !important;
-}
-
-html.light .glass-card {
-  background: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05), 0 1px 3px -1px rgba(15, 23, 42, 0.04) !important;
-}
-
-html.light .glass-card:hover {
-  background: #ffffff !important;
-  border-color: #6366f1 !important;
-  box-shadow: 0 12px 28px -4px rgba(99, 102, 241, 0.12) !important;
-}
-
-/* 3. Headers, Navbars & Footers */
-html.light header {
-  background-color: rgba(255, 255, 255, 0.96) !important;
-  border-bottom-color: #e2e8f0 !important;
-}
-
-html.light nav#desktopNavBar {
-  background-color: #f1f5f9 !important;
-  border-color: #e2e8f0 !important;
-}
-
-html.light nav#mobileBottomNav {
-  background-color: rgba(255, 255, 255, 0.98) !important;
-  border-top-color: #e2e8f0 !important;
-}
-
-html.light footer {
-  background-color: #ffffff !important;
-  border-top-color: #e2e8f0 !important;
-  color: #475569 !important;
-}
-
-/* 4. Headings & High Contrast Text */
-html.light h1,
-html.light h2,
-html.light h3,
-html.light h4,
-html.light h5,
-html.light h6 {
-  color: #0f172a !important;
-}
-
-/* Hero Section Specific Overrides */
-html.light #homeHeroTitle {
-  color: #0f172a !important;
-}
-
-html.light #homeHeroHighlight {
-  color: #4338ca !important; /* Deep Royal Indigo */
-  background: none !important;
-  -webkit-text-fill-color: #4338ca !important;
-}
-
-html.light #homeCreatorName {
-  color: #0f172a !important;
-}
-
-html.light #homeCreatorDept {
-  color: #4338ca !important;
-  font-weight: 600 !important;
-}
-
-html.light #homeCreatorBatch,
-html.light #homeCreatorId {
-  color: #0f172a !important;
-  font-weight: 700 !important;
-}
-
-html.light #homeHeroDesc {
-  color: #334155 !important;
-}
-
-/* 4 Core Action Cards Typography */
-html.light #homeCard1Title,
-html.light #homeCard2Title,
-html.light #homeCard3Title,
-html.light #homeCard4Title {
-  color: #0f172a !important;
-}
-
-html.light #homeCard1Desc,
-html.light #homeCard2Desc,
-html.light #homeCard3Desc,
-html.light #homeCard4Desc {
-  color: #475569 !important;
-}
-
-/* General Typography Contrast in Light Mode */
-html.light p {
-  color: #334155;
-}
-
-html.light .text-white {
-  color: #0f172a !important;
-}
-
-html.light .text-slate-100,
-html.light .text-slate-200 {
-  color: #0f172a !important;
-}
-
-html.light .text-slate-300 {
-  color: #334155 !important;
-}
-
-html.light .text-slate-400 {
-  color: #475569 !important;
-}
-
-html.light .text-slate-500 {
-  color: #64748b !important;
-}
-
-/* Deep High-Contrast Colors for Icons & Secondary Text */
-html.light .text-indigo-400,
-html.light .text-indigo-300,
-html.light .text-indigo-200 {
-  color: #4338ca !important;
-}
-
-html.light .text-purple-400,
-html.light .text-purple-300,
-html.light .text-purple-200 {
-  color: #6b21a8 !important;
-}
-
-html.light .text-teal-400,
-html.light .text-teal-300,
-html.light .text-teal-200 {
-  color: #0f766e !important;
-}
-
-html.light .text-emerald-400,
-html.light .text-emerald-300,
-html.light .text-emerald-200 {
-  color: #065f46 !important;
-}
-
-html.light .text-amber-400,
-html.light .text-amber-300,
-html.light .text-amber-200 {
-  color: #92400e !important;
-}
-
-html.light .text-red-400,
-html.light .text-red-300,
-html.light .text-red-200 {
-  color: #b91c1c !important;
-}
-
-html.light .text-cyan-400,
-html.light .text-cyan-300,
-html.light .text-cyan-200 {
-  color: #0e7490 !important;
-}
-
-/* 5. Translucent Badges & Pills (Crisp light surfaces with strong dark text) */
-html.light #homeCreatorBadge,
-html.light #homeDeptPill,
-html.light [class*="bg-indigo-500/"],
-html.light [class*="bg-indigo-600/"] {
-  background-color: #e0e7ff !important;
-  color: #3730a3 !important;
-  border-color: #a5b4fc !important;
-}
-
-html.light [class*="bg-red-500/"],
-html.light [class*="bg-red-600/"] {
-  background-color: #fee2e2 !important;
-  color: #991b1b !important;
-  border-color: #fca5a5 !important;
-}
-
-html.light [class*="bg-emerald-500/"],
-html.light [class*="bg-emerald-600/"] {
-  background-color: #d1fae5 !important;
-  color: #065f46 !important;
-  border-color: #6ee7b7 !important;
-}
-
-html.light [class*="bg-purple-500/"],
-html.light [class*="bg-purple-600/"] {
-  background-color: #f3e8ff !important;
-  color: #6b21a8 !important;
-  border-color: #d8b4fe !important;
-}
-
-html.light [class*="bg-amber-500/"],
-html.light [class*="bg-amber-600/"] {
-  background-color: #fef3c7 !important;
-  color: #92400e !important;
-  border-color: #fcd34d !important;
-}
-
-/* 6. Navigation & Subtabs */
-html.light .nav-tab:not(.bg-indigo-600) {
-  color: #334155 !important;
-}
-html.light .nav-tab:not(.bg-indigo-600):hover {
-  background-color: #e2e8f0 !important;
-  color: #0f172a !important;
-}
-html.light .home-subtab:not(.bg-indigo-600):not(.bg-blue-600) {
-  color: #475569 !important;
-  background: #f1f5f9 !important;
-  border: 1px solid #cbd5e1 !important;
-}
-html.light .home-subtab:not(.bg-indigo-600):not(.bg-blue-600):hover {
-  color: #0f172a !important;
-  background: #e2e8f0 !important;
-}
-
-/* 7. SOLID SATURATED BUTTONS MUST RETAIN CRISP PURE WHITE TEXT */
-html.light button.bg-indigo-600,
-html.light button.bg-indigo-600 *,
-html.light a.bg-indigo-600,
-html.light a.bg-indigo-600 *,
-html.light button.bg-blue-600,
-html.light button.bg-blue-600 *,
-html.light a.bg-blue-600,
-html.light a.bg-blue-600 *,
-html.light button.bg-cyan-600,
-html.light button.bg-cyan-600 *,
-html.light a.bg-cyan-600,
-html.light a.bg-cyan-600 *,
-html.light button.bg-purple-600,
-html.light button.bg-purple-600 *,
-html.light a.bg-purple-600,
-html.light a.bg-purple-600 *,
-html.light button.bg-red-600,
-html.light button.bg-red-600 *,
-html.light a.bg-red-600,
-html.light a.bg-red-600 *,
-html.light button.bg-emerald-600,
-html.light button.bg-emerald-600 *,
-html.light a.bg-emerald-600,
-html.light a.bg-emerald-600 *,
-html.light button[class*="bg-gradient-to"],
-html.light button[class*="bg-gradient-to"] *,
-html.light a[class*="bg-gradient-to"],
-html.light a[class*="bg-gradient-to"] *,
-html.light .btn-primary,
-html.light .btn-primary * {
-  color: #ffffff !important;
-}
-
-/* 8. Form Inputs, Selects & Textareas */
-html.light input,
-html.light select,
-html.light textarea {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border-color: #cbd5e1 !important;
-}
-
-html.light input::placeholder,
-html.light textarea::placeholder {
-  color: #64748b !important;
-}
-
-html.light input:focus,
-html.light select:focus,
-html.light textarea:focus {
-  border-color: #6366f1 !important;
-  background-color: #ffffff !important;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
-}
-
-html.light select option {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-}
-
-/* 9. Dialogs & Modals */
-html.light dialog > div,
-html.light dialog .glass-panel {
-  background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18) !important;
-}
-
-/* 10. AI Message Card in Light Mode */
-html.light .ai-message-card {
-  background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05) !important;
-}
-
-html.light .ai-prose code {
-  background: #f1f5f9 !important;
-  color: #0284c7 !important;
-  border-color: #cbd5e1 !important;
-}
-
-html.light .ai-prose pre {
-  background: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
-}
-
-html.light .ai-prose h3 {
-  color: #4338ca !important;
-}
-
-/* 11. Border overrides */
-html.light [class*="border-slate-800"],
-html.light [class*="border-slate-700"],
-html.light [class*="border-slate-900"] {
-  border-color: #cbd5e1 !important;
-}
-
-/* 11. KaTeX Mathematical Display Formatting */
+/* KaTeX Formatting */
 .katex-display {
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0.5rem 0.75rem;
   margin: 0.5rem 0;
-  background: rgba(15, 23, 42, 0.6);
-  border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-surface-tint);
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-line);
 }
 .katex {
   font-size: 1.05em;
-  color: #f8fafc;
+  color: var(--text-main);
 }
 
-/* KaTeX Light Mode Formatting */
-html.light .katex {
-  color: #0f172a !important;
+/* ==================== CV BUILDER ON-SCREEN PREVIEW STYLES ==================== */
+.cv-preview-paper {
+  background: #ffffff !important;
+  color: #1a202c !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.45;
+  border: 1px solid #e2e8f0;
 }
-html.light .katex-display {
-  background: #f1f5f9 !important;
-  border: 1px solid #cbd5e1 !important;
+.cv-preview-paper a {
+  color: #193b31;
+  text-decoration: none;
+}
+.cv-preview-paper a:hover {
+  text-decoration: underline;
 }
 
-/* =========================================================================
-   12. Landscape Print Engine for Timetable / Routine (Clean PDF/Print Output)
-   ========================================================================= */
+/* ==================== PRINT STYLESHEET (CLEAN PDF & PRINT OUTPUT) ==================== */
 @media print {
   @page {
     size: landscape;
@@ -567,8 +369,7 @@ html.light .katex-display {
     background: #ffffff !important;
     color: #000000 !important;
   }
-  /* Hide non-printable app UI elements during print */
-  header, footer, nav, #authHeaderContainer,
+  header, footer, nav, #mobileBottomNav, #desktopNavBar, #authHeaderContainer,
   .no-print, button, input, select, dialog, #aiChatFloatingWindow {
     display: none !important;
   }
@@ -606,7 +407,6 @@ html.light .katex-display {
     background: #f0f0f0 !important;
   }
 
-  /* Printable CV & Resume Container */
   #printableCvContainer {
     display: block !important;
     width: 100% !important;
@@ -622,7 +422,7 @@ html.light .katex-display {
     box-shadow: none !important;
   }
   #printableCvContainer a {
-    color: #2b6cb0 !important;
+    color: #193b31 !important;
     text-decoration: underline !important;
   }
   .cv-section-block {
@@ -631,21 +431,3 @@ html.light .katex-display {
     margin-bottom: 12px !important;
   }
 }
-
-/* ==================== CV BUILDER ON-SCREEN PREVIEW STYLES ==================== */
-.cv-preview-paper {
-  background: #ffffff;
-  color: #1a202c;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.45;
-}
-.cv-preview-paper a {
-  color: #2b6cb0;
-  text-decoration: none;
-}
-.cv-preview-paper a:hover {
-  text-decoration: underline;
-}
-
-
