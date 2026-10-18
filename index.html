@@ -60,7 +60,7 @@
   <script src="jszip.min.js"></script>
 
   <!-- Custom Academic UI Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=3.3.0">
+  <link rel="stylesheet" href="styles.css?v=4.0.0">
 </head>
 <body class="min-h-screen flex flex-col font-sans antialiased text-main bg-canvas">
 
@@ -276,7 +276,7 @@
           <span class="text-xs text-muted">8 Semesters • 40+ Courses</span>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div id="homeSemestersGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button onclick="quickOpenSemester('L1-T1')" class="academic-card p-3.5 text-left transition-all group">
             <div class="flex items-center justify-between mb-1">
               <span class="text-xs font-bold text-forest font-mono">L1-T1</span>
@@ -339,7 +339,7 @@
               <i data-lucide="folder" class="w-4 h-4 text-muted group-hover:text-forest transition-colors"></i>
             </div>
             <div class="text-xs font-semibold text-main group-hover:text-forest">Level 4 Term 2</div>
-            <div class="text-[10px] text-muted mt-0.5">Power Plant, Auto, OR</div>
+            <div class="text-[10px] text-muted mt-0.5">Applied Thermo, Fluid Mach, Thesis</div>
           </button>
         </div>
       </div>
@@ -358,6 +358,14 @@
             </button>
             <span id="filteredCountBadge" class="px-2 py-0.5 rounded-full bg-forest-tint text-forest border border-forest/20 text-xs font-mono font-bold">0</span>
           </div>
+        </div>
+
+        <!-- Explorer Heading & View Title -->
+        <div class="flex items-center justify-between px-1 pb-1">
+          <h3 id="explorerViewTitle" class="text-sm font-bold text-main flex items-center gap-2">
+            <i data-lucide="folder-open" class="w-4 h-4 text-forest"></i>
+            <span>Academic Resource Explorer</span>
+          </h3>
         </div>
 
         <!-- Explorer Content Grid -->
@@ -1411,18 +1419,22 @@
           </div>
 
           <form id="studentFeedbackForm" onsubmit="handleFeedbackSubmit(event)" class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
               <div>
                 <label class="block text-xs font-medium text-slate-300 mb-1.5">Your Name (Optional)</label>
-                <input id="fbName" type="text" placeholder="e.g., Fahim or Anonymous" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-all">
+                <input id="fbName" type="text" placeholder="e.g., Fahim or Anonymous" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-forest outline-none transition-all">
               </div>
               <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1.5">CUET Student ID / Batch (Optional)</label>
-                <input id="fbRoll" type="text" placeholder="e.g., 20030XX or '20 Batch" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-indigo-500 outline-none transition-all">
+                <label class="block text-xs font-medium text-slate-300 mb-1.5">Student ID / Batch (Optional)</label>
+                <input id="fbRoll" type="text" placeholder="e.g., 20030XX or '20 Batch" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-forest outline-none transition-all">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1.5">Email / WhatsApp (Optional)</label>
+                <input id="fbContact" type="text" placeholder="For follow-up / reply" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:border-forest outline-none transition-all">
               </div>
               <div>
                 <label class="block text-xs font-medium text-slate-300 mb-1.5">Category</label>
-                <select id="fbCategory" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:border-indigo-500 outline-none transition-all">
+                <select id="fbCategory" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:border-forest outline-none transition-all">
                   <option value="Request Course Notes">Request Course Notes / Question Bank</option>
                   <option value="Report Broken File">Report Broken File or Link</option>
                   <option value="Platform Suggestion">Platform Feature Suggestion</option>
@@ -3043,41 +3055,8 @@
     <!-- Populated dynamically right before window.print() -->
   </div>
 
-  <!-- FIXED MOBILE BOTTOM NAVIGATION BAR -->
-  <nav id="mobileBottomNav" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-2 py-1.5 flex items-center justify-around text-[10px] shadow-2xl">
-    <button onclick="switchTab('home')" id="mobileNav-home" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-indigo-400 font-bold bg-indigo-500/10">
-      <i data-lucide="home" class="w-4 h-4"></i>
-      <span data-i18n="tab_home">Home</span>
-    </button>
-    <button onclick="switchTab('resources')" id="mobileNav-resources" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
-      <i data-lucide="folder" class="w-4 h-4"></i>
-      <span data-i18n="tab_resources">Courses</span>
-    </button>
-    <button onclick="switchTab('videos')" id="mobileNav-videos" class="hidden flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
-      <i data-lucide="youtube" class="w-4 h-4 text-red-500"></i>
-      <span data-i18n="tab_videos">Videos</span>
-    </button>
-
-    <button onclick="openBulletinModal()" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
-      <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
-      <span>Syllabus</span>
-    </button>
-    <button onclick="switchTab('ai')" id="mobileNav-ai" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
-      <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
-      <span data-i18n="tab_ai">AI Hub</span>
-    </button>
-    <button onclick="switchTab('tracker')" id="mobileNav-tracker" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-slate-400 hover:text-white">
-      <i data-lucide="check-square" class="w-4 h-4 text-amber-400"></i>
-      <span data-i18n="tab_tracker">Tracker</span>
-    </button>
-    <button onclick="switchTab('admin')" id="mobileNav-admin" class="hidden flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all text-amber-400 hover:text-amber-300">
-      <i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i>
-      <span data-i18n="tab_admin">Admin</span>
-    </button>
-  </nav>
-
   <!-- Application Logic Scripts -->
-  <script src="data.js?v=3.3.0"></script>
-  <script src="app.js?v=3.3.0"></script>
+  <script src="data.js?v=4.0.0"></script>
+  <script src="app.js?v=4.0.0"></script>
 </body>
 </html>
