@@ -690,6 +690,22 @@
       <!-- ==================== SUB-PANEL 2: STUDENT HUB & TOOLS ==================== -->
       <div id="homeSubPanel-tools" class="hidden space-y-6">
         
+        <!-- Student Hub & Tools Quick Switcher Bar -->
+        <div class="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs font-semibold overflow-x-auto no-scrollbar">
+          <button onclick="scrollToolSection('routine')" class="px-4 py-2 rounded-xl bg-indigo-600 text-white shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+            <span>Class Routine Studio</span>
+          </button>
+          <button onclick="scrollToolSection('cv')" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-teal-300 flex items-center gap-1.5 whitespace-nowrap">
+            <i data-lucide="file-badge" class="w-3.5 h-3.5"></i>
+            <span>CV &amp; Resume Builder</span>
+          </button>
+          <button onclick="scrollToolSection('cgpa')" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 flex items-center gap-1.5 whitespace-nowrap">
+            <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
+            <span>GPA / CGPA Calculator</span>
+          </button>
+        </div>
+        
         <!-- PWA Offline App Install Banner -->
         <div id="pwaHomeCard" class="p-4 sm:p-5 rounded-2xl glass-card border border-indigo-500/30 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
           <div class="flex items-center gap-3.5">
@@ -751,6 +767,12 @@
               <button onclick="printMyRoutine()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-all" title="Print timetable in landscape layout or save as PDF">
                 <i data-lucide="printer" class="w-3.5 h-3.5"></i>
                 <span>Print / PDF</span>
+              </button>
+
+              <!-- Export iCalendar (.ics) -->
+              <button onclick="exportRoutineIcs()" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-300 hover:text-white border border-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-all" title="Export timetable to Google Calendar / Outlook (.ics)">
+                <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                <span>Calendar (.ics)</span>
               </button>
 
               <!-- Backup / Transfer JSON -->
@@ -908,6 +930,311 @@
             </div>
           </div>
         </div>
+
+        
+        <!-- ==================== CUET STUDENT CV & RESUME BUILDER ==================== -->
+        <div id="cvBuilderMainCard" class="p-5 sm:p-7 rounded-3xl glass-card border border-slate-800 space-y-6">
+          <!-- Top Header & Action Row -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-teal-400 uppercase tracking-wider">
+                  <i data-lucide="file-badge" class="w-4 h-4 text-teal-400"></i>
+                  <span>Career & Placement Studio</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-medium" title="Your CV data is private to your current browser storage. Never uploaded to public servers.">
+                  <i data-lucide="shield-check" class="w-3 h-3"></i>
+                  <span>Private on this device</span>
+                </span>
+              </div>
+              <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                <span>CUET Student CV &amp; Resume Builder</span>
+              </h3>
+              <p class="text-xs text-slate-400">
+                ইঞ্জিনিয়ারিং ইন্টার্নশিপ, জব ও হায়ার স্টাডিজ (M.Sc / Ph.D)-এর জন্য প্রফেশনাল সিভি তৈরি করুন। সম্পূর্ণ এডিটেবল ওয়ার্ড (.docx) ও প্রিন্টেবল PDF ডাউনলোড করুন।
+              </p>
+            </div>
+
+            <!-- Global CV Actions: Word Export / Print / Backup / Drafts -->
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- Export Word (.docx) -->
+              <button onclick="exportMyCvDocx()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md transition-all" title="Export your CV as an editable Word (.docx) document">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                <span>Export Word (.docx)</span>
+              </button>
+
+              <!-- Print / PDF -->
+              <button onclick="printMyCv()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-teal-300 hover:text-white border border-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-all" title="Print or save high-resolution selectable-text PDF">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                <span>Print / Save PDF</span>
+              </button>
+
+              <!-- Save Draft -->
+              <button onclick="saveCvDraftPrompt()" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1 transition-all" title="Save current version">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                <span>Save Draft</span>
+              </button>
+
+              <!-- Backup / Transfer JSON -->
+              <button onclick="openCvBackupModal()" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1 transition-all" title="Backup CV data as JSON">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Backup</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Template Selector & Draft Manager Bar -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-slate-950/80 border border-slate-800/80 text-xs">
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <span class="text-[11px] font-semibold text-slate-400 mr-1 whitespace-nowrap">Template:</span>
+              <button id="cvTplBtn-job" onclick="switchCvTemplate('template_job')" class="px-3 py-1.5 rounded-xl font-bold transition-all bg-indigo-600 text-white shadow-sm whitespace-nowrap">
+                Simple Job Resume
+              </button>
+              <button id="cvTplBtn-eng" onclick="switchCvTemplate('template_eng')" class="px-3 py-1.5 rounded-xl font-medium transition-all bg-slate-900 hover:bg-slate-800 text-slate-300 whitespace-nowrap">
+                Engineering Graduate
+              </button>
+              <button id="cvTplBtn-academic" onclick="switchCvTemplate('template_academic')" class="px-3 py-1.5 rounded-xl font-medium transition-all bg-slate-900 hover:bg-slate-800 text-slate-300 whitespace-nowrap">
+                Academic &amp; Research CV
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2 self-end sm:self-center">
+              <select id="cvDraftsSelect" onchange="loadSelectedCvDraft()" class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200 outline-none">
+                <option value="default">Default Draft (ডিফল্ট)</option>
+              </select>
+              <button onclick="createNewBlankCvPrompt()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-medium transition-all" title="Start a fresh blank CV">
+                + New Blank
+              </button>
+            </div>
+          </div>
+
+          <!-- Main Split View: Form Editor on Left, Live Preview on Right -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Left Column: Form Editor (lg:col-span-6) -->
+            <div class="lg:col-span-6 space-y-4">
+              
+              <!-- 1. Contact & Identity -->
+              <details open class="group p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <summary class="font-bold text-white flex items-center justify-between cursor-pointer select-none">
+                  <span class="flex items-center gap-2">
+                    <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i>
+                    <span>1. Personal &amp; Contact Details</span>
+                  </span>
+                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="space-y-3 pt-3.5 border-t border-slate-800/80 mt-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label class="block font-semibold text-slate-300 mb-1">Full Name *</label>
+                      <input type="text" id="cvInput-fullName" oninput="updateCvLivePreview()" placeholder="e.g. Mohammad Fahim Ahmed" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-slate-300 mb-1">Professional Title / Headline</label>
+                      <input type="text" id="cvInput-title" oninput="updateCvLivePreview()" placeholder="e.g. Mechanical Engineer | CAD Specialist" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white outline-none focus:border-indigo-500">
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label class="block font-semibold text-slate-300 mb-1">Email *</label>
+                      <input type="email" id="cvInput-email" oninput="updateCvLivePreview()" placeholder="you@student.cuet.ac.bd" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-slate-300 mb-1">Phone</label>
+                      <input type="tel" id="cvInput-phone" oninput="updateCvLivePreview()" placeholder="+880 1..." class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-slate-300 mb-1">Location</label>
+                      <input type="text" id="cvInput-location" oninput="updateCvLivePreview()" placeholder="Chittagong, Bangladesh" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white outline-none focus:border-indigo-500">
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label class="block font-semibold text-slate-300 mb-1">LinkedIn Profile</label>
+                      <input type="text" id="cvInput-linkedin" oninput="updateCvLivePreview()" placeholder="linkedin.com/in/..." class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-slate-300 mb-1">GitHub / Code</label>
+                      <input type="text" id="cvInput-github" oninput="updateCvLivePreview()" placeholder="github.com/..." class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-slate-300 mb-1">Portfolio / Website</label>
+                      <input type="text" id="cvInput-portfolio" oninput="updateCvLivePreview()" placeholder="your-site.com" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 outline-none focus:border-indigo-500">
+                    </div>
+                  </div>
+                  <!-- Optional Photo Toggle -->
+                  <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+                    <div class="flex items-center gap-2">
+                      <input type="checkbox" id="cvInput-showPhoto" onchange="updateCvLivePreview()" class="rounded border-slate-700 text-indigo-600 focus:ring-0">
+                      <label for="cvInput-showPhoto" class="text-xs text-slate-300 font-medium">Show Photo (ছবি সংযুক্ত করুন)</label>
+                    </div>
+                    <input type="file" id="cvInput-photoFile" accept="image/*" onchange="handleCvPhotoUpload(event)" class="text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:bg-slate-800 file:text-indigo-300">
+                  </div>
+                </div>
+              </details>
+
+              <!-- 2. Professional Summary -->
+              <details open class="group p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <summary class="font-bold text-white flex items-center justify-between cursor-pointer select-none">
+                  <span class="flex items-center gap-2">
+                    <i data-lucide="align-left" class="w-4 h-4 text-blue-400"></i>
+                    <span>2. Professional Summary / Career Objective</span>
+                  </span>
+                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="pt-3 border-t border-slate-800/80 mt-3">
+                  <textarea id="cvInput-summary" oninput="updateCvLivePreview()" rows="3" placeholder="Briefly describe your engineering background, technical interests, and career objective..." class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white outline-none focus:border-indigo-500 text-xs leading-relaxed"></textarea>
+                </div>
+              </details>
+
+              <!-- 3. Education -->
+              <details open class="group p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <summary class="font-bold text-white flex items-center justify-between cursor-pointer select-none">
+                  <span class="flex items-center gap-2">
+                    <i data-lucide="graduation-cap" class="w-4 h-4 text-emerald-400"></i>
+                    <span>3. Education (ডিগ্রি ও শিক্ষা প্রতিষ্ঠান)</span>
+                  </span>
+                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="space-y-3 pt-3 border-t border-slate-800/80 mt-3">
+                  <div id="cvEducationListContainer" class="space-y-3">
+                    <!-- Populated via JS renderCvFormArrays() -->
+                  </div>
+                  <button type="button" onclick="addCvEducationItem()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-700 font-semibold text-xs flex items-center gap-1 transition-all">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>+ Add Education</span>
+                  </button>
+                </div>
+              </details>
+
+              <!-- 4. Experience & Internships -->
+              <details open class="group p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <summary class="font-bold text-white flex items-center justify-between cursor-pointer select-none">
+                  <span class="flex items-center gap-2">
+                    <i data-lucide="briefcase" class="w-4 h-4 text-amber-400"></i>
+                    <span>4. Experience &amp; Internships</span>
+                  </span>
+                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="space-y-3 pt-3 border-t border-slate-800/80 mt-3">
+                  <div id="cvExperienceListContainer" class="space-y-3">
+                    <!-- Populated via JS -->
+                  </div>
+                  <button type="button" onclick="addCvExperienceItem()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-700 font-semibold text-xs flex items-center gap-1 transition-all">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>+ Add Experience</span>
+                  </button>
+                </div>
+              </details>
+
+              <!-- 5. Engineering & Design Projects -->
+              <details open class="group p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <summary class="font-bold text-white flex items-center justify-between cursor-pointer select-none">
+                  <span class="flex items-center gap-2">
+                    <i data-lucide="cpu" class="w-4 h-4 text-indigo-400"></i>
+                    <span>5. Engineering &amp; Design Projects</span>
+                  </span>
+                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="space-y-3 pt-3 border-t border-slate-800/80 mt-3">
+                  <div id="cvProjectsListContainer" class="space-y-3">
+                    <!-- Populated via JS -->
+                  </div>
+                  <button type="button" onclick="addCvProjectItem()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-indigo-400 border border-slate-700 font-semibold text-xs flex items-center gap-1 transition-all">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>+ Add Project</span>
+                  </button>
+                </div>
+              </details>
+
+              <!-- 6. Research & Publications -->
+              <details class="group p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <summary class="font-bold text-white flex items-center justify-between cursor-pointer select-none">
+                  <span class="flex items-center gap-2">
+                    <i data-lucide="book-marked" class="w-4 h-4 text-cyan-400"></i>
+                    <span>6. Research &amp; Publications (গবেষণা ও থিসিস)</span>
+                  </span>
+                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="space-y-3 pt-3 border-t border-slate-800/80 mt-3">
+                  <div id="cvResearchListContainer" class="space-y-3">
+                    <!-- Populated via JS -->
+                  </div>
+                  <button type="button" onclick="addCvResearchItem()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-slate-700 font-semibold text-xs flex items-center gap-1 transition-all">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>+ Add Publication / Thesis</span>
+                  </button>
+                </div>
+              </details>
+
+              <!-- 7. Technical Skills & Tools -->
+              <details open class="group p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <summary class="font-bold text-white flex items-center justify-between cursor-pointer select-none">
+                  <span class="flex items-center gap-2">
+                    <i data-lucide="wrench" class="w-4 h-4 text-purple-400"></i>
+                    <span>7. Technical Skills &amp; Competencies</span>
+                  </span>
+                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="space-y-3 pt-3 border-t border-slate-800/80 mt-3">
+                  <div id="cvSkillsListContainer" class="space-y-2.5">
+                    <!-- Populated via JS -->
+                  </div>
+                  <button type="button" onclick="addCvSkillItem()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-purple-400 border border-slate-700 font-semibold text-xs flex items-center gap-1 transition-all">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>+ Add Skill Category</span>
+                  </button>
+                </div>
+              </details>
+
+              <!-- 8. Certifications, Awards & References -->
+              <details class="group p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs">
+                <summary class="font-bold text-white flex items-center justify-between cursor-pointer select-none">
+                  <span class="flex items-center gap-2">
+                    <i data-lucide="award" class="w-4 h-4 text-yellow-400"></i>
+                    <span>8. Certifications, Awards &amp; References</span>
+                  </span>
+                  <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="space-y-3 pt-3 border-t border-slate-800/80 mt-3">
+                  <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Certifications (1 per line)</label>
+                    <textarea id="cvInput-certifications" oninput="updateCvLivePreview()" rows="2" placeholder="e.g. Certified SolidWorks Associate (CSWA) — Dassault Systèmes (2024)" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white outline-none focus:border-indigo-500"></textarea>
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Honors &amp; Awards (1 per line)</label>
+                    <textarea id="cvInput-awards" oninput="updateCvLivePreview()" rows="2" placeholder="e.g. 1st Runner Up — National CAD Competition (2024)" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white outline-none focus:border-indigo-500"></textarea>
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-slate-300 mb-1">References (Optional: Name, Title, Institution, Email)</label>
+                    <textarea id="cvInput-references" oninput="updateCvLivePreview()" rows="2" placeholder="e.g. Dr. Mohammad XYZ, Professor, Dept of ME, CUET | xyz@cuet.ac.bd" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white outline-none focus:border-indigo-500"></textarea>
+                  </div>
+                </div>
+              </details>
+
+            </div>
+
+            <!-- Right Column: Live Interactive Preview (lg:col-span-6) -->
+            <div class="lg:col-span-6 sticky top-20">
+              <div class="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 mb-3 flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                  <i data-lucide="eye" class="w-4 h-4 text-indigo-400"></i>
+                  <span>Live Interactive Preview (রিয়েল-টাইম প্রিভিউ)</span>
+                </span>
+                <span id="cvPreviewPageCountBadge" class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-mono">1 Page View</span>
+              </div>
+
+              <!-- Preview Paper Container (A4 aspect ratio preview) -->
+              <div id="cvLivePreviewContainer" class="overflow-y-auto max-h-[800px] rounded-2xl border border-slate-700/80 bg-slate-900 p-2 sm:p-4 shadow-2xl">
+                <div id="cvLivePreviewPaper" class="cv-preview-paper p-6 sm:p-8 rounded-xl min-h-[700px] text-[11px] leading-relaxed transition-all">
+                  <!-- Dynamically rendered via JS updateCvLivePreview() -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+    
 
         <!-- Interactive CUET 4.0 CGPA Calculator -->
         <div class="p-5 sm:p-6 rounded-3xl glass-card border border-slate-800 space-y-5">
@@ -2616,10 +2943,16 @@
                 <input id="adminGithubTokenInput" type="password" placeholder="ghp_... or gho_..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500 font-mono">
                 <span class="text-[10px] text-slate-500">টোকেনটি শুধুমাত্র আপনার অ্যাডমিন ব্রাউজারে সুরক্ষিত থাকবে।</span>
               </div>
-              <button onclick="publishToGithub()" id="publishLiveBtn" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition-all">
-                <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-                <span id="publishLiveBtnText">Publish Live to All Students</span>
-              </button>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button onclick="publishToGithub()" id="publishLiveBtn" class="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/30 transition-all">
+                  <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                  <span id="publishLiveBtnText">Publish Live</span>
+                </button>
+                <button onclick="downloadPortalSyncJsonFile()" type="button" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all">
+                  <i data-lucide="download" class="w-4 h-4"></i>
+                  <span>Download portal_sync.json</span>
+                </button>
+              </div>
             </div>
 
             <!-- Real-Time Webhook & Cloud Sync -->
@@ -3548,6 +3881,7 @@
           আপনার বার্তার ড্রাফট প্রস্তুত করা হয়েছে এবং এই ডিভাইসে সুরক্ষিত আছে। বার্তাটি সরাসরি <strong>ফাহিম নিলয় (Mohammad Fahim Ahmed)</strong>-এর কাছে পৌঁছাতে অনুগ্রহ করে নিচের <strong>WhatsApp</strong> বা <strong>Email</strong> বাটনে ক্লিক করে পাঠিয়ে দিন। যতক্ষণ না আপনি নিচের বাটনে ট্যাপ করছেন, মেসেজটি ফাহিম নিলয়ের ইনবক্সে পৌঁছাবে না:
         </p>
         <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 space-y-1">
+          <div id="receiptSummaryId" class="text-emerald-400 font-bold font-mono"></div>
           <div id="receiptSummaryCategory" class="text-indigo-300 font-bold"></div>
           <div id="receiptSummaryName" class="text-slate-400"></div>
           <div id="receiptSummarySnippet" class="text-slate-400 italic truncate"></div>
@@ -3870,6 +4204,11 @@
 
   <!-- PRINTABLE ROUTINE CONTAINER (Used strictly for @media print) -->
   <div id="printableRoutineContainer" class="hidden print-only">
+    <!-- Populated dynamically right before window.print() -->
+  </div>
+
+  <!-- PRINTABLE CV CONTAINER (Used strictly for @media print) -->
+  <div id="printableCvContainer" class="hidden print-only">
     <!-- Populated dynamically right before window.print() -->
   </div>
 
