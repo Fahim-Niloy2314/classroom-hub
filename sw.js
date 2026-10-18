@@ -4,7 +4,7 @@
    Author: Fahim Niloy (CUET ME '20, Roll: 2003063)
    ========================================================================= */
 
-const CACHE_NAME = 'classroomhub-pwa-v1';
+const CACHE_NAME = 'classroomhub-pwa-v2';
 
 const STATIC_PRECACHE_URLS = [
   './',
