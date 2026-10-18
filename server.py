@@ -128,6 +128,43 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
         # Fallback to standard static file serving from APP_DIR
         return super().do_GET()
 
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/api/publish":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode("utf-8")
+            try:
+                data = json.loads(body)
+                sync_path = os.path.join(APP_DIR, "portal_sync.json")
+                payload = data.get("payload", data)
+                with open(sync_path, "w", encoding="utf-8") as f:
+                    json.dump(payload, f, indent=2, ensure_ascii=False)
+
+                deployed = False
+                deploy_msg = "Saved to portal_sync.json"
+                if data.get("triggerDeploy"):
+                    deploy_script = os.path.join(APP_DIR, "deploy_to_github.py")
+                    if os.path.exists(deploy_script):
+                        res = subprocess.run([sys.executable, deploy_script], capture_output=True, text=True)
+                        deployed = (res.returncode == 0)
+                        deploy_msg = res.stdout if deployed else res.stderr
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "success": True,
+                    "message": "Published live via authenticated ClassroomHub server backend!",
+                    "deployed": deployed,
+                    "deployMsg": deploy_msg
+                }).encode("utf-8"))
+            except Exception as e:
+                self.send_error(500, f"Server publish error: {str(e)}")
+            return
+
+        self.send_error(404, "Endpoint not found")
+
 def run_server(port=PORT):
     server_address = ("", port)
     try:
