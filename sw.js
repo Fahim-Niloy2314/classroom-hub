@@ -4,7 +4,7 @@
    Author: Fahim Niloy (CUET ME '20, Roll: 2003063)
    ========================================================================= */
 
-const CACHE_NAME = 'classroomhub-pwa-v2';
+const CACHE_NAME = 'classroomhub-pwa-v3';
 
 const STATIC_PRECACHE_URLS = [
   './',
@@ -14,7 +14,10 @@ const STATIC_PRECACHE_URLS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './icon.svg'
+  './icon.svg',
+  './cuet_routine_template_blank.docx',
+  './cuet_routine_template_sample.docx',
+  './jszip.min.js'
 ];
 
 // 1. Install Event: Pre-cache core application shell
