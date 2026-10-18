@@ -4,13 +4,14 @@
    Author: Fahim Niloy (CUET ME '20, Roll: 2003063)
    ========================================================================= */
 
-const CACHE_NAME = 'classroomhub-pwa-v3';
+const CACHE_NAME = 'classroomhub-pwa-v4';
 
 const STATIC_PRECACHE_URLS = [
   './',
   './index.html',
-  './styles.css',
-  './app.js',
+  './styles.css?v=4.0.0',
+  './app.js?v=4.0.0',
+  './data.js?v=4.0.0',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -54,6 +55,11 @@ self.addEventListener('fetch', (event) => {
 
   // Ignore non-GET and non-HTTP/HTTPS requests
   if (request.method !== 'GET' || !url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // Never cache private server API endpoints
+  if (url.pathname.startsWith('/api/')) {
     return;
   }
 
