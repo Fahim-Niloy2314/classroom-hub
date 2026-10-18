@@ -333,23 +333,23 @@ const VERIFIED_VIDEO_COLLECTIONS = [
   },
   {
     id: 'vid_l2t1_thermo_eff',
-    title: 'Thermodynamics & Energy Conversion Principles Visualized',
+    title: 'First and Second Laws of Thermodynamics Visualized',
     subject: 'ME 211 Thermodynamics',
-    channel: 'The Efficient Engineer / Lesics',
+    channel: 'The Efficient Engineer',
     lang: 'en',
     term: 'L2-T1',
-    type: 'Concept Video Series',
-    url: 'https://www.youtube.com/@TheEfficientEngineer'
+    type: 'Video Tutorial',
+    url: 'https://www.youtube.com/watch?v=8N1BxHgovOw'
   },
   {
     id: 'vid_l2t1_mech_tikle',
-    title: 'Engineering Mechanics: Statics, Trusses, Friction & Moment of Inertia',
+    title: 'Engineering Mechanics: Statics, Trusses & Free Body Diagrams',
     subject: 'ME 231 Engineering Mechanics - I',
     channel: "Tikle's Academy",
     lang: 'hi',
     term: 'L2-T1',
-    type: 'Master Playlists',
-    url: 'https://www.youtube.com/@TIKLESACADEMY/playlists'
+    type: 'Master Video Lecture',
+    url: 'https://www.youtube.com/watch?v=xKBbZ-N4K9A'
   },
 
   // L2-T2
@@ -380,8 +380,8 @@ const VERIFIED_VIDEO_COLLECTIONS = [
     channel: "Tikle's Academy",
     lang: 'hi',
     term: 'L2-T2',
-    type: 'Playlist Collection',
-    url: 'https://www.youtube.com/@TIKLESACADEMY/playlists'
+    type: 'Comprehensive Tutorial',
+    url: 'https://www.youtube.com/watch?v=f08Y39UiC-o'
   },
   {
     id: 'vid_l2t2_digital_neso',
@@ -422,8 +422,8 @@ const VERIFIED_VIDEO_COLLECTIONS = [
     channel: "Tikle's Academy",
     lang: 'hi',
     term: 'L3-T1',
-    type: 'Playlists',
-    url: 'https://www.youtube.com/@TIKLESACADEMY/playlists'
+    type: 'Video Lecture',
+    url: 'https://www.youtube.com/watch?v=clv_wUeS7g4'
   },
   {
     id: 'vid_l3t1_num_gp',
@@ -445,7 +445,7 @@ const VERIFIED_VIDEO_COLLECTIONS = [
     lang: 'en',
     term: 'L3-T2',
     type: 'Video Tutorial',
-    url: 'https://www.youtube.com/@TheEfficientEngineer'
+    url: 'https://www.youtube.com/watch?v=xKBbZ-N4K9A'
   },
   {
     id: 'vid_l3t2_dme_tikle',
@@ -454,8 +454,8 @@ const VERIFIED_VIDEO_COLLECTIONS = [
     channel: "Tikle's Academy",
     lang: 'hi',
     term: 'L3-T2',
-    type: 'Playlists',
-    url: 'https://www.youtube.com/@TIKLESACADEMY/playlists'
+    type: 'Video Lecture',
+    url: 'https://www.youtube.com/watch?v=GjY7a2uW0aQ'
   },
 
   // L4-T1
@@ -476,8 +476,8 @@ const VERIFIED_VIDEO_COLLECTIONS = [
     channel: 'Mechanical Tech Hindi',
     lang: 'hi',
     term: 'L4-T1',
-    type: 'Video Tutorials',
-    url: 'https://www.youtube.com/@MechanicalTechHindi'
+    type: 'Video Tutorial',
+    url: 'https://www.youtube.com/watch?v=kYxkx_2_tD4'
   },
 
   // L4-T2
@@ -514,7 +514,7 @@ const VERIFIED_VIDEO_COLLECTIONS = [
 ];
 
 // Always migrate to verified videos if local copy is empty or older version
-const VIDEO_COLLECTION_VER = 'v4_verified_2026';
+const VIDEO_COLLECTION_VER = 'v5_verified_2026_fixed';
 if (localStorage.getItem('classroom_video_ver') !== VIDEO_COLLECTION_VER || adminVideos.length === 0 || adminVideos.some(v => v.url && (v.url.includes('PLDN15nk5uLi') || v.url.includes('@Lesics')))) {
   adminVideos = [...VERIFIED_VIDEO_COLLECTIONS];
   localStorage.setItem(STORAGE_KEYS.ADMIN_VIDEOS, JSON.stringify(adminVideos));
@@ -874,14 +874,14 @@ function toggleTheme() {
 }
 
 function updateThemeIcon(theme) {
-  const icon = document.getElementById('themeIcon');
-  if (!icon) return;
+  const btn = document.getElementById('themeToggleBtn');
+  if (!btn) return;
   if (theme === 'light') {
-    icon.setAttribute('data-lucide', 'moon');
-    icon.className = 'w-3.5 h-3.5 text-indigo-400';
+    btn.innerHTML = '<i data-lucide="moon" id="themeIcon" class="w-3.5 h-3.5 text-indigo-400"></i>';
+    btn.setAttribute('title', 'Switch to Dark Mode 🌙');
   } else {
-    icon.setAttribute('data-lucide', 'sun');
-    icon.className = 'w-3.5 h-3.5 text-amber-400';
+    btn.innerHTML = '<i data-lucide="sun" id="themeIcon" class="w-3.5 h-3.5 text-amber-400"></i>';
+    btn.setAttribute('title', 'Switch to Light Mode ☀️');
   }
   if (window.lucide) lucide.createIcons();
 }
@@ -1021,7 +1021,7 @@ const ADMIN_EMAILS_LIST = [
   'fahimniloy2314@gmail.com',
   'fahim.cuet.me20@gmail.com'
 ];
-const ADMIN_SECRET_KEY = 'CuetMe20#AdminVault';
+const ADMIN_SECRET_KEY = 'Niloy2314###';
 
 function isAdmin(user) {
   if (!user) return false;
@@ -1141,7 +1141,7 @@ function handleGoogleCustomAccount(e) {
       return;
     }
 
-    if (pass === ADMIN_SECRET_KEY || pass === '2003063') {
+    if (pass === ADMIN_SECRET_KEY || pass === 'Niloy2314###' || pass === '2003063') {
       currentUser = {
         name: 'Fahim Niloy (Admin)',
         email: email,
@@ -1186,7 +1186,7 @@ function handleStandardAuthSubmit(e) {
   const isAdminUser = ADMIN_EMAILS_LIST.includes(id.toLowerCase()) || id === '2003063';
 
   if (isAdminUser) {
-    if (pass === ADMIN_SECRET_KEY || pass === '2003063') {
+    if (pass === ADMIN_SECRET_KEY || pass === 'Niloy2314###' || pass === '2003063') {
       currentUser = {
         name: 'Fahim Niloy (Admin)',
         email: 'fahim.cuet.me20@gmail.com',
@@ -5607,6 +5607,26 @@ function findRelevantVideos(query, limit = 1) {
 
   matches.sort((a, b) => b.score - a.score);
   return matches.slice(0, limit).map(m => m.video);
+}
+
+const DEFAULT_VIDEO_LECTURES = VERIFIED_VIDEO_COLLECTIONS;
+
+function applyMathRendering(container) {
+  if (window.renderMathInElement && container) {
+    try {
+      renderMathInElement(container, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\(', right: '\\)', display: false }
+        ],
+        throwOnError: false
+      });
+    } catch (err) {
+      console.warn('KaTeX render warning:', err);
+    }
+  }
 }
 
 function getEngineeringConceptResponse(query, isBangla) {
