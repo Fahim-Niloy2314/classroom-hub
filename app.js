@@ -171,37 +171,46 @@ if (!adminFaqs || adminFaqs.length === 0) {
   localStorage.setItem(STORAGE_KEYS.ADMIN_FAQS, JSON.stringify(adminFaqs));
 }
 
-let adminRoutine = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_ROUTINE) || 'null');
-if (!adminRoutine || Object.keys(adminRoutine).length === 0) {
+let adminRoutine = null;
+const rawStoredRoutine = localStorage.getItem(STORAGE_KEYS.ADMIN_ROUTINE);
+if (rawStoredRoutine !== null) {
+  try {
+    adminRoutine = JSON.parse(rawStoredRoutine);
+  } catch (e) {
+    adminRoutine = null;
+  }
+}
+if (!adminRoutine) {
   adminRoutine = {
     'L4-T2': {
       'Sunday': [
-        { time: '08:00 AM - 08:50 AM', course: 'ME 4201 Power Plant Engineering', room: 'ME-304', teacher: 'Prof. Dr. XYZ' },
-        { time: '08:50 AM - 09:40 AM', course: 'ME 4203 Automobile Engineering', room: 'ME-304', teacher: 'Dr. ABC' },
-        { time: '10:00 AM - 12:30 PM', course: 'ME 4200 Project & Thesis Sessional', room: 'ME Lab', teacher: 'Supervisor' }
+        { time: '08:00 AM - 08:50 AM', course: 'ME-411 Power Plant Engineering', room: 'ME-304', teacher: 'Prof. Dr. XYZ' },
+        { time: '08:50 AM - 09:40 AM', course: 'ME-421 Automobile Engineering', room: 'ME-304', teacher: 'Dr. ABC' },
+        { time: '10:00 AM - 12:30 PM', course: 'ME-498 Project & Thesis Sessional', room: 'ME Lab', teacher: 'Supervisor' }
       ],
       'Monday': [
-        { time: '08:50 AM - 10:30 AM', course: 'ME 4205 Operations Research', room: 'ME-304', teacher: 'Faculty' },
-        { time: '10:50 AM - 01:20 PM', course: 'ME 4202 Power Plant Sessional', room: 'Thermal Lab', teacher: 'Lab Faculty' }
+        { time: '08:50 AM - 10:30 AM', course: 'ME-455 Operations Management', room: 'ME-304', teacher: 'Faculty' },
+        { time: '10:50 AM - 01:20 PM', course: 'ME-412 Power Plant Engineering Sessional', room: 'Thermal Lab', teacher: 'Lab Faculty' }
       ],
       'Tuesday': [
-        { time: '08:00 AM - 09:40 AM', course: 'ME 4201 Power Plant Engineering', room: 'ME-304', teacher: 'Prof. Dr. XYZ' },
-        { time: '10:00 AM - 11:40 AM', course: 'ME 4203 Automobile Engineering', room: 'ME-304', teacher: 'Dr. ABC' }
+        { time: '08:00 AM - 09:40 AM', course: 'ME-411 Power Plant Engineering', room: 'ME-304', teacher: 'Prof. Dr. XYZ' },
+        { time: '10:00 AM - 11:40 AM', course: 'ME-421 Automobile Engineering', room: 'ME-304', teacher: 'Dr. ABC' }
       ],
       'Wednesday': [
-        { time: '08:50 AM - 10:30 AM', course: 'ME 4205 Operations Research', room: 'ME-304', teacher: 'Faculty' },
-        { time: '10:50 AM - 01:20 PM', course: 'ME 4204 Automobile Sessional', room: 'Auto Lab', teacher: 'Lab Faculty' }
+        { time: '08:50 AM - 10:30 AM', course: 'ME-455 Operations Management', room: 'ME-304', teacher: 'Faculty' },
+        { time: '10:50 AM - 01:20 PM', course: 'ME-422 Automobile Engineering Sessional', room: 'Auto Lab', teacher: 'Lab Faculty' }
       ],
       'Thursday': [
-        { time: '09:40 AM - 11:20 AM', course: 'ME 4200 Project Consultation', room: 'Dept Library', teacher: 'Advisors' }
+        { time: '09:40 AM - 11:20 AM', course: 'ME-498 Project Consultation', room: 'Dept Library', teacher: 'Advisors' }
       ]
     }
   };
   localStorage.setItem(STORAGE_KEYS.ADMIN_ROUTINE, JSON.stringify(adminRoutine));
 }
 
-// Default initial notices if empty
-if (adminNotices.length === 0) {
+// Default initial notices if never initialized (preserves intentionally empty lists [])
+const rawStoredNotices = localStorage.getItem(STORAGE_KEYS.ADMIN_NOTICES);
+if (rawStoredNotices === null) {
   adminNotices = [
     {
       id: 'not_1',
@@ -820,6 +829,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderExplorer();
   renderTracker();
   renderAdminWorkspace();
+  initCvBuilder();
   lucide.createIcons();
 });
 
@@ -829,20 +839,49 @@ async function loadPortalSyncData() {
     if (res.ok) {
       const syncData = await res.json();
       
-      // Synchronize notices
-      const notices = syncData.notices || syncData.adminNotices;
-      if (notices && Array.isArray(notices) && notices.length > 0) {
+      // Synchronize notices - accepts intentionally empty lists (e.g. cleared notices)
+      const notices = syncData.notices !== undefined ? syncData.notices : syncData.adminNotices;
+      if (notices !== undefined && Array.isArray(notices)) {
         adminNotices = notices;
         localStorage.setItem(STORAGE_KEYS.ADMIN_NOTICES, JSON.stringify(adminNotices));
         if (typeof renderAdminNoticesList === 'function') renderAdminNoticesList();
         if (typeof renderPublicNoticesTab === 'function') renderPublicNoticesTab();
       }
       
-      // Synchronize 51 faculty members
-      const faculty = syncData.faculty || syncData.facultyMembers;
-      if (faculty && Array.isArray(faculty) && faculty.length >= 40) {
+      // Synchronize faculty members - accepts any valid list without artificial >= 40 limit
+      const faculty = syncData.faculty !== undefined ? syncData.faculty : syncData.facultyMembers;
+      if (faculty !== undefined && Array.isArray(faculty)) {
         saveFacultyMembers(faculty);
         if (typeof renderFacultyDirectory === 'function') renderFacultyDirectory();
+      }
+
+      // Synchronize unified CUET course registry
+      if (syncData.courseRegistry && typeof syncData.courseRegistry === 'object') {
+        window.CUET_COURSE_REGISTRY = syncData.courseRegistry;
+        localStorage.setItem('classroom_course_registry', JSON.stringify(syncData.courseRegistry));
+      }
+
+      // Synchronize custom resources & overrides
+      if (syncData.customResources && Array.isArray(syncData.customResources)) {
+        localStorage.setItem(STORAGE_KEYS.COMMUNITY_RESOURCES, JSON.stringify(syncData.customResources));
+      }
+
+      // Synchronize video collections
+      if (syncData.videos && Array.isArray(syncData.videos)) {
+        localStorage.setItem(STORAGE_KEYS.ADMIN_VIDEOS, JSON.stringify(syncData.videos));
+        if (typeof renderAdminVideosList === 'function') renderAdminVideosList();
+      }
+
+      // Synchronize exam and milestone timeline
+      if (syncData.timeline && Array.isArray(syncData.timeline)) {
+        localStorage.setItem(STORAGE_KEYS.ADMIN_TIMELINE, JSON.stringify(syncData.timeline));
+        if (typeof renderAdminTimelineList === 'function') renderAdminTimelineList();
+      }
+
+      // Synchronize FAQs
+      if (syncData.faqs && Array.isArray(syncData.faqs)) {
+        localStorage.setItem(STORAGE_KEYS.ADMIN_FAQS, JSON.stringify(syncData.faqs));
+        if (typeof renderAdminFaqsList === 'function') renderAdminFaqsList();
       }
       
       // Synchronize class routines across all 8 semesters
@@ -1068,6 +1107,7 @@ function switchTab(tab) {
   else if (tab === 'videos') renderVideoVault();
   else if (tab === 'tracker') renderTracker();
   else if (tab === 'admin') renderAdminWorkspace();
+  initCvBuilder();
 
   lucide.createIcons();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1209,6 +1249,19 @@ async function handleGoogleCustomAccount(e) {
 
     const isValid = await verifyAdminPassword(pass);
     if (isValid) {
+      // Attempt backend session authentication if server is reachable
+      try {
+        fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass })
+        }).then(res => res.json()).then(data => {
+          if (data && data.token) {
+            localStorage.setItem('classroom_admin_token', data.token);
+            console.log('✓ Admin authenticated with server backend');
+          }
+        }).catch(err => console.log('Server login note:', err));
+      } catch(e) {}
       currentUser = {
         name: 'Fahim Niloy (Admin)',
         email: email,
@@ -2356,7 +2409,7 @@ async function initVisitorCount() {
   if (footerVisitsEl) footerVisitsEl.textContent = visits.toLocaleString();
 }
 
-function handleFeedbackSubmit(e) {
+async function handleFeedbackSubmit(e) {
   if (e && e.preventDefault) e.preventDefault();
   const name = document.getElementById('fbName')?.value.trim() || 'Anonymous Student';
   const roll = document.getElementById('fbRoll')?.value.trim() || 'N/A';
@@ -2369,8 +2422,36 @@ function handleFeedbackSubmit(e) {
     return;
   }
 
+  // Generate unique confirmed receipt reference
+  let subId = 'SUB-' + Math.floor(Date.now() / 1000) + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+
+  // Try to dispatch to ClassroomHub server backend /api/submissions
+  try {
+    const srvResp = await fetch('/api/submissions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: category,
+        title: `${category} from ${name}`,
+        description: message,
+        studentName: name,
+        studentEmail: roll !== 'N/A' ? `u${roll}@student.cuet.ac.bd` : '',
+        rating: rating,
+        roll: roll
+      })
+    });
+    if (srvResp.ok) {
+      const srvData = await srvResp.json();
+      if (srvData.receiptId) {
+        subId = srvData.receiptId;
+      }
+    }
+  } catch (err) {
+    console.log('ClassroomHub server offline, registered with local receipt ID:', err);
+  }
+
   const newFeedback = {
-    id: 'fb_' + Date.now(),
+    id: subId,
     name,
     roll,
     category,
@@ -2394,31 +2475,35 @@ function handleFeedbackSubmit(e) {
     } catch(err) {}
   }
 
-  // Populate and open real feedback receipt modal with 1-click WhatsApp & Email forwarding
+  // Populate and open confirmed feedback receipt modal with 1-click WhatsApp & Email forwarding
   const receiptDialog = document.getElementById('feedbackReceiptDialog');
   if (receiptDialog) {
+    const idEl = document.getElementById('receiptSummaryId');
     const catEl = document.getElementById('receiptSummaryCategory');
     const nameEl = document.getElementById('receiptSummaryName');
     const snipEl = document.getElementById('receiptSummarySnippet');
     const waLink = document.getElementById('receiptWhatsappLink');
     const emailLink = document.getElementById('receiptEmailLink');
 
+    if (idEl) idEl.textContent = `Confirmed Receipt: #${subId}`;
     if (catEl) catEl.textContent = `${category} • ⭐ ${rating}/5`;
     if (nameEl) nameEl.textContent = `Student: ${name} (Roll: ${roll})`;
     if (snipEl) snipEl.textContent = `"${message}"`;
 
-    const encodedMsg = encodeURIComponent(`[ClassroomHub Message]\nCategory: ${category}\nFrom: ${name} (Roll: ${roll})\nRating: ${rating}/5\n\nMessage:\n${message}`);
+    const encodedMsg = encodeURIComponent(`[ClassroomHub Message #${subId}]\nCategory: ${category}\nFrom: ${name} (Roll: ${roll})\nRating: ${rating}/5\n\nMessage:\n${message}`);
     if (waLink) waLink.href = `https://wa.me/8801850162261?text=${encodedMsg}`;
-    if (emailLink) emailLink.href = `mailto:fahimcuet63@gmail.com?subject=${encodeURIComponent(`ClassroomHub ${category} from ${name}`)}&body=${encodedMsg}`;
+    if (emailLink) emailLink.href = `mailto:fahimcuet63@gmail.com?subject=${encodeURIComponent(`ClassroomHub [${subId}] ${category} from ${name}`)}&body=${encodedMsg}`;
 
     receiptDialog.showModal();
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
   }
 
   if (e && e.target && e.target.reset) e.target.reset();
-  showToast(currentLang === 'en' ? 'Thank you! Your feedback has been registered.' : 'ধন্যবাদ! আপনার বার্তাটি নিবন্ধিত হয়েছে।');
+  showToast(currentLang === 'en' ? `Feedback confirmed! Receipt: #${subId}` : `বার্তাটি সফলভাবে নিশ্চিত হয়েছে! রিসিপ্ট আইডি: #${subId}`);
   renderAdminWorkspace();
+  if (typeof initCvBuilder === 'function') initCvBuilder();
 }
+
 
 /* =========================================================================
    11. LIVE HOMEPAGE NOTICE BOARD & ANNOUNCEMENTS BANNER
@@ -2577,6 +2662,7 @@ function rollbackToRevision(revId) {
 
   logAdminAction('Rollback Executed', `Restored revision ${rev.id} (${rev.desc})`);
   renderAdminWorkspace();
+  initCvBuilder();
   renderExplorer();
   renderHomeNotices();
   showToast('State successfully restored to selected revision!');
@@ -2708,6 +2794,7 @@ function approveSubmission(idx) {
   localStorage.setItem(STORAGE_KEYS.COMMUNITY_RESOURCES, JSON.stringify(communityResources));
   logAdminAction('Approved Resource', item.name);
   renderAdminWorkspace();
+  initCvBuilder();
   renderExplorer();
   showToast(currentLang === 'en' ? 'Resource approved and published!' : 'রিসোর্স অনুমোদিত ও প্রকাশিত হয়েছে!');
 }
@@ -2721,6 +2808,7 @@ function rejectSubmission(idx) {
   localStorage.setItem(STORAGE_KEYS.PENDING_RESOURCES, JSON.stringify(pendingResources));
   logAdminAction('Rejected Submission', item.name);
   renderAdminWorkspace();
+  initCvBuilder();
   showToast(currentLang === 'en' ? 'Submission rejected' : 'সাবমিশন বাতিল করা হয়েছে');
 }
 
@@ -3004,6 +3092,7 @@ function handleAdminAddResource(e) {
   if (e && e.target && e.target.reset) e.target.reset();
   logAdminAction('Added File Directly', title);
   renderAdminWorkspace();
+  initCvBuilder();
   renderExplorer();
   showToast('Resource added directly to Course Explorer!');
   switchAdminSubTab('resources');
@@ -3683,6 +3772,7 @@ function handleBackupFileSelected(e) {
 
       logAdminAction('Restored Backup', `Loaded file: ${file.name}`);
       renderAdminWorkspace();
+  initCvBuilder();
       renderExplorer();
       renderHomeNotices();
       applyPortalSettings();
@@ -3759,6 +3849,7 @@ function deleteFeedback(idx) {
   feedbacks.splice(idx, 1);
   localStorage.setItem(STORAGE_KEYS.FEEDBACKS, JSON.stringify(feedbacks));
   renderAdminWorkspace();
+  initCvBuilder();
   showToast('Feedback removed');
 }
 
@@ -3767,6 +3858,7 @@ function clearAllFeedbacks() {
     feedbacks = [];
     localStorage.setItem(STORAGE_KEYS.FEEDBACKS, JSON.stringify(feedbacks));
     renderAdminWorkspace();
+  initCvBuilder();
     showToast('All feedbacks cleared');
   }
 }
@@ -8072,10 +8164,10 @@ let publishedRoutineCurrentDay = 'Sunday';
 const DEFAULT_BLANK_ROUTINE = {
   id: 'my_routine_personal',
   title: 'My Weekly Timetable',
-  semester: 'L4-T2',
-  batch: "ME '20",
-  section: 'Section B',
-  room: 'ME-304',
+  semester: '',
+  batch: '',
+  section: '',
+  room: '',
   days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'],
   timeSlots: [
     '08:00 - 08:50',
@@ -8083,10 +8175,10 @@ const DEFAULT_BLANK_ROUTINE = {
     '10:00 - 10:50',
     '10:50 - 11:40',
     '11:40 - 12:30',
-    '01:30 - 02:20',
-    '02:30 - 05:00'
+    '13:30 - 14:20',
+    '14:30 - 17:00'
   ],
-  entries: [], // Intentionally empty: Every student builds or imports their own!
+  entries: [], // Intentionally blank: Every student builds or imports their own!
   isCustomized: false,
   lastModified: new Date().toISOString()
 };
@@ -8170,9 +8262,49 @@ function parseTimeToMinutes(timeStr) {
   if (!match) return 0;
   let hours = parseInt(match[1], 10);
   const minutes = parseInt(match[2], 10);
-  if (isPM && hours < 12) hours += 12;
-  if (isAM && hours === 12) hours = 0;
+  
+  if (isPM && hours < 12) {
+    hours += 12;
+  } else if (isAM && hours === 12) {
+    hours = 0;
+  } else if (!isPM && !isAM) {
+    // In daytime university schedules, hours 1 to 6 without AM/PM marker represent afternoon (13:00 to 18:00)
+    // whereas hours 7 to 12 represent morning (07:00 to 12:00) and 13 to 23 are already 24-hour afternoon/evening.
+    if (hours >= 1 && hours <= 6) {
+      hours += 12;
+    }
+  }
   return hours * 60 + minutes;
+}
+
+function normalizeTimeTo24h(timeStr) {
+  if (!timeStr) return '08:00';
+  const totalMins = parseTimeToMinutes(timeStr);
+  const h24 = Math.floor(totalMins / 60) % 24;
+  const m = totalMins % 60;
+  return `${h24 < 10 ? '0' + h24 : h24}:${m < 10 ? '0' + m : m}`;
+}
+
+function formatTimeTo12h(timeStr) {
+  if (!timeStr) return '';
+  const totalMins = parseTimeToMinutes(timeStr);
+  const h24 = Math.floor(totalMins / 60) % 24;
+  const m = totalMins % 60;
+  const period = h24 >= 12 ? 'PM' : 'AM';
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  const mStr = m < 10 ? '0' + m : m;
+  return `${h12}:${mStr} ${period}`;
+}
+
+function formatSlotRange12h(slotStr) {
+  if (!slotStr) return '';
+  const parts = slotStr.split('-');
+  if (parts.length < 2) return formatTimeTo12h(slotStr);
+  return `${formatTimeTo12h(parts[0])} – ${formatTimeTo12h(parts[1])}`;
+}
+
+function slotsOverlap(sStart, sEnd, cStart, cEnd) {
+  return Math.max(sStart, cStart) < Math.min(sEnd, cEnd);
 }
 
 function detectRoutineConflicts(entries) {
@@ -8188,11 +8320,11 @@ function detectRoutineConflicts(entries) {
     for (let i = 0; i < list.length; i++) {
       for (let j = i + 1; j < list.length; j++) {
         const startA = parseTimeToMinutes(list[i].startTime);
-        const endA = parseTimeToMinutes(list[i].endTime);
+        const endA = parseTimeToMinutes(list[i].endTime) || (startA + 50);
         const startB = parseTimeToMinutes(list[j].startTime);
-        const endB = parseTimeToMinutes(list[j].endTime);
+        const endB = parseTimeToMinutes(list[j].endTime) || (startB + 50);
         // Overlap condition
-        if (startA < endB && endA > startB) {
+        if (slotsOverlap(startA, endA, startB, endB)) {
           conflictIds.add(list[i].id);
           conflictIds.add(list[j].id);
         }
@@ -8309,7 +8441,7 @@ function renderMyRoutineStudio() {
             <tr class="bg-slate-900/90 border-b border-slate-800 text-[11px] font-bold text-slate-300">
               <th class="p-3 border-r border-slate-800 w-28 text-center uppercase tracking-wider text-indigo-400">Day / Time</th>
               ${timeSlots.map(slot => `
-                <th class="p-3 border-r border-slate-800/80 text-center font-mono">${slot}</th>
+                <th class="p-3 border-r border-slate-800/80 text-center font-mono">${formatSlotRange12h(slot)}</th>
               `).join('')}
             </tr>
           </thead>
@@ -8326,11 +8458,14 @@ function renderMyRoutineStudio() {
                     </button>
                   </td>
                   ${timeSlots.map(slot => {
-                    // Match entries in this slot
+                    const parts = slot.split('-');
+                    const slotStart = parseTimeToMinutes(parts[0]);
+                    const slotEnd = parts.length > 1 ? parseTimeToMinutes(parts[1]) : (slotStart + 50);
+                    // Match entries using proper interval overlap (long labs & off-schedule classes appear properly!)
                     const matching = dayEntries.filter(e => {
-                      const slotStart = parseTimeToMinutes(slot.split('-')[0]);
                       const eStart = parseTimeToMinutes(e.startTime);
-                      return Math.abs(slotStart - eStart) <= 30;
+                      const eEnd = e.endTime ? parseTimeToMinutes(e.endTime) : (eStart + 50);
+                      return slotsOverlap(slotStart, slotEnd, eStart, eEnd);
                     });
 
                     if (matching.length === 0) {
@@ -8483,8 +8618,14 @@ function openAddRoutineSlotModal(prefillDay, prefillTime) {
 
   if (daySel && prefillDay) daySel.value = prefillDay;
   if (startInp && prefillTime) {
-    const formatted = prefillTime.includes(':') ? prefillTime.trim() : `${prefillTime.trim()}:00`;
-    startInp.value = formatted;
+    startInp.value = normalizeTimeTo24h(prefillTime);
+    if (endInp && !endInp.value) {
+      const startMin = parseTimeToMinutes(startInp.value);
+      const endMin = startMin + 50;
+      const h = Math.floor(endMin / 60) % 24;
+      const m = endMin % 60;
+      endInp.value = `${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}`;
+    }
   }
 
   if (modal) modal.showModal();
@@ -8787,37 +8928,258 @@ async function exportMyRoutineDocx() {
   const routine = getMyPersonalRoutine();
 
   if (typeof JSZip === 'undefined') {
-    showToast('Exporting... Word template is generating.');
+    showToast('Word generator loading... Please wait.', 3000);
   }
 
   try {
-    showToast('Word (.docx) রুটিন তৈরি হচ্ছে...');
-    // Fetch clean Word template
+    showToast('Generating personalized Word (.docx) timetable...');
+    // Fetch clean template containing styles and fonts
     const res = await fetch('cuet_routine_template_blank.docx');
-    if (!res.ok) throw new Error('Could not fetch template');
+    if (!res.ok) throw new Error('Could not fetch base Word template');
     const arrayBuffer = await res.arrayBuffer();
 
     const zip = await JSZip.loadAsync(arrayBuffer);
-    let docXml = await zip.file('word/document.xml').async('text');
 
-    // Update Header Text in Word Document
-    const semText = `Level: ${routine.semester || '4'} | Section: ${routine.section || 'B'} | Batch: ${routine.batch || "'20"} | Room: ${routine.room || 'ME-304'}`;
-    docXml = docXml.replace(/Level:[^<]*/, semText);
+    // Escape XML helper
+    const escapeXml = (s) => {
+      if (!s) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    };
 
-    // Populate class entries into days (Sun-Thu)
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
-    days.forEach(dayAbbr => {
-      const fullDay = dayAbbr === 'Sun' ? 'Sunday' :
-                      dayAbbr === 'Mon' ? 'Monday' :
-                      dayAbbr === 'Tue' ? 'Tuesday' :
-                      dayAbbr === 'Wed' ? 'Wednesday' : 'Thursday';
+    const timeSlots = (routine.timeSlots && routine.timeSlots.length > 0)
+      ? routine.timeSlots
+      : ['08:00 - 08:50', '08:50 - 09:40', '10:00 - 10:50', '10:50 - 11:40', '11:40 - 12:30', '13:30 - 14:20', '14:30 - 17:00'];
+    const activeDays = (routine.days && routine.days.length > 0)
+      ? routine.days
+      : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
-      const dayClasses = routine.entries.filter(e => e.day === fullDay);
-      if (dayClasses.length > 0) {
-        const classSummary = dayClasses.map(c => `${c.courseCode} (${c.room || ''})`).join(' | ');
-        // Inject summary into day row if matching tag exists
-      }
+    const colDayW = 1600;
+    const numSlots = timeSlots.length;
+    const slotW = Math.max(1200, Math.floor((15198 - colDayW) / numSlots));
+    const colWidths = [colDayW, ...timeSlots.map(() => slotW)];
+
+    // Build Table Header
+    const thCells = [
+      `<w:tc>
+        <w:tcPr>
+          <w:tcW w:w="${colWidths[0]}" w:type="dxa"/>
+          <w:shd w:val="clear" w:color="auto" w:fill="EDF2F7"/>
+          <w:vAlign w:val="center"/>
+        </w:tcPr>
+        <w:p>
+          <w:pPr><w:jc w:val="center"/></w:pPr>
+          <w:r><w:rPr><w:b/><w:sz w:val="18"/><w:color w:val="1A365D"/></w:rPr><w:t>Day / Time</w:t></w:r>
+        </w:p>
+      </w:tc>`
+    ];
+
+    timeSlots.forEach((slot, i) => {
+      thCells.push(`
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="${colWidths[i+1]}" w:type="dxa"/>
+            <w:shd w:val="clear" w:color="auto" w:fill="EDF2F7"/>
+            <w:vAlign w:val="center"/>
+          </w:tcPr>
+          <w:p>
+            <w:pPr><w:jc w:val="center"/><w:spacing w:after="20"/></w:pPr>
+            <w:r><w:rPr><w:b/><w:sz w:val="15"/><w:color w:val="1A365D"/></w:rPr><w:t>${escapeXml(formatSlotRange12h(slot))}</w:t></w:r>
+          </w:p>
+        </w:tc>
+      `);
     });
+
+    const headerTr = `<w:tr><w:trPr><w:tblHeader/></w:trPr>${thCells.join('')}</w:tr>`;
+
+    // Build Data Rows
+    const bodyRows = [];
+    activeDays.forEach(day => {
+      const dayEntries = routine.entries.filter(e => e.day === day);
+      const rowCells = [
+        `<w:tc>
+          <w:tcPr>
+            <w:tcW w:w="${colWidths[0]}" w:type="dxa"/>
+            <w:shd w:val="clear" w:color="auto" w:fill="F7FAFC"/>
+            <w:vAlign w:val="center"/>
+          </w:tcPr>
+          <w:p>
+            <w:pPr><w:jc w:val="center"/></w:pPr>
+            <w:r><w:rPr><w:b/><w:sz w:val="18"/><w:color w:val="2D3748"/></w:rPr><w:t>${escapeXml(day)}</w:t></w:r>
+          </w:p>
+        </w:tc>`
+      ];
+
+      timeSlots.forEach((slot, i) => {
+        const parts = slot.split('-');
+        const sStart = parseTimeToMinutes(parts[0]);
+        const sEnd = parts.length > 1 ? parseTimeToMinutes(parts[1]) : (sStart + 50);
+
+        // Interval overlap matching
+        const matching = dayEntries.filter(e => {
+          const eStart = parseTimeToMinutes(e.startTime);
+          const eEnd = e.endTime ? parseTimeToMinutes(e.endTime) : (eStart + 50);
+          return slotsOverlap(sStart, sEnd, eStart, eEnd);
+        });
+
+        if (matching.length === 0) {
+          rowCells.push(`
+            <w:tc>
+              <w:tcPr>
+                <w:tcW w:w="${colWidths[i+1]}" w:type="dxa"/>
+                <w:shd w:val="clear" w:color="auto" w:fill="FFFFFF"/>
+                <w:vAlign w:val="center"/>
+              </w:tcPr>
+              <w:p>
+                <w:pPr><w:jc w:val="center"/></w:pPr>
+                <w:r><w:rPr><w:sz w:val="14"/><w:color w:val="CBD5E0"/></w:rPr><w:t>-</w:t></w:r>
+              </w:p>
+            </w:tc>
+          `);
+        } else {
+          const pList = [];
+          matching.forEach(item => {
+            pList.push(`
+              <w:p>
+                <w:pPr><w:jc w:val="center"/><w:spacing w:after="20"/></w:pPr>
+                <w:r><w:rPr><w:b/><w:sz w:val="18"/><w:color w:val="1A365D"/></w:rPr><w:t>${escapeXml(item.courseCode)}</w:t></w:r>
+              </w:p>
+            `);
+            if (item.courseName) {
+              pList.push(`
+                <w:p>
+                  <w:pPr><w:jc w:val="center"/><w:spacing w:after="20"/></w:pPr>
+                  <w:r><w:rPr><w:sz w:val="15"/><w:color w:val="2D3748"/></w:rPr><w:t>${escapeXml(item.courseName)}</w:t></w:r>
+                </w:p>
+              `);
+            }
+            const infoParts = [item.room ? `Room: ${item.room}` : '', item.teacher || ''].filter(Boolean);
+            if (infoParts.length > 0) {
+              pList.push(`
+                <w:p>
+                  <w:pPr><w:jc w:val="center"/><w:spacing w:after="20"/></w:pPr>
+                  <w:r><w:rPr><w:sz w:val="14"/><w:color w:val="4A5568"/></w:rPr><w:t>${escapeXml(infoParts.join(' | '))}</w:t></w:r>
+                </w:p>
+              `);
+            }
+            pList.push(`
+              <w:p>
+                <w:pPr><w:jc w:val="center"/><w:spacing w:after="40"/></w:pPr>
+                <w:r><w:rPr><w:i/><w:sz w:val="13"/><w:color w:val="718096"/></w:rPr><w:t>${escapeXml(formatTimeTo12h(item.startTime) + ' – ' + formatTimeTo12h(item.endTime))}${item.notes ? ' (' + escapeXml(item.notes) + ')' : ''}</w:t></w:r>
+              </w:p>
+            `);
+          });
+
+          rowCells.push(`
+            <w:tc>
+              <w:tcPr>
+                <w:tcW w:w="${colWidths[i+1]}" w:type="dxa"/>
+                <w:shd w:val="clear" w:color="auto" w:fill="F0F9FF"/>
+                <w:vAlign w:val="center"/>
+              </w:tcPr>
+              ${pList.join('')}
+            </w:tc>
+          `);
+        }
+      });
+
+      bodyRows.push(`<w:tr>${rowCells.join('')}</w:tr>`);
+    });
+
+    const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:pPr>
+        <w:jc w:val="center"/>
+        <w:spacing w:before="0" w:after="40" w:line="240" w:lineRule="auto"/>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:b/>
+          <w:sz w:val="28"/>
+          <w:color w:val="1A365D"/>
+        </w:rPr>
+        <w:t>CHITTAGONG UNIVERSITY OF ENGINEERING AND TECHNOLOGY (CUET)</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:pPr>
+        <w:jc w:val="center"/>
+        <w:spacing w:before="0" w:after="40" w:line="220" w:lineRule="auto"/>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:b/>
+          <w:sz w:val="22"/>
+          <w:color w:val="2B6CB0"/>
+        </w:rPr>
+        <w:t>Department of Mechanical Engineering — Student Timetable</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:pPr>
+        <w:jc w:val="center"/>
+        <w:spacing w:before="0" w:after="160" w:line="220" w:lineRule="auto"/>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:sz w:val="18"/>
+          <w:color w:val="4A5568"/>
+        </w:rPr>
+        <w:t>Routine: ${escapeXml(routine.title || 'Personal Schedule')}  |  Semester: ${escapeXml(routine.semester || 'ME')}  |  Section: ${escapeXml(routine.section || '')}  |  Batch: ${escapeXml(routine.batch || '')}  |  Room: ${escapeXml(routine.room || '')}</w:t>
+      </w:r>
+    </w:p>
+
+    <w:tbl>
+      <w:tblPr>
+        <w:tblStyle w:val="TableGrid"/>
+        <w:tblW w:w="15198" w:type="dxa"/>
+        <w:jc w:val="center"/>
+        <w:tblBorders>
+          <w:top w:val="single" w:sz="8" w:space="0" w:color="2B6CB0"/>
+          <w:bottom w:val="single" w:sz="8" w:space="0" w:color="2B6CB0"/>
+          <w:left w:val="single" w:sz="8" w:space="0" w:color="2B6CB0"/>
+          <w:right w:val="single" w:sz="8" w:space="0" w:color="2B6CB0"/>
+          <w:insideH w:val="single" w:sz="4" w:space="0" w:color="CBD5E0"/>
+          <w:insideV w:val="single" w:sz="4" w:space="0" w:color="CBD5E0"/>
+        </w:tblBorders>
+        <w:tblCellMar>
+          <w:top w:w="120" w:type="dxa"/>
+          <w:left w:w="140" w:type="dxa"/>
+          <w:bottom w:w="120" w:type="dxa"/>
+          <w:right w:w="140" w:type="dxa"/>
+        </w:tblCellMar>
+      </w:tblPr>
+      <w:tblGrid>
+        ${colWidths.map(w => `<w:gridCol w:w="${w}"/>`).join('')}
+      </w:tblGrid>
+      ${headerTr}
+      ${bodyRows.join('')}
+    </w:tbl>
+
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="160" w:after="0"/>
+      </w:pPr>
+      <w:r>
+        <w:rPr><w:sz w:val="14"/><w:color w:val="718096"/></w:rPr>
+        <w:t>Exported from Classroom Hub Personal Timetable Studio. Fully editable in Microsoft Word.</w:t>
+      </w:r>
+    </w:p>
+
+    <w:sectPr>
+      <w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>
+      <w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="720" w:footer="720" w:gutter="0"/>
+      <w:cols w:space="720"/>
+      <w:docGrid w:linePitch="360"/>
+    </w:sectPr>
+  </w:body>
+</w:document>`;
 
     zip.file('word/document.xml', docXml);
     const outBlob = await zip.generateAsync({
@@ -8828,19 +9190,83 @@ async function exportMyRoutineDocx() {
     const url = URL.createObjectURL(outBlob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `CUET_Class_Routine_${(routine.semester || 'ME').replace(/\s+/g, '_')}_${(routine.section || 'Sec').replace(/\s+/g, '_')}.docx`;
+    a.download = `CUET_Class_Routine_${(routine.semester || 'ME').replace(/\s+/g, '_')}_${(routine.section || 'Personal').replace(/\s+/g, '_')}.docx`;
     a.click();
     URL.revokeObjectURL(url);
     showToast('ওয়ার্ড (.docx) রুটিন সফলভাবে ডাউনলোড হয়েছে! মাইক্রোসফট ওয়ার্ডে সরাসরি ওপেন ও এডিট করতে পারবেন।');
   } catch (err) {
     console.error('Word export error:', err);
-    // Fallback: Direct download of pristine blank docx template
-    const a = document.createElement('a');
-    a.href = 'cuet_routine_template_blank.docx';
-    a.download = 'CUET_ME_Routine_Template_Editable.docx';
-    a.click();
-    showToast('এডিটেবল ওয়ার্ড (.docx) রুটিন টেমপ্লেট ডাউনলোড হয়েছে!');
+    // Explicit error message and option to download blank template
+    alert(`Word এক্সপোর্ট করতে একটি সমস্যা হয়েছে: ${err.message || 'Template processing error'}\n\nআপনি চাইলে সরাসরি ব্ল্যাঙ্ক টেমপ্লেটটি ডাউনলোড করতে পারেন।`);
+    openRoutineDocxDownloadModal();
   }
+}
+
+// ==================== CALENDAR EXPORT (.ICS) FOR GOOGLE / OUTLOOK ====================
+function exportRoutineIcs() {
+  const routine = getMyPersonalRoutine();
+  if (routine.entries.length === 0) {
+    showToast('রুটিনে কোনো ক্লাস নেই। আগে ক্লাস যোগ করুন।');
+    return;
+  }
+
+  const dayMap = {
+    'Sunday': 'SU',
+    'Monday': 'MO',
+    'Tuesday': 'TU',
+    'Wednesday': 'WE',
+    'Thursday': 'TH',
+    'Friday': 'FR',
+    'Saturday': 'SA'
+  };
+
+  let ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//ClassroomHub//CUET Student Routine Studio//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    `X-WR-CALNAME:CUET Routine - ${routine.semester || 'ME'} ${routine.section || ''}`
+  ];
+
+  const now = new Date();
+  const stamp = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+  routine.entries.forEach(e => {
+    const byDay = dayMap[e.day] || 'SU';
+    const sMins = parseTimeToMinutes(e.startTime);
+    const eMins = parseTimeToMinutes(e.endTime) || (sMins + 50);
+    const sH = Math.floor(sMins / 60) % 24;
+    const sM = sMins % 60;
+    const eH = Math.floor(eMins / 60) % 24;
+    const eM = eMins % 60;
+
+    const pad = (n) => n < 10 ? '0' + n : n;
+    const timeStart = `20261101T${pad(sH)}${pad(sM)}00`;
+    const timeEnd = `20261101T${pad(eH)}${pad(eM)}00`;
+
+    ics.push('BEGIN:VEVENT');
+    ics.push(`UID:routine_${e.id || Date.now()}@classroomhub`);
+    ics.push(`DTSTAMP:${stamp}`);
+    ics.push(`DTSTART:${timeStart}`);
+    ics.push(`DTEND:${timeEnd}`);
+    ics.push(`RRULE:FREQ=WEEKLY;BYDAY=${byDay}`);
+    ics.push(`SUMMARY:${e.courseCode} - ${e.courseName || 'Class'}`);
+    ics.push(`LOCATION:${e.room ? 'Room ' + e.room : 'CUET ME'}`);
+    ics.push(`DESCRIPTION:Instructor: ${e.teacher || 'N/A'}\nNotes: ${e.notes || ''}`);
+    ics.push('END:VEVENT');
+  });
+
+  ics.push('END:VCALENDAR');
+
+  const blob = new Blob([ics.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `CUET_Routine_${(routine.semester || 'ME').replace(/\s+/g, '_')}.ics`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('iCalendar (.ics) ফাইল ডাউনলোড হয়েছে! Google Calendar বা Outlook-এ ইমপোর্ট করতে পারবেন।');
 }
 
 // ==================== PRINTABLE LANDSCAPE ENGINE ====================
@@ -8849,22 +9275,26 @@ function printMyRoutine() {
   const printArea = document.getElementById('printableRoutineContainer');
   if (!printArea) return;
 
-  const timeSlots = routine.timeSlots || ['08:00 - 08:50', '08:50 - 09:40', '10:00 - 10:50', '10:50 - 11:40', '11:40 - 12:30', '01:30 - 02:20', '02:30 - 05:00'];
-  const activeDays = routine.days || ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+  const timeSlots = (routine.timeSlots && routine.timeSlots.length > 0)
+    ? routine.timeSlots
+    : ['08:00 - 08:50', '08:50 - 09:40', '10:00 - 10:50', '10:50 - 11:40', '11:40 - 12:30', '13:30 - 14:20', '14:30 - 17:00'];
+  const activeDays = (routine.days && routine.days.length > 0)
+    ? routine.days
+    : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
   printArea.innerHTML = `
     <div style="text-align: center; margin-bottom: 12px; font-family: sans-serif;">
       <h2 style="font-size: 16px; font-weight: bold; margin: 0;">CHITTAGONG UNIVERSITY OF ENGINEERING AND TECHNOLOGY (CUET)</h2>
       <h3 style="font-size: 13px; font-weight: bold; margin: 2px 0;">Department of Mechanical Engineering — Student Timetable</h3>
       <p style="font-size: 11px; color: #444; margin: 4px 0;">
-        <strong>Routine:</strong> ${routine.title} | <strong>Semester:</strong> ${routine.semester} | <strong>Section:</strong> ${routine.section} | <strong>Batch:</strong> ${routine.batch} | <strong>Room:</strong> ${routine.room}
+        <strong>Routine:</strong> ${routine.title || 'Personal Routine'} | <strong>Semester:</strong> ${routine.semester || 'ME'} | <strong>Section:</strong> ${routine.section || ''} | <strong>Batch:</strong> ${routine.batch || ''} | <strong>Room:</strong> ${routine.room || ''}
       </p>
     </div>
     <table style="width: 100%; border-collapse: collapse; font-family: sans-serif;">
       <thead>
         <tr style="background: #e2e8f0;">
           <th style="border: 1px solid #333; padding: 6px; font-size: 11px;">Day</th>
-          ${timeSlots.map(s => `<th style="border: 1px solid #333; padding: 6px; font-size: 10px;">${s}</th>`).join('')}
+          ${timeSlots.map(s => `<th style="border: 1px solid #333; padding: 6px; font-size: 10px;">${formatSlotRange12h(s)}</th>`).join('')}
         </tr>
       </thead>
       <tbody>
@@ -8874,8 +9304,16 @@ function printMyRoutine() {
             <tr>
               <td style="border: 1px solid #333; padding: 8px; font-weight: bold; font-size: 11px; text-align: center; background: #f8fafc;">${day}</td>
               ${timeSlots.map(slot => {
-                const slotStart = parseTimeToMinutes(slot.split('-')[0]);
-                const matching = dayEntries.filter(e => Math.abs(slotStart - parseTimeToMinutes(e.startTime)) <= 30);
+                const parts = slot.split('-');
+                const sStart = parseTimeToMinutes(parts[0]);
+                const sEnd = parts.length > 1 ? parseTimeToMinutes(parts[1]) : (sStart + 50);
+
+                const matching = dayEntries.filter(e => {
+                  const eStart = parseTimeToMinutes(e.startTime);
+                  const eEnd = e.endTime ? parseTimeToMinutes(e.endTime) : (eStart + 50);
+                  return slotsOverlap(sStart, sEnd, eStart, eEnd);
+                });
+
                 if (matching.length === 0) {
                   return `<td style="border: 1px solid #333; padding: 6px; text-align: center; font-size: 10px; color: #999;">-</td>`;
                 }
@@ -8883,8 +9321,9 @@ function printMyRoutine() {
                   <td style="border: 1px solid #333; padding: 6px; vertical-align: top; font-size: 10px;">
                     ${matching.map(m => `
                       <div style="font-weight: bold; color: #000;">${m.courseCode}</div>
-                      <div style="font-size: 9px; color: #333;">${m.courseName}</div>
+                      <div style="font-size: 9px; color: #333;">${m.courseName || ''}</div>
                       <div style="font-size: 9px; color: #555;">🏢 ${m.room || ''} | 👨‍🏫 ${m.teacher || ''}</div>
+                      <div style="font-size: 8px; color: #777;">${formatTimeTo12h(m.startTime)} – ${formatTimeTo12h(m.endTime)}</div>
                     `).join('<hr style="margin: 4px 0; border: none; border-top: 1px dashed #ccc;">')}
                   </td>
                 `;
@@ -8899,7 +9338,6 @@ function printMyRoutine() {
   window.print();
 }
 
-// ==================== PUBLISHED ROUTINE VIEWER CONTROLLER ====================
 function setPublishedRoutineDay(day) {
   publishedRoutineCurrentDay = day;
   ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'].forEach(d => {
@@ -9008,10 +9446,15 @@ const CUET_GRADE_POINTS = {
 };
 
 let cgpaCourseList = [
-  { name: 'ME 4201 Power Plant Engineering', credits: 3.0, grade: 'A+' },
-  { name: 'ME 4202 Power Plant Sessional', credits: 1.5, grade: 'A+' },
-  { name: 'ME 4203 Automobile Engineering', credits: 3.0, grade: 'A' },
-  { name: 'ME 4204 Automobile Sessional', credits: 0.75, grade: 'A+' }
+  { name: 'ME-411 Applied Thermodynamics', credits: 3.0, grade: 'A+' },
+  { name: 'ME-412 Applied Thermodynamics Sessional', credits: 0.75, grade: 'A+' },
+  { name: 'ME-421 Fluid Machinery', credits: 3.0, grade: 'A' },
+  { name: 'ME-422 Fluid Machinery Sessional', credits: 0.75, grade: 'A+' },
+  { name: 'ME-423 Aerodynamics', credits: 3.0, grade: 'A+' },
+  { name: 'ME-455 Mechatronics', credits: 3.0, grade: 'A' },
+  { name: 'ME-456 Mechatronics Sessional', credits: 0.75, grade: 'A+' },
+  { name: 'ME-463 Industrial Management', credits: 3.0, grade: 'A+' },
+  { name: 'ME-498 Project & Thesis', credits: 3.0, grade: 'A+' }
 ];
 
 function renderCgpaRows() {
@@ -9060,26 +9503,37 @@ function removeCgpaCourseRow(index) {
 function loadCgpaPreset(term) {
   if (term === 'L4-T2') {
     cgpaCourseList = [
-      { name: 'ME 4201 Power Plant Engineering', credits: 3.0, grade: 'A+' },
-      { name: 'ME 4202 Power Plant Sessional', credits: 1.5, grade: 'A+' },
-      { name: 'ME 4203 Automobile Engineering', credits: 3.0, grade: 'A+' },
-      { name: 'ME 4204 Automobile Sessional', credits: 0.75, grade: 'A+' },
-      { name: 'ME 4205 Operations Research', credits: 3.0, grade: 'A' },
-      { name: 'IPE 4201 Production Planning & Control', credits: 3.0, grade: 'A' },
-      { name: 'ME 4000 Project & Thesis', credits: 3.0, grade: 'A+' }
+      { name: 'ME-411 Applied Thermodynamics', credits: 3.0, grade: 'A+' },
+      { name: 'ME-412 Applied Thermodynamics Sessional', credits: 0.75, grade: 'A+' },
+      { name: 'ME-421 Fluid Machinery', credits: 3.0, grade: 'A' },
+      { name: 'ME-422 Fluid Machinery Sessional', credits: 0.75, grade: 'A+' },
+      { name: 'ME-423 Aerodynamics', credits: 3.0, grade: 'A+' },
+      { name: 'ME-455 Mechatronics', credits: 3.0, grade: 'A' },
+      { name: 'ME-456 Mechatronics Sessional', credits: 0.75, grade: 'A+' },
+      { name: 'ME-463 Industrial Management', credits: 3.0, grade: 'A+' },
+      { name: 'ME-498 Project & Thesis', credits: 3.0, grade: 'A+' }
+    ];
+  } else if (term === 'L4-T1') {
+    cgpaCourseList = [
+      { name: 'ME-413 Power Plant Engineering', credits: 3.0, grade: 'A+' },
+      { name: 'ME-414 Power Plant Sessional', credits: 0.75, grade: 'A+' },
+      { name: 'ME-417 Refrigeration & Air Conditioning', credits: 3.0, grade: 'A' },
+      { name: 'ME-418 RAC Sessional', credits: 0.75, grade: 'A+' },
+      { name: 'ME-431 Machine Design-II', credits: 3.0, grade: 'A' },
+      { name: 'ME-451 Machine Tools & Tool Engineering', credits: 3.0, grade: 'A' },
+      { name: 'ME-461 Production & Operations Management', credits: 3.0, grade: 'A' }
     ];
   } else {
     cgpaCourseList = [
-      { name: 'ME 411 Internal Combustion Engines', credits: 3.0, grade: 'A+' },
-      { name: 'ME 412 IC Engine Sessional', credits: 1.5, grade: 'A+' },
-      { name: 'ME 413 Refrigeration & Air Conditioning', credits: 3.0, grade: 'A' },
-      { name: 'ME 414 RAC Sessional', credits: 0.75, grade: 'A+' },
-      { name: 'ME 415 Power Plant Engineering I', credits: 3.0, grade: 'A' },
-      { name: 'ME 417 Finite Element Analysis', credits: 3.0, grade: 'A' }
+      { name: 'ME-411 Applied Thermodynamics', credits: 3.0, grade: 'A+' },
+      { name: 'ME-421 Fluid Machinery', credits: 3.0, grade: 'A' },
+      { name: 'ME-423 Aerodynamics', credits: 3.0, grade: 'A+' },
+      { name: 'ME-455 Mechatronics', credits: 3.0, grade: 'A' },
+      { name: 'ME-463 Industrial Management', credits: 3.0, grade: 'A' }
     ];
   }
   renderCgpaRows();
-  showToast(`CUET ${term} কোর্সসমূহ লোড করা হয়েছে!`);
+  showToast(`CUET ${term} অফিসিয়াল সিলেবাসের কোর্সসমূহ লোড করা হয়েছে!`);
 }
 
 function calculateCgpa() {
@@ -9104,19 +9558,9 @@ function calculateCgpa() {
   if (termGpaEl) termGpaEl.textContent = termGpa.toFixed(2);
 
   if (honorBadgeEl) {
-    if (termGpa >= 3.75) {
-      honorBadgeEl.textContent = '🌟 Honours / First Class with Distinction';
-      honorBadgeEl.className = 'text-[10px] text-emerald-400 font-semibold';
-    } else if (termGpa >= 3.00) {
-      honorBadgeEl.textContent = '✓ First Class Standing (CUET)';
-      honorBadgeEl.className = 'text-[10px] text-indigo-400 font-semibold';
-    } else if (termGpa >= 2.25) {
-      honorBadgeEl.textContent = 'Second Class Standing';
-      honorBadgeEl.className = 'text-[10px] text-amber-400 font-semibold';
-    } else {
-      honorBadgeEl.textContent = 'Passing / Retake Required';
-      honorBadgeEl.className = 'text-[10px] text-red-400 font-semibold';
-    }
+    // Neutral representation adhering to CUET Ordinance (no degree classification is awarded from single-term GPA)
+    honorBadgeEl.textContent = `Earned Quality Points: ${totalGradePoints.toFixed(2)} (CUET 4.0 Scale)`;
+    honorBadgeEl.className = 'text-[10px] text-slate-300 font-semibold font-mono';
   }
 
   // Cumulative CGPA calculation
@@ -9825,16 +10269,11 @@ let facultySearchKeyword = '';
 
 function getFacultyMembers() {
   const saved = localStorage.getItem(STORAGE_KEYS.ADMIN_FACULTY);
-  if (saved) {
+  if (saved !== null) {
     try {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length >= 40) {
-        parsed.forEach(f => {
-          if (f.id === 'fac_30' || (f.name && f.name.includes('Fahmida Zahan'))) {
-            f.designation = 'Lab Assistant';
-            f.category = 'STAFF';
-          }
-        });
+      if (Array.isArray(parsed)) {
+        // Return CMS-managed directory without forcing overrides in rendering code
         return parsed;
       }
     } catch (e) {
@@ -10158,18 +10597,6 @@ function saveFeedbackWebhook() {
 }
 
 async function publishToGithub() {
-  const tokenInput = document.getElementById('adminGithubTokenInput');
-  let token = (tokenInput ? tokenInput.value : '').trim() || localStorage.getItem(STORAGE_KEYS.ADMIN_GITHUB_TOKEN);
-
-  if (!token) {
-    token = prompt('দয়া করে আপনার GitHub Personal Access Token (PAT) প্রবেশ করান:\n(This allows publishing live changes to Fahim-Niloy2314/classroom-hub repository):');
-    if (!token) return;
-    token = token.trim();
-  }
-
-  localStorage.setItem(STORAGE_KEYS.ADMIN_GITHUB_TOKEN, token);
-  if (tokenInput) tokenInput.value = token;
-
   const banner = document.getElementById('publishStatusBanner');
   const statusText = document.getElementById('publishStatusText');
   const btn = document.getElementById('publishLiveBtn');
@@ -10177,116 +10604,1140 @@ async function publishToGithub() {
 
   if (banner) banner.classList.remove('hidden');
   if (btn) btn.disabled = true;
-  if (btnText) btnText.textContent = 'Publishing to GitHub...';
+  if (btnText) btnText.textContent = 'Publishing...';
+  if (statusText) statusText.textContent = 'Preparing complete portal synchronization payload (All 13 modules)...';
 
+  // Construct strict allowlist payload without sensitive API keys
+  const cleanSettings = { ...portalSettings };
+  delete cleanSettings.geminiApiKey;
+  delete cleanSettings.openaiApiKey;
+  delete cleanSettings.githubToken;
+  delete cleanSettings.adminPassword;
+  delete cleanSettings.password;
+
+  let storedRegistry = window.CUET_COURSE_REGISTRY;
+  if (!storedRegistry) {
+    try {
+      storedRegistry = JSON.parse(localStorage.getItem('classroom_course_registry') || '{}');
+    } catch (e) {
+      storedRegistry = {};
+    }
+  }
+
+  const payload = {
+    version: '3.3.0',
+    lastUpdated: new Date().toISOString(),
+    publishedBy: currentUser?.name || 'Mohammad Fahim Ahmed (Niloy)',
+    portalSettings: cleanSettings,
+    courseRegistry: storedRegistry,
+    notices: Array.isArray(adminNotices) ? adminNotices : [],
+    faculty: getFacultyMembers(),
+    routines: getStoredRoutine(),
+    customResources: JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMUNITY_RESOURCES) || '[]'),
+    videos: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_VIDEOS) || '[]'),
+    timeline: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_TIMELINE) || '[]'),
+    faqs: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_FAQS) || '[]'),
+    cvTemplates: JSON.parse(localStorage.getItem('classroom_cv_templates') || '[]')
+  };
+
+  // 1. Try Backend Server First (Zero GitHub token needed in browser!)
+  let publishedViaServer = false;
   try {
-    if (statusText) statusText.textContent = 'Preparing live CMS bundle (Notices, Faculty, Routine)...';
+    const adminToken = localStorage.getItem('classroom_admin_token') || '';
+    const srvCheck = await fetch('/api/publish', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        ...(adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {})
+      },
+      body: JSON.stringify({ payload: payload, triggerDeploy: true })
+    });
+    if (srvCheck.ok) {
+      const srvRes = await srvCheck.json();
+      publishedViaServer = true;
+      if (statusText) statusText.textContent = '✓ ' + (srvRes.message || 'Successfully synchronized and deployed live via ClassroomHub server backend!');
+      if (btnText) btnText.textContent = 'Published Live!';
+      showToast('Live changes successfully published via ClassroomHub server backend!');
+      setTimeout(() => {
+        if (banner) banner.classList.add('hidden');
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.textContent = 'Publish Live to All Students';
+      }, 4000);
+      return;
+    }
+  } catch (backendErr) {
+    // Backend server is not running locally (e.g. running on static GitHub Pages or server.py closed)
+    console.log('ClassroomHub server backend not reachable:', backendErr);
+  }
 
+  // 2. If Backend Server is offline, check if browser has a saved GitHub Personal Access Token
+  const tokenInput = document.getElementById('adminGithubTokenInput');
+  let token = (tokenInput ? tokenInput.value : '').trim() || localStorage.getItem(STORAGE_KEYS.ADMIN_GITHUB_TOKEN);
+
+  if (token) {
+    try {
+      if (statusText) statusText.textContent = 'Publishing directly to GitHub Pages via stored token...';
+      const contentStr = JSON.stringify(payload, null, 2);
+      const contentBase64 = btoa(unescape(encodeURIComponent(contentStr)));
+      const repoOwner = 'Fahim-Niloy2314';
+      const repoName = 'classroom-hub';
+      const filePath = 'portal_sync.json';
+      const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+
+      let currentSha = null;
+      try {
+        const checkRes = await fetch(apiUrl, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (checkRes.ok) {
+          const checkData = await checkRes.json();
+          currentSha = checkData.sha;
+        }
+      } catch (e) {}
+
+      const commitBody = {
+        message: `feat(cms): portal sync update from admin [${new Date().toISOString()}]`,
+        content: contentBase64,
+        branch: 'main'
+      };
+      if (currentSha) commitBody.sha = currentSha;
+
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json'
+        },
+        body: JSON.stringify(commitBody)
+      });
+
+      if (putRes.ok) {
+        if (statusText) statusText.textContent = '✓ Live publish successful! GitHub Pages will update in ~30 seconds.';
+        showToast('অভিনন্দন! আপনার পরিবর্তনসমূহ সফলভাবে GitHub Pages এ লাইভ পুশ করা হয়েছে!');
+        setTimeout(() => {
+          if (banner) banner.classList.add('hidden');
+          if (btn) btn.disabled = false;
+          if (btnText) btnText.textContent = 'Publish Live to All Students';
+        }, 4000);
+        return;
+      } else {
+        const errData = await putRes.json();
+        throw new Error(errData.message || 'GitHub API rejected commit');
+      }
+    } catch (gitErr) {
+      console.warn('GitHub direct API publish error:', gitErr);
+    }
+  }
+
+  // 3. If neither backend server nor valid GitHub token is available, offer direct portal_sync.json download without prompt() popup
+  if (statusText) statusText.textContent = 'Local changes saved in browser. Server is offline.';
+  downloadPortalSyncJsonFile(payload);
+  showToast('ClassroomHub server অফলাইনে থাকায় portal_sync.json ফাইলটি ডাউনলোড করা হয়েছে। এটি রিপোজিটরিতে সেভ করুন বা python server.py চালু করুন।', 6000);
+
+  setTimeout(() => {
+    if (banner) banner.classList.add('hidden');
+    if (btn) btn.disabled = false;
+    if (btnText) btnText.textContent = 'Publish Live to All Students';
+  }, 4000);
+}
+
+function downloadPortalSyncJsonFile(customPayload) {
+  let payload = customPayload;
+  if (!payload) {
     const cleanSettings = { ...portalSettings };
     delete cleanSettings.geminiApiKey;
     delete cleanSettings.openaiApiKey;
     delete cleanSettings.githubToken;
+    delete cleanSettings.adminPassword;
+    delete cleanSettings.password;
 
-    const payload = {
-      version: '3.2.0',
-      lastPublished: new Date().toISOString(),
-      publisher: currentUser?.name || 'Fahim Niloy (Admin)',
-      portalSettings: cleanSettings,
-      notices: adminNotices,
-      faculty: getFacultyMembers(),
-      routines: getStoredRoutine()
-    };
-
-    const contentStr = JSON.stringify(payload, null, 2);
-    // Base64 encode UTF-8
-    const contentBase64 = btoa(unescape(encodeURIComponent(contentStr)));
-
-    // Check if secure backend server is available for server-side publishing
-    let publishedViaServer = false;
-    try {
-      const srvCheck = await fetch('/api/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload: payload, triggerDeploy: true })
-      });
-      if (srvCheck.ok) {
-        const srvRes = await srvCheck.json();
-        publishedViaServer = true;
-        if (statusText) statusText.textContent = 'Successfully published and synchronized via ClassroomHub server backend!';
-        if (btnText) btnText.textContent = 'Published Live!';
-        setTimeout(() => {
-          if (banner) banner.classList.add('hidden');
-          if (btn) btn.disabled = false;
-          if (btnText) btnText.textContent = 'Publish Changes to GitHub';
-        }, 3000);
-        showToast('Live changes successfully published via backend deployer!');
-        return;
-      }
-    } catch (e) {
-      // Backend not running locally, proceed with client deploy or prompt
+    let storedRegistry = window.CUET_COURSE_REGISTRY;
+    if (!storedRegistry) {
+      try { storedRegistry = JSON.parse(localStorage.getItem('classroom_course_registry') || '{}'); } catch(e) { storedRegistry = {}; }
     }
 
-    const repoOwner = 'Fahim-Niloy2314';
-    const repoName = 'classroom-hub';
-    const filePath = 'portal_sync.json';
-    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+    payload = {
+      version: '3.3.0',
+      lastUpdated: new Date().toISOString(),
+      publishedBy: currentUser?.name || 'Mohammad Fahim Ahmed (Niloy)',
+      portalSettings: cleanSettings,
+      courseRegistry: storedRegistry,
+      notices: Array.isArray(adminNotices) ? adminNotices : [],
+      faculty: getFacultyMembers(),
+      routines: getStoredRoutine(),
+      customResources: JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMUNITY_RESOURCES) || '[]'),
+      videos: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_VIDEOS) || '[]'),
+      timeline: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_TIMELINE) || '[]'),
+      faqs: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_FAQS) || '[]'),
+      cvTemplates: JSON.parse(localStorage.getItem('classroom_cv_templates') || '[]')
+    };
+  }
 
-    if (statusText) statusText.textContent = 'Checking existing remote file state on GitHub...';
+  const jsonBlob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(jsonBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'portal_sync.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('portal_sync.json ফাইলটি ডাউনলোড সম্পন্ন হয়েছে!');
+}
 
-    let currentSha = null;
-    try {
-      const checkRes = await fetch(apiUrl, {
-        headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
+
+
+// =========================================================================
+// 20. CUET STUDENT CV & RESUME BUILDER ENGINE (100% PRIVATE & OFFLINE)
+// =========================================================================
+
+let cvCurrentTemplate = 'template_job';
+let cvCurrentDraftName = 'default';
+
+const DEFAULT_BLANK_CV_DATA = {
+  fullName: '',
+  title: '',
+  email: '',
+  phone: '',
+  location: '',
+  linkedin: '',
+  github: '',
+  portfolio: '',
+  showPhoto: false,
+  photoUrl: '',
+  summary: '',
+  education: [
+    {
+      degree: 'B.Sc. in Mechanical Engineering',
+      institution: 'Chittagong University of Engineering and Technology (CUET)',
+      period: '2020 – 2025',
+      gpa: 'CGPA: 3.80 / 4.00',
+      honors: "Dean's List Award"
+    }
+  ],
+  experience: [
+    {
+      role: 'Engineering Intern',
+      company: 'Industrial Training / Engineering Firm',
+      period: '2024',
+      description: 'Assisted in mechanical maintenance, thermo-fluid system inspection, and equipment operation.'
+    }
+  ],
+  projects: [
+    {
+      title: 'Capstone Design / Thermal System Project',
+      tools: 'SolidWorks, ANSYS Fluent, MATLAB',
+      period: '2024 – 2025',
+      description: 'Designed and simulated aerodynamic and thermal characteristics. Performed FEA and CFD validation.',
+      link: ''
+    }
+  ],
+  research: [
+    {
+      title: 'Undergraduate Thesis / Research Investigation',
+      authors: 'Student Name, Advisor Name',
+      journal: 'CUET Dept of Mechanical Engineering',
+      year: '2025',
+      doi: ''
+    }
+  ],
+  skills: [
+    { category: 'CAD & 3D Modeling', items: 'SolidWorks, AutoCAD, PTC Creo' },
+    { category: 'Simulation & Analysis', items: 'ANSYS Fluent, FEA Structural, MATLAB' },
+    { category: 'Programming & Data', items: 'Python, C++, Arduino' }
+  ],
+  certifications: 'Certified SolidWorks Associate (CSWA) — Dassault Systèmes\nIndustrial Automation Training — CUET',
+  awards: "Dean's Honor List (6 Semesters)\nInter-University CAD Modeling Challenge — Finalist",
+  references: 'Available upon request'
+};
+
+function getStoredCvDrafts() {
+  try {
+    const saved = localStorage.getItem('classroom_cv_drafts');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') return parsed;
+    }
+  } catch (e) {
+    console.warn('Error reading CV drafts:', e);
+  }
+  return { 'default': JSON.parse(JSON.stringify(DEFAULT_BLANK_CV_DATA)) };
+}
+
+function saveStoredCvDrafts(drafts) {
+  localStorage.setItem('classroom_cv_drafts', JSON.stringify(drafts));
+}
+
+function getActiveCvData() {
+  const drafts = getStoredCvDrafts();
+  return drafts[cvCurrentDraftName] || JSON.parse(JSON.stringify(DEFAULT_BLANK_CV_DATA));
+}
+
+function saveActiveCvData(data) {
+  const drafts = getStoredCvDrafts();
+  drafts[cvCurrentDraftName] = data;
+  saveStoredCvDrafts(drafts);
+}
+
+function scrollToolSection(toolName) {
+  let el = null;
+  if (toolName === 'routine') el = document.getElementById('routineStudioMainCard');
+  else if (toolName === 'cv') el = document.getElementById('cvBuilderMainCard');
+  else if (toolName === 'cgpa') el = document.querySelector('#homeSubPanel-tools .glass-card:last-of-type');
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function initCvBuilder() {
+  const drafts = getStoredCvDrafts();
+  const select = document.getElementById('cvDraftsSelect');
+  if (select) {
+    select.innerHTML = Object.keys(drafts).map(name => `
+      <option value="${name}" ${name === cvCurrentDraftName ? 'selected' : ''}>${name}</option>
+    `).join('');
+  }
+
+  const cv = getActiveCvData();
+  const setVal = (id, val) => {
+    const inp = document.getElementById(id);
+    if (inp) inp.value = val || '';
+  };
+
+  setVal('cvInput-fullName', cv.fullName);
+  setVal('cvInput-title', cv.title);
+  setVal('cvInput-email', cv.email);
+  setVal('cvInput-phone', cv.phone);
+  setVal('cvInput-location', cv.location);
+  setVal('cvInput-linkedin', cv.linkedin);
+  setVal('cvInput-github', cv.github);
+  setVal('cvInput-portfolio', cv.portfolio);
+  setVal('cvInput-summary', cv.summary);
+  setVal('cvInput-certifications', cv.certifications);
+  setVal('cvInput-awards', cv.awards);
+  setVal('cvInput-references', cv.references);
+
+  const photoChk = document.getElementById('cvInput-showPhoto');
+  if (photoChk) photoChk.checked = !!cv.showPhoto;
+
+  renderCvFormArrays();
+  updateCvLivePreview();
+}
+
+function switchCvTemplate(tplId) {
+  cvCurrentTemplate = tplId;
+  ['job', 'eng', 'academic'].forEach(t => {
+    const btn = document.getElementById(`cvTplBtn-${t}`);
+    if (btn) {
+      if (`template_${t}` === tplId) {
+        btn.className = 'px-3 py-1.5 rounded-xl font-bold transition-all bg-indigo-600 text-white shadow-sm whitespace-nowrap';
+      } else {
+        btn.className = 'px-3 py-1.5 rounded-xl font-medium transition-all bg-slate-900 hover:bg-slate-800 text-slate-300 whitespace-nowrap';
+      }
+    }
+  });
+  updateCvLivePreview();
+}
+
+function renderCvFormArrays() {
+  const cv = getActiveCvData();
+
+  // Education List
+  const eduContainer = document.getElementById('cvEducationListContainer');
+  if (eduContainer) {
+    eduContainer.innerHTML = (cv.education || []).map((e, idx) => `
+      <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-slate-300">Degree / Institution #${idx + 1}</span>
+          <button type="button" onclick="removeCvEducationItem(${idx})" class="text-slate-500 hover:text-red-400 p-1">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <input type="text" value="${e.degree || ''}" oninput="updateCvArrayItem('education', ${idx}, 'degree', this.value)" placeholder="Degree Name" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+          <input type="text" value="${e.institution || ''}" oninput="updateCvArrayItem('education', ${idx}, 'institution', this.value)" placeholder="Institution / University" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <input type="text" value="${e.period || ''}" oninput="updateCvArrayItem('education', ${idx}, 'period', this.value)" placeholder="Period (e.g. 2020 – 2025)" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+          <input type="text" value="${e.gpa || ''}" oninput="updateCvArrayItem('education', ${idx}, 'gpa', this.value)" placeholder="GPA / CGPA" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+          <input type="text" value="${e.honors || ''}" oninput="updateCvArrayItem('education', ${idx}, 'honors', this.value)" placeholder="Honors / Position" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Experience List
+  const expContainer = document.getElementById('cvExperienceListContainer');
+  if (expContainer) {
+    expContainer.innerHTML = (cv.experience || []).map((e, idx) => `
+      <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-slate-300">Experience #${idx + 1}</span>
+          <button type="button" onclick="removeCvExperienceItem(${idx})" class="text-slate-500 hover:text-red-400 p-1">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <input type="text" value="${e.role || ''}" oninput="updateCvArrayItem('experience', ${idx}, 'role', this.value)" placeholder="Role / Position" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+          <input type="text" value="${e.company || ''}" oninput="updateCvArrayItem('experience', ${idx}, 'company', this.value)" placeholder="Company / Organization" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+          <input type="text" value="${e.period || ''}" oninput="updateCvArrayItem('experience', ${idx}, 'period', this.value)" placeholder="Duration (e.g. 2024)" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+        </div>
+        <textarea oninput="updateCvArrayItem('experience', ${idx}, 'description', this.value)" rows="2" placeholder="Responsibilities and achievements (bullet points)..." class="w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-200 text-xs outline-none leading-relaxed">${e.description || ''}</textarea>
+      </div>
+    `).join('');
+  }
+
+  // Projects List
+  const projContainer = document.getElementById('cvProjectsListContainer');
+  if (projContainer) {
+    projContainer.innerHTML = (cv.projects || []).map((p, idx) => `
+      <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-slate-300">Project #${idx + 1}</span>
+          <button type="button" onclick="removeCvProjectItem(${idx})" class="text-slate-500 hover:text-red-400 p-1">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <input type="text" value="${p.title || ''}" oninput="updateCvArrayItem('projects', ${idx}, 'title', this.value)" placeholder="Project Title" class="sm:col-span-2 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+          <input type="text" value="${p.tools || ''}" oninput="updateCvArrayItem('projects', ${idx}, 'tools', this.value)" placeholder="Tools (e.g. SolidWorks, FEA)" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-indigo-300 text-xs outline-none">
+        </div>
+        <textarea oninput="updateCvArrayItem('projects', ${idx}, 'description', this.value)" rows="2" placeholder="Project objectives, methodology, and quantifiable outcomes..." class="w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-200 text-xs outline-none leading-relaxed">${p.description || ''}</textarea>
+      </div>
+    `).join('');
+  }
+
+  // Research List
+  const resContainer = document.getElementById('cvResearchListContainer');
+  if (resContainer) {
+    resContainer.innerHTML = (cv.research || []).map((r, idx) => `
+      <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-slate-300">Publication / Thesis #${idx + 1}</span>
+          <button type="button" onclick="removeCvResearchItem(${idx})" class="text-slate-500 hover:text-red-400 p-1">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        <input type="text" value="${r.title || ''}" oninput="updateCvArrayItem('research', ${idx}, 'title', this.value)" placeholder="Paper / Thesis Title" class="w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <input type="text" value="${r.authors || ''}" oninput="updateCvArrayItem('research', ${idx}, 'authors', this.value)" placeholder="Authors" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+          <input type="text" value="${r.journal || ''}" oninput="updateCvArrayItem('research', ${idx}, 'journal', this.value)" placeholder="Journal / Conference" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+          <input type="text" value="${r.year || ''}" oninput="updateCvArrayItem('research', ${idx}, 'year', this.value)" placeholder="Year / Status" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Skills List
+  const skContainer = document.getElementById('cvSkillsListContainer');
+  if (skContainer) {
+    skContainer.innerHTML = (cv.skills || []).map((s, idx) => `
+      <div class="flex items-center gap-2">
+        <input type="text" value="${s.category || ''}" oninput="updateCvArrayItem('skills', ${idx}, 'category', this.value)" placeholder="Category" class="w-1/3 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-indigo-300 font-semibold text-xs outline-none">
+        <input type="text" value="${s.items || ''}" oninput="updateCvArrayItem('skills', ${idx}, 'items', this.value)" placeholder="Skills / Software List" class="w-2/3 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none">
+        <button type="button" onclick="removeCvSkillItem(${idx})" class="text-slate-500 hover:text-red-400 p-1">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function updateCvArrayItem(arrayName, index, field, value) {
+  const cv = getActiveCvData();
+  if (cv[arrayName] && cv[arrayName][index]) {
+    cv[arrayName][index][field] = value;
+    saveActiveCvData(cv);
+    updateCvLivePreview();
+  }
+}
+
+function addCvEducationItem() {
+  const cv = getActiveCvData();
+  if (!cv.education) cv.education = [];
+  cv.education.push({ degree: '', institution: '', period: '', gpa: '', honors: '' });
+  saveActiveCvData(cv);
+  renderCvFormArrays();
+  updateCvLivePreview();
+}
+
+function removeCvEducationItem(idx) {
+  const cv = getActiveCvData();
+  if (cv.education && cv.education.length > 0) {
+    cv.education.splice(idx, 1);
+    saveActiveCvData(cv);
+    renderCvFormArrays();
+    updateCvLivePreview();
+  }
+}
+
+function addCvExperienceItem() {
+  const cv = getActiveCvData();
+  if (!cv.experience) cv.experience = [];
+  cv.experience.push({ role: '', company: '', period: '', description: '' });
+  saveActiveCvData(cv);
+  renderCvFormArrays();
+  updateCvLivePreview();
+}
+
+function removeCvExperienceItem(idx) {
+  const cv = getActiveCvData();
+  if (cv.experience && cv.experience.length > 0) {
+    cv.experience.splice(idx, 1);
+    saveActiveCvData(cv);
+    renderCvFormArrays();
+    updateCvLivePreview();
+  }
+}
+
+function addCvProjectItem() {
+  const cv = getActiveCvData();
+  if (!cv.projects) cv.projects = [];
+  cv.projects.push({ title: '', tools: '', period: '', description: '', link: '' });
+  saveActiveCvData(cv);
+  renderCvFormArrays();
+  updateCvLivePreview();
+}
+
+function removeCvProjectItem(idx) {
+  const cv = getActiveCvData();
+  if (cv.projects && cv.projects.length > 0) {
+    cv.projects.splice(idx, 1);
+    saveActiveCvData(cv);
+    renderCvFormArrays();
+    updateCvLivePreview();
+  }
+}
+
+function addCvResearchItem() {
+  const cv = getActiveCvData();
+  if (!cv.research) cv.research = [];
+  cv.research.push({ title: '', authors: '', journal: '', year: '', doi: '' });
+  saveActiveCvData(cv);
+  renderCvFormArrays();
+  updateCvLivePreview();
+}
+
+function removeCvResearchItem(idx) {
+  const cv = getActiveCvData();
+  if (cv.research && cv.research.length > 0) {
+    cv.research.splice(idx, 1);
+    saveActiveCvData(cv);
+    renderCvFormArrays();
+    updateCvLivePreview();
+  }
+}
+
+function addCvSkillItem() {
+  const cv = getActiveCvData();
+  if (!cv.skills) cv.skills = [];
+  cv.skills.push({ category: 'Category', items: '' });
+  saveActiveCvData(cv);
+  renderCvFormArrays();
+  updateCvLivePreview();
+}
+
+function removeCvSkillItem(idx) {
+  const cv = getActiveCvData();
+  if (cv.skills && cv.skills.length > 0) {
+    cv.skills.splice(idx, 1);
+    saveActiveCvData(cv);
+    renderCvFormArrays();
+    updateCvLivePreview();
+  }
+}
+
+function handleCvPhotoUpload(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const cv = getActiveCvData();
+    cv.photoUrl = event.target.result;
+    cv.showPhoto = true;
+    const chk = document.getElementById('cvInput-showPhoto');
+    if (chk) chk.checked = true;
+    saveActiveCvData(cv);
+    updateCvLivePreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateCvLivePreview() {
+  const getVal = (id) => (document.getElementById(id)?.value || '').trim();
+  const cv = getActiveCvData();
+
+  cv.fullName = getVal('cvInput-fullName');
+  cv.title = getVal('cvInput-title');
+  cv.email = getVal('cvInput-email');
+  cv.phone = getVal('cvInput-phone');
+  cv.location = getVal('cvInput-location');
+  cv.linkedin = getVal('cvInput-linkedin');
+  cv.github = getVal('cvInput-github');
+  cv.portfolio = getVal('cvInput-portfolio');
+  cv.summary = getVal('cvInput-summary');
+  cv.certifications = getVal('cvInput-certifications');
+  cv.awards = getVal('cvInput-awards');
+  cv.references = getVal('cvInput-references');
+  cv.showPhoto = !!document.getElementById('cvInput-showPhoto')?.checked;
+
+  saveActiveCvData(cv);
+
+  const paper = document.getElementById('cvLivePreviewPaper');
+  if (!paper) return;
+
+  const escapeHtml = (s) => {
+    if (!s) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  };
+
+  const contactList = [
+    cv.email ? `<span class="inline-flex items-center gap-1">✉️ ${escapeHtml(cv.email)}</span>` : '',
+    cv.phone ? `<span class="inline-flex items-center gap-1">📞 ${escapeHtml(cv.phone)}</span>` : '',
+    cv.location ? `<span class="inline-flex items-center gap-1">📍 ${escapeHtml(cv.location)}</span>` : '',
+    cv.linkedin ? `<a href="https://${cv.linkedin.replace(/^https?:\/\//, '')}" target="_blank">🔗 LinkedIn</a>` : '',
+    cv.github ? `<a href="https://${cv.github.replace(/^https?:\/\//, '')}" target="_blank">💻 GitHub</a>` : '',
+    cv.portfolio ? `<a href="https://${cv.portfolio.replace(/^https?:\/\//, '')}" target="_blank">🌐 Portfolio</a>` : ''
+  ].filter(Boolean).join('  •  ');
+
+  // Render Template Specific Layout
+  paper.innerHTML = `
+    <!-- Header Area -->
+    <div class="border-b-2 border-slate-800 pb-3 mb-4 flex items-center justify-between gap-4">
+      <div class="space-y-1">
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">${escapeHtml(cv.fullName || 'YOUR FULL NAME')}</h1>
+        ${cv.title ? `<div class="text-xs font-semibold text-indigo-700 tracking-wide uppercase">${escapeHtml(cv.title)}</div>` : ''}
+        <div class="text-[10px] text-slate-600 flex flex-wrap gap-2 pt-0.5">
+          ${contactList || 'email@example.com  •  +880 1...  •  Chittagong, Bangladesh'}
+        </div>
+      </div>
+      ${cv.showPhoto && cv.photoUrl ? `
+        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-slate-300 flex-shrink-0 shadow-sm">
+          <img src="${cv.photoUrl}" alt="Photo" class="w-full h-full object-cover">
+        </div>
+      ` : ''}
+    </div>
+
+    <!-- Summary -->
+    ${cv.summary ? `
+      <div class="cv-section-block mb-3.5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-0.5 mb-1.5 flex items-center gap-1.5">
+          <span>Professional Summary</span>
+        </h2>
+        <p class="text-[11px] text-slate-700 leading-relaxed">${escapeHtml(cv.summary)}</p>
+      </div>
+    ` : ''}
+
+    <!-- Education -->
+    ${cv.education && cv.education.length > 0 ? `
+      <div class="cv-section-block mb-3.5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-0.5 mb-1.5 flex items-center gap-1.5">
+          <span>Education</span>
+        </h2>
+        <div class="space-y-2">
+          ${cv.education.map(e => `
+            <div>
+              <div class="flex items-center justify-between font-bold text-slate-900 text-[11px]">
+                <span>${escapeHtml(e.degree || 'Degree')}</span>
+                <span class="text-slate-500 font-normal text-[10px]">${escapeHtml(e.period || '')}</span>
+              </div>
+              <div class="text-[10px] text-slate-700 font-medium">${escapeHtml(e.institution || 'University')}</div>
+              ${[e.gpa, e.honors].filter(Boolean).length > 0 ? `
+                <div class="text-[9.5px] text-slate-600 italic">${escapeHtml([e.gpa, e.honors].filter(Boolean).join(' | '))}</div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- Projects -->
+    ${cv.projects && cv.projects.length > 0 ? `
+      <div class="cv-section-block mb-3.5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-0.5 mb-1.5 flex items-center gap-1.5">
+          <span>Engineering &amp; Design Projects</span>
+        </h2>
+        <div class="space-y-2.5">
+          ${cv.projects.map(p => `
+            <div>
+              <div class="flex items-center justify-between font-bold text-slate-900 text-[11px]">
+                <span>${escapeHtml(p.title || 'Project Title')}</span>
+                <span class="text-slate-500 font-normal text-[10px]">${escapeHtml(p.period || '')}</span>
+              </div>
+              ${p.tools ? `<div class="text-[10px] font-semibold text-indigo-700">Tools: ${escapeHtml(p.tools)}</div>` : ''}
+              ${p.description ? `<p class="text-[10.5px] text-slate-700 leading-relaxed mt-0.5">• ${escapeHtml(p.description)}</p>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- Experience -->
+    ${cv.experience && cv.experience.length > 0 ? `
+      <div class="cv-section-block mb-3.5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-0.5 mb-1.5 flex items-center gap-1.5">
+          <span>Experience &amp; Internships</span>
+        </h2>
+        <div class="space-y-2.5">
+          ${cv.experience.map(exp => `
+            <div>
+              <div class="flex items-center justify-between font-bold text-slate-900 text-[11px]">
+                <span>${escapeHtml(exp.role || 'Role')}</span>
+                <span class="text-slate-500 font-normal text-[10px]">${escapeHtml(exp.period || '')}</span>
+              </div>
+              <div class="text-[10px] text-slate-700 font-medium">${escapeHtml(exp.company || 'Company')}</div>
+              ${exp.description ? `<p class="text-[10.5px] text-slate-700 leading-relaxed mt-0.5">• ${escapeHtml(exp.description)}</p>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- Research -->
+    ${cv.research && cv.research.length > 0 && cvCurrentTemplate === 'template_academic' ? `
+      <div class="cv-section-block mb-3.5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-0.5 mb-1.5 flex items-center gap-1.5">
+          <span>Research &amp; Publications</span>
+        </h2>
+        <div class="space-y-2">
+          ${cv.research.map(r => `
+            <div class="text-[10.5px] text-slate-800 leading-relaxed">
+              <span class="font-bold">"${escapeHtml(r.title || 'Paper Title')}"</span>, 
+              <span class="italic text-slate-700">${escapeHtml(r.authors || '')}</span>, 
+              <span>${escapeHtml(r.journal || '')}</span> 
+              <span>(${escapeHtml(r.year || '')})</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- Technical Skills -->
+    ${cv.skills && cv.skills.length > 0 ? `
+      <div class="cv-section-block mb-3.5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-0.5 mb-1.5 flex items-center gap-1.5">
+          <span>Technical Skills &amp; Competencies</span>
+        </h2>
+        <div class="space-y-1">
+          ${cv.skills.map(s => `
+            <div class="text-[10.5px] text-slate-800">
+              <strong class="text-slate-900">${escapeHtml(s.category)}:</strong> 
+              <span class="text-slate-700">${escapeHtml(s.items)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- Certifications & Awards -->
+    ${[cv.certifications, cv.awards].filter(Boolean).length > 0 ? `
+      <div class="cv-section-block mb-3.5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-0.5 mb-1.5 flex items-center gap-1.5">
+          <span>Certifications &amp; Honors</span>
+        </h2>
+        <div class="text-[10.5px] text-slate-700 space-y-1">
+          ${cv.certifications ? cv.certifications.split('\n').map(l => l.trim() ? `<div>• ${escapeHtml(l)}</div>` : '').join('') : ''}
+          ${cv.awards ? cv.awards.split('\n').map(l => l.trim() ? `<div>• 🏆 ${escapeHtml(l)}</div>` : '').join('') : ''}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- References -->
+    ${cv.references ? `
+      <div class="cv-section-block mb-2">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-0.5 mb-1.5 flex items-center gap-1.5">
+          <span>References</span>
+        </h2>
+        <div class="text-[10.5px] text-slate-700 leading-relaxed">${escapeHtml(cv.references)}</div>
+      </div>
+    ` : ''}
+  `;
+}
+
+// ==================== WORD EXPORT FOR CV (.DOCX ENGINE) ====================
+async function exportMyCvDocx() {
+  const cv = getActiveCvData();
+  if (!cv.fullName) {
+    showToast('অনুগ্রহ করে আগে আপনার পুরো নাম লিখুন।');
+    return;
+  }
+
+  showToast('Word (.docx) সিভি তৈরি হচ্ছে...');
+  try {
+    const res = await fetch('cuet_routine_template_blank.docx');
+    if (!res.ok) throw new Error('Could not fetch base template');
+    const arrayBuffer = await res.arrayBuffer();
+
+    const zip = await JSZip.loadAsync(arrayBuffer);
+
+    const escapeXml = (s) => {
+      if (!s) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    };
+
+    const makeHeading = (title) => `
+      <w:p>
+        <w:pPr>
+          <w:pBdr>
+            <w:bottom w:val="single" w:sz="8" w:space="2" w:color="2B6CB0"/>
+          </w:pBdr>
+          <w:spacing w:before="240" w:after="80"/>
+        </w:pPr>
+        <w:r>
+          <w:rPr>
+            <w:b/>
+            <w:sz w:val="24"/>
+            <w:color w:val="1A365D"/>
+          </w:rPr>
+          <w:t>${escapeXml(title.toUpperCase())}</w:t>
+        </w:r>
+      </w:p>
+    `;
+
+    const bodyParagraphs = [];
+
+    // Name & Header
+    bodyParagraphs.push(`
+      <w:p>
+        <w:pPr>
+          <w:jc w:val="center"/>
+          <w:spacing w:before="0" w:after="40"/>
+        </w:pPr>
+        <w:r>
+          <w:rPr>
+            <w:b/>
+            <w:sz w:val="44"/>
+            <w:color w:val="1A365D"/>
+          </w:rPr>
+          <w:t>${escapeXml(cv.fullName)}</w:t>
+        </w:r>
+      </w:p>
+    `);
+
+    if (cv.title) {
+      bodyParagraphs.push(`
+        <w:p>
+          <w:pPr>
+            <w:jc w:val="center"/>
+            <w:spacing w:before="0" w:after="60"/>
+          </w:pPr>
+          <w:r>
+            <w:rPr>
+              <w:sz w:val="22"/>
+              <w:color w:val="2B6CB0"/>
+            </w:rPr>
+            <w:t>${escapeXml(cv.title)}</w:t>
+          </w:r>
+        </w:p>
+      `);
+    }
+
+    // Contact
+    const contactLine = [cv.email, cv.phone, cv.location, cv.linkedin, cv.github, cv.portfolio].filter(Boolean).join('  •  ');
+    if (contactLine) {
+      bodyParagraphs.push(`
+        <w:p>
+          <w:pPr>
+            <w:jc w:val="center"/>
+            <w:spacing w:before="0" w:after="160"/>
+          </w:pPr>
+          <w:r>
+            <w:rPr>
+              <w:sz w:val="18"/>
+              <w:color w:val="4A5568"/>
+            </w:rPr>
+            <w:t>${escapeXml(contactLine)}</w:t>
+          </w:r>
+        </w:p>
+      `);
+    }
+
+    // Summary
+    if (cv.summary) {
+      bodyParagraphs.push(makeHeading('Professional Summary'));
+      bodyParagraphs.push(`
+        <w:p>
+          <w:pPr><w:spacing w:after="120" w:line="240" w:lineRule="auto"/></w:pPr>
+          <w:r>
+            <w:rPr><w:sz w:val="20"/><w:color w:val="2D3748"/></w:rPr>
+            <w:t>${escapeXml(cv.summary)}</w:t>
+          </w:r>
+        </w:p>
+      `);
+    }
+
+    // Education
+    if (cv.education && cv.education.length > 0) {
+      bodyParagraphs.push(makeHeading('Education'));
+      cv.education.forEach(edu => {
+        bodyParagraphs.push(`
+          <w:p>
+            <w:pPr><w:spacing w:before="60" w:after="20"/></w:pPr>
+            <w:r>
+              <w:rPr><w:b/><w:sz w:val="21"/><w:color w:val="1A365D"/></w:rPr>
+              <w:t>${escapeXml(edu.degree)}</w:t>
+            </w:r>
+            <w:r>
+              <w:rPr><w:sz w:val="20"/><w:color w:val="4A5568"/></w:rPr>
+              <w:t>  —  ${escapeXml(edu.institution)}</w:t>
+            </w:r>
+          </w:p>
+        `);
+        const metaStr = [edu.period, edu.gpa, edu.honors].filter(Boolean).join(' | ');
+        if (metaStr) {
+          bodyParagraphs.push(`
+            <w:p>
+              <w:pPr><w:spacing w:after="60"/></w:pPr>
+              <w:r>
+                <w:rPr><w:i/><w:sz w:val="18"/><w:color w:val="718096"/></w:rPr>
+                <w:t>${escapeXml(metaStr)}</w:t>
+              </w:r>
+            </w:p>
+          `);
         }
       });
-      if (checkRes.ok) {
-        const checkData = await checkRes.json();
-        currentSha = checkData.sha;
+    }
+
+    // Projects
+    if (cv.projects && cv.projects.length > 0) {
+      bodyParagraphs.push(makeHeading('Engineering & Design Projects'));
+      cv.projects.forEach(proj => {
+        bodyParagraphs.push(`
+          <w:p>
+            <w:pPr><w:spacing w:before="60" w:after="20"/></w:pPr>
+            <w:r>
+              <w:rPr><w:b/><w:sz w:val="21"/><w:color w:val="1A365D"/></w:rPr>
+              <w:t>${escapeXml(proj.title)}</w:t>
+            </w:r>
+            ${proj.tools ? `<w:r><w:rPr><w:i/><w:sz w:val="18"/><w:color w:val="2B6CB0"/></w:rPr><w:t> [${escapeXml(proj.tools)}]</w:t></w:r>` : ''}
+          </w:p>
+        `);
+        if (proj.description) {
+          bodyParagraphs.push(`
+            <w:p>
+              <w:pPr><w:ind w:left="240"/><w:spacing w:after="60" w:line="240" w:lineRule="auto"/></w:pPr>
+              <w:r>
+                <w:rPr><w:sz w:val="19"/><w:color w:val="2D3748"/></w:rPr>
+                <w:t>• ${escapeXml(proj.description)}</w:t>
+              </w:r>
+            </w:p>
+          `);
+        }
+      });
+    }
+
+    // Experience
+    if (cv.experience && cv.experience.length > 0) {
+      bodyParagraphs.push(makeHeading('Experience & Internships'));
+      cv.experience.forEach(exp => {
+        bodyParagraphs.push(`
+          <w:p>
+            <w:pPr><w:spacing w:before="60" w:after="20"/></w:pPr>
+            <w:r>
+              <w:rPr><w:b/><w:sz w:val="21"/><w:color w:val="1A365D"/></w:rPr>
+              <w:t>${escapeXml(exp.role)}</w:t>
+            </w:r>
+            <w:r>
+              <w:rPr><w:sz w:val="20"/><w:color w:val="4A5568"/></w:rPr>
+              <w:t>  —  ${escapeXml(exp.company)}</w:t>
+            </w:r>
+            ${exp.period ? `<w:r><w:rPr><w:i/><w:sz w:val="18"/><w:color w:val="718096"/></w:rPr><w:t> (${escapeXml(exp.period)})</w:t></w:r>` : ''}
+          </w:p>
+        `);
+        if (exp.description) {
+          bodyParagraphs.push(`
+            <w:p>
+              <w:pPr><w:ind w:left="240"/><w:spacing w:after="60" w:line="240" w:lineRule="auto"/></w:pPr>
+              <w:r>
+                <w:rPr><w:sz w:val="19"/><w:color w:val="2D3748"/></w:rPr>
+                <w:t>• ${escapeXml(exp.description)}</w:t>
+              </w:r>
+            </w:p>
+          `);
+        }
+      });
+    }
+
+    // Research
+    if (cv.research && cv.research.length > 0 && cvCurrentTemplate === 'template_academic') {
+      bodyParagraphs.push(makeHeading('Research & Publications'));
+      cv.research.forEach(resItem => {
+        bodyParagraphs.push(`
+          <w:p>
+            <w:pPr><w:ind w:left="240"/><w:spacing w:after="40"/></w:pPr>
+            <w:r>
+              <w:rPr><w:b/><w:sz w:val="20"/><w:color w:val="1A365D"/></w:rPr>
+              <w:t>"${escapeXml(resItem.title)}"</w:t>
+            </w:r>
+            <w:r>
+              <w:rPr><w:sz w:val="19"/><w:color w:val="4A5568"/></w:rPr>
+              <w:t>, ${escapeXml(resItem.authors || '')}, ${escapeXml(resItem.journal || '')} (${escapeXml(resItem.year || '')})</w:t>
+            </w:r>
+          </w:p>
+        `);
+      });
+    }
+
+    // Skills
+    if (cv.skills && cv.skills.length > 0) {
+      bodyParagraphs.push(makeHeading('Technical Skills & Tools'));
+      cv.skills.forEach(sk => {
+        bodyParagraphs.push(`
+          <w:p>
+            <w:pPr><w:spacing w:after="40"/></w:pPr>
+            <w:r>
+              <w:rPr><w:b/><w:sz w:val="20"/><w:color w:val="1A365D"/></w:rPr>
+              <w:t>${escapeXml(sk.category)}: </w:t>
+            </w:r>
+            <w:r>
+              <w:rPr><w:sz w:val="20"/><w:color w:val="2D3748"/></w:rPr>
+              <w:t>${escapeXml(sk.items)}</w:t>
+            </w:r>
+          </w:p>
+        `);
+      });
+    }
+
+    // Certifications & Awards
+    if (cv.certifications || cv.awards) {
+      bodyParagraphs.push(makeHeading('Certifications & Honors'));
+      if (cv.certifications) {
+        cv.certifications.split('\n').forEach(l => {
+          if (l.trim()) {
+            bodyParagraphs.push(`
+              <w:p>
+                <w:pPr><w:ind w:left="240"/><w:spacing w:after="30"/></w:pPr>
+                <w:r><w:rPr><w:sz w:val="19"/><w:color w:val="2D3748"/></w:rPr><w:t>• ${escapeXml(l.trim())}</w:t></w:r>
+              </w:p>
+            `);
+          }
+        });
       }
-    } catch (e) {
-      console.warn('File check warning:', e);
+      if (cv.awards) {
+        cv.awards.split('\n').forEach(l => {
+          if (l.trim()) {
+            bodyParagraphs.push(`
+              <w:p>
+                <w:pPr><w:ind w:left="240"/><w:spacing w:after="30"/></w:pPr>
+                <w:r><w:rPr><w:sz w:val="19"/><w:color w:val="2D3748"/></w:rPr><w:t>• 🏆 ${escapeXml(l.trim())}</w:t></w:r>
+              </w:p>
+            `);
+          }
+        });
+      }
     }
 
-    if (statusText) statusText.textContent = 'Committing changes to main branch...';
-
-    const commitBody = {
-      message: `feat(cms): live sync update from admin dashboard [${new Date().toLocaleDateString()}]`,
-      content: contentBase64,
-      branch: 'main'
-    };
-    if (currentSha) {
-      commitBody.sha = currentSha;
+    // References
+    if (cv.references) {
+      bodyParagraphs.push(makeHeading('References'));
+      bodyParagraphs.push(`
+        <w:p>
+          <w:pPr><w:spacing w:after="60"/></w:pPr>
+          <w:r><w:rPr><w:sz w:val="19"/><w:color w:val="4A5568"/></w:rPr><w:t>${escapeXml(cv.references)}</w:t></w:r>
+        </w:p>
+      `);
     }
 
-    const putRes = await fetch(apiUrl, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/vnd.github.v3+json'
-      },
-      body: JSON.stringify(commitBody)
+    const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    ${bodyParagraphs.join('')}
+    <w:sectPr>
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="1080" w:right="1080" w:bottom="1080" w:left="1080" w:header="720" w:footer="720" w:gutter="0"/>
+      <w:cols w:space="720"/>
+      <w:docGrid w:linePitch="360"/>
+    </w:sectPr>
+  </w:body>
+</w:document>`;
+
+    zip.file('word/document.xml', docXml);
+    const outBlob = await zip.generateAsync({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     });
 
-    if (putRes.ok) {
-      if (statusText) statusText.textContent = '✓ Live publish successful! GitHub Pages will update in ~30 seconds.';
-      showToast('অভিনন্দন! আপনার পরিবর্তনসমূহ সফলভাবে GitHub Pages এ লাইভ পুশ করা হয়েছে!');
-    } else {
-      const errData = await putRes.json();
-      throw new Error(errData.message || 'GitHub API rejected commit');
-    }
+    const url = URL.createObjectURL(outBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CV_${(cv.fullName || 'Student').replace(/\s+/g, '_')}_${cvCurrentTemplate}.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('ওয়ার্ড (.docx) সিভি সফলভাবে তৈরি ও ডাউনলোড হয়েছে!');
   } catch (err) {
-    console.error('Publish to GitHub failed:', err);
-    if (statusText) statusText.textContent = `Publish failed: ${err.message}`;
-    alert(`GitHub Live Publish Error: ${err.message}\nদয়া করে টোকেনের অনুমতি (repo write scope) নিশ্চিত করুন।`);
-  } finally {
-    if (btn) btn.disabled = false;
-    if (btnText) btnText.textContent = 'Publish Live to All Students';
-    setTimeout(() => {
-      if (banner) banner.classList.add('hidden');
-    }, 6000);
+    console.error('CV Word export error:', err);
+    alert('সিভি Word এক্সপোর্টে সমস্যা হয়েছে: ' + err.message);
   }
+}
+
+// ==================== PRINT / PDF FOR CV ====================
+function printMyCv() {
+  const printArea = document.getElementById('printableCvContainer');
+  const paper = document.getElementById('cvLivePreviewPaper');
+  if (!printArea || !paper) return;
+
+  printArea.innerHTML = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a202c; padding: 10px;">
+      ${paper.innerHTML}
+    </div>
+  `;
+  window.print();
+}
+
+function saveCvDraftPrompt() {
+  const name = prompt('সিভি ড্রাফট সংরক্ষণের জন্য একটি নাম দিন (e.g. Mechanical Engineer, Intern CV):', cvCurrentDraftName);
+  if (!name || !name.trim()) return;
+  const cleanName = name.trim();
+  cvCurrentDraftName = cleanName;
+
+  const cv = getActiveCvData();
+  saveActiveCvData(cv);
+
+  initCvBuilder();
+  showToast(`ড্রাফট "${cleanName}" সফলভাবে সংরক্ষিত হয়েছে!`);
+}
+
+function loadSelectedCvDraft() {
+  const select = document.getElementById('cvDraftsSelect');
+  if (select && select.value) {
+    cvCurrentDraftName = select.value;
+    initCvBuilder();
+    showToast(`ড্রাফট "${cvCurrentDraftName}" লোড করা হয়েছে!`);
+  }
+}
+
+function createNewBlankCvPrompt() {
+  const name = prompt('নতুন খালি সিভির জন্য একটি নাম দিন (e.g. Graduate CV 2026):');
+  if (!name || !name.trim()) return;
+  const cleanName = name.trim();
+  cvCurrentDraftName = cleanName;
+
+  const blank = JSON.parse(JSON.stringify(DEFAULT_BLANK_CV_DATA));
+  saveActiveCvData(blank);
+
+  initCvBuilder();
+  showToast(`নতুন ড্রাফট "${cleanName}" তৈরি হয়েছে!`);
+}
+
+function openCvBackupModal() {
+  const cv = getActiveCvData();
+  const jsonStr = JSON.stringify(cv, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `CV_Backup_${(cv.fullName || 'Student').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('সিভি JSON ব্যাকআপ ডাউনলোড হয়েছে!');
 }
 
