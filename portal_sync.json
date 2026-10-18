@@ -686,5 +686,733 @@
       "specialization": "Departmental Lab Logistics",
       "order": 53
     }
-  ]
+  ],
+  "routines": {
+    "L1-T1": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 1101: Engineering Mechanics I (Statics)",
+          "room": "ME-101",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "MATH 1101: Differential & Integral Calculus",
+          "room": "ME-101",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 1102: Mechanical Engineering Drawing I",
+          "room": "Drawing Hall",
+          "teacher": "Dr. Md. Mahbubul Alam / Lab Staff"
+        },
+        {
+          "time": "01:30 PM - 02:20 PM",
+          "course": "CHEM 1101: Chemistry",
+          "room": "ME-101",
+          "teacher": "Dept. of Chemistry"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "HUM 1101: English & Professional Communication",
+          "room": "ME-101",
+          "teacher": "Dept. of Humanities"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "CHEM 1102: Chemistry Laboratory",
+          "room": "Chemistry Lab",
+          "teacher": "Chem Faculty & Instructors"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "MATH 1101: Differential & Integral Calculus",
+          "room": "ME-101",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 1101: Engineering Mechanics I (Statics)",
+          "room": "ME-101",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "CHEM 1101: Chemistry",
+          "room": "ME-101",
+          "teacher": "Dept. of Chemistry"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 1101: Engineering Mechanics I (Statics)",
+          "room": "ME-101",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 1104: Workshop Practice Sessional",
+          "room": "Central Machine Shop",
+          "teacher": "Workshop Instructors"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "MATH 1101: Differential & Integral Calculus",
+          "room": "ME-101",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "HUM 1101: English & Professional Communication",
+          "room": "ME-101",
+          "teacher": "Dept. of Humanities"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "CHEM 1101: Chemistry",
+          "room": "ME-101",
+          "teacher": "Dept. of Chemistry"
+        }
+      ]
+    },
+    "L1-T2": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 1201: Engineering Mechanics II (Dynamics)",
+          "room": "ME-102",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 1203: Basic Thermodynamics",
+          "room": "ME-102",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "PHY 1202: Physics Laboratory",
+          "room": "Physics Lab",
+          "teacher": "Dept. of Physics"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "PHY 1201: Physics (Waves, Optics & Heat)",
+          "room": "ME-102",
+          "teacher": "Dept. of Physics"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "MATH 1201: Vector Analysis & Matrices",
+          "room": "ME-102",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 1202: Workshop Technology Sessional",
+          "room": "Machine Shop",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 1203: Basic Thermodynamics",
+          "room": "ME-102",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 1201: Engineering Mechanics II (Dynamics)",
+          "room": "ME-102",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "MATH 1201: Vector Analysis & Matrices",
+          "room": "ME-102",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "PHY 1201: Physics (Waves, Optics & Heat)",
+          "room": "ME-102",
+          "teacher": "Dept. of Physics"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 1204: Engineering Drawing II (CAD Sessional)",
+          "room": "CAD Lab",
+          "teacher": "Engr. Tanvir Ahmed"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 1201: Engineering Mechanics II (Dynamics)",
+          "room": "ME-102",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "09:50 AM - 10:40 AM",
+          "course": "ME 1203: Basic Thermodynamics",
+          "room": "ME-102",
+          "teacher": "Dr. Bodius Salam"
+        }
+      ]
+    },
+    "L2-T1": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 2101: Fluid Mechanics I",
+          "room": "ME-201",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 2103: Mechanics of Solids I",
+          "room": "ME-201",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 2102: Fluid Mechanics Sessional I",
+          "room": "Fluid Mechanics Lab",
+          "teacher": "Lab Faculty"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "EEE 2101: Electrical Technology",
+          "room": "ME-201",
+          "teacher": "Dept. of EEE"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "MATH 2101: Differential Equations",
+          "room": "ME-201",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "EEE 2102: Electrical Technology Sessional",
+          "room": "EEE Lab",
+          "teacher": "EEE Faculty"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 2103: Mechanics of Solids I",
+          "room": "ME-201",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 2101: Fluid Mechanics I",
+          "room": "ME-201",
+          "teacher": "Dr. Sajal Chandra Banik"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "MATH 2101: Differential Equations",
+          "room": "ME-201",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "EEE 2101: Electrical Technology",
+          "room": "ME-201",
+          "teacher": "Dept. of EEE"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 2104: Mechanics of Solids Sessional I",
+          "room": "Strength of Materials Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 2101: Fluid Mechanics I",
+          "room": "ME-201",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "09:50 AM - 10:40 AM",
+          "course": "ME 2103: Mechanics of Solids I",
+          "room": "ME-201",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        }
+      ]
+    },
+    "L2-T2": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 2201: Applied Thermodynamics",
+          "room": "ME-202",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 2203: Mechanics of Solids II",
+          "room": "ME-202",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 2202: Applied Thermodynamics Sessional",
+          "room": "Thermal Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 2205: Engineering Metallurgy",
+          "room": "ME-202",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "MATH 2201: Complex Variable & Statistics",
+          "room": "ME-202",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 2206: Metallurgy & Materials Testing Sessional",
+          "room": "Metallurgy Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 2201: Applied Thermodynamics",
+          "room": "ME-202",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 2205: Engineering Metallurgy",
+          "room": "ME-202",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 2203: Mechanics of Solids II",
+          "room": "ME-202",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "MATH 2201: Complex Variable & Statistics",
+          "room": "ME-202",
+          "teacher": "Dept. of Math"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 2205: Engineering Metallurgy",
+          "room": "ME-202",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 2201: Applied Thermodynamics",
+          "room": "ME-202",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 2203: Mechanics of Solids II",
+          "room": "ME-202",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        }
+      ]
+    },
+    "L3-T1": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 3101: Fluid Mechanics II (Turbomachinery)",
+          "room": "ME-301",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 3103: Heat and Mass Transfer",
+          "room": "ME-301",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 3104: Heat Transfer Sessional",
+          "room": "Heat Transfer Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 3105: Manufacturing Processes",
+          "room": "ME-301",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 3107: Mechanics of Machinery",
+          "room": "ME-301",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 3106: Manufacturing Processes Sessional",
+          "room": "Machine Shop",
+          "teacher": "Lab Instructors"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 3103: Heat and Mass Transfer",
+          "room": "ME-301",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 3101: Fluid Mechanics II",
+          "room": "ME-301",
+          "teacher": "Dr. Sajal Chandra Banik"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 3107: Mechanics of Machinery",
+          "room": "ME-301",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 3105: Manufacturing Processes",
+          "room": "ME-301",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 3101: Fluid Mechanics II",
+          "room": "ME-301",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 3103: Heat and Mass Transfer",
+          "room": "ME-301",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 3102: Turbomachinery Sessional",
+          "room": "Hydraulics Lab",
+          "teacher": "Lab Faculty"
+        }
+      ]
+    },
+    "L3-T2": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 3201: Machine Design",
+          "room": "ME-302",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 3203: Instrumentation & Measurement",
+          "room": "ME-302",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 3202: Machine Design Sessional",
+          "room": "CAD/CAM Lab",
+          "teacher": "Engr. Tanvir Ahmed"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 3205: Mechanical Vibrations",
+          "room": "ME-302",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "IPE 3201: Industrial Management",
+          "room": "ME-302",
+          "teacher": "Prof. Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 3204: Instrumentation & Measurement Sessional",
+          "room": "Instrumentation Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 3201: Machine Design",
+          "room": "ME-302",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 3205: Mechanical Vibrations",
+          "room": "ME-302",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 3203: Instrumentation & Measurement",
+          "room": "ME-302",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "IPE 3201: Industrial Management",
+          "room": "ME-302",
+          "teacher": "Prof. Dr. Md. Mahbubul Alam"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 3205: Mechanical Vibrations",
+          "room": "ME-302",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 3201: Machine Design",
+          "room": "ME-302",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        }
+      ]
+    },
+    "L4-T1": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 4101: Internal Combustion Engines",
+          "room": "ME-401",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 4103: Refrigeration & Air Conditioning",
+          "room": "ME-401",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 4102: Heat Engines Sessional",
+          "room": "IC Engine Lab",
+          "teacher": "Lab Faculty"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 4105: Finite Element Analysis & Simulation",
+          "room": "ME-401",
+          "teacher": "Engr. Tanvir Ahmed"
+        },
+        {
+          "time": "10:00 AM - 01:00 PM",
+          "course": "ME 4000: Project & Thesis Progress",
+          "room": "Dept. Seminar Room",
+          "teacher": "Assigned Supervisors"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 4103: Refrigeration & Air Conditioning",
+          "room": "ME-401",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "09:00 AM - 11:30 AM",
+          "course": "ME 4104: RAC Sessional",
+          "room": "RAC Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 4101: Internal Combustion Engines",
+          "room": "ME-401",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 11:40 AM",
+          "course": "ME 4105: Finite Element Analysis & Simulation",
+          "room": "ME-401",
+          "teacher": "Engr. Tanvir Ahmed"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 4103: Refrigeration & Air Conditioning",
+          "room": "ME-401",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 4106: FEA & Simulation Sessional",
+          "room": "CAD/CAE Lab",
+          "teacher": "Lab Team"
+        }
+      ]
+    },
+    "L4-T2": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 4201: Power Plant Engineering",
+          "room": "ME-304",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 4203: Automobile Engineering",
+          "room": "ME-304",
+          "teacher": "Prof. Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 4202: Power Plant Sessional",
+          "room": "Thermal Power Lab",
+          "teacher": "Dr. Sanjoy Kumar Nandi / Lab Staff"
+        },
+        {
+          "time": "01:30 PM - 02:20 PM",
+          "course": "IPE 4201: Production Planning & Control",
+          "room": "ME-304",
+          "teacher": "Prof. Dr. Md. Mahbubul Alam"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 4201: Power Plant Engineering",
+          "room": "ME-304",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "09:50 AM - 10:40 AM",
+          "course": "ME 4205: Operations Research & Quality Control",
+          "room": "ME-304",
+          "teacher": "Engr. Tanvir Ahmed"
+        },
+        {
+          "time": "10:50 AM - 01:20 PM",
+          "course": "ME 4000: Project & Thesis",
+          "room": "Department Laboratories",
+          "teacher": "Assigned Supervisors"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 4203: Automobile Engineering",
+          "room": "ME-304",
+          "teacher": "Prof. Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "08:50 AM - 10:30 AM",
+          "course": "ME 4205: Operations Research & Quality Control",
+          "room": "ME-304",
+          "teacher": "Engr. Tanvir Ahmed"
+        },
+        {
+          "time": "10:50 AM - 01:20 PM",
+          "course": "ME 4204: Automobile Sessional",
+          "room": "Automobile Lab",
+          "teacher": "Engr. Asif Mohammad / Lab Team"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "IPE 4201: Production Planning & Control",
+          "room": "ME-304",
+          "teacher": "Prof. Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 4201: Power Plant Engineering",
+          "room": "ME-304",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "10:00 AM - 01:00 PM",
+          "course": "ME 4000: Project & Thesis Progress Work",
+          "room": "Assigned Research Lab",
+          "teacher": "Supervisors"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 4203: Automobile Engineering",
+          "room": "ME-304",
+          "teacher": "Prof. Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "09:50 AM - 10:40 AM",
+          "course": "IPE 4201: Production Planning & Control",
+          "room": "ME-304",
+          "teacher": "Prof. Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "10:50 AM - 12:30 PM",
+          "course": "ME 4205: Operations Research & Quality Control",
+          "room": "ME-304",
+          "teacher": "Engr. Tanvir Ahmed"
+        }
+      ]
+    }
+  }
 }
