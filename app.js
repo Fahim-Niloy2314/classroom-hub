@@ -48,8 +48,19 @@ const STORAGE_KEYS = {
   GEMINI_API_KEY: 'classroom_gemini_api_key',
   OPENAI_API_KEY: 'classroom_openai_api_key',
   ADMIN_FAQS: 'classroom_admin_faqs',
-  ADMIN_ROUTINE: 'classroom_admin_routine'
+  ADMIN_ROUTINE: 'classroom_admin_routine',
+  ADMIN_FACULTY: 'classroom_admin_faculty',
+  ADMIN_PWD_HASH: 'classroom_admin_pwd_hash',
+  ADMIN_GITHUB_TOKEN: 'classroom_admin_github_token',
+  FEEDBACK_WEBHOOK: 'classroom_feedback_webhook'
 };
+
+// Cryptographic Password Hash Utility (Zero Plaintext Secrets)
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+const DEFAULT_ADMIN_PWD_HASH = '1c5ee9de39ca7ca5b25e25c7c994cf7b33d131c1ab99437ca2912a2cc4b6f21e';
 
 // Admin Email List
 const ADMIN_EMAILS = [
@@ -75,7 +86,7 @@ const DEFAULT_PORTAL_SETTINGS = {
   heroTitle: "Mechanical Engineering",
   heroSubtitle: "Academic Vault & Archive",
   deptDesc: "Chittagong University of Engineering and Technology (CUET)",
-  heroDesc: "A comprehensive digitized academic repository preserving 3,893+ course materials from Level 1 Term 1 to Level 4 Term 2.",
+  heroDesc: "A comprehensive digitized academic repository preserving 3,896+ course materials from Level 1 Term 1 to Level 4 Term 2.",
   creatorName: "Mohammad Fahim Ahmed",
   creatorBadge: "Fahim Niloy",
   creatorDept: "Department of Mechanical Engineering",
@@ -86,7 +97,7 @@ const DEFAULT_PORTAL_SETTINGS = {
   portfolioUrl: "https://mohammad-fahim-ahmed.netlify.app/",
   githubUrl: "https://github.com/Fahim-Niloy2314/classroom-hub",
   card1Title: "Course Explorer",
-  card1Desc: "Browse 3,895+ verified notes, questions, and lab manuals organized exactly by semester.",
+  card1Desc: "Browse 3,896+ verified notes, questions, and lab manuals organized exactly by semester.",
   card2Title: "Video Lectures",
   card2Desc: "সেমিস্টার ও টার্ম অনুযায়ী ফোল্ডার আকারে সাজানো ভেরিফাইড ভিডিও লেকচার।",
   card3Title: "Syllabus & Rules",
@@ -1021,7 +1032,13 @@ const ADMIN_EMAILS_LIST = [
   'fahimniloy2314@gmail.com',
   'fahim.cuet.me20@gmail.com'
 ];
-const ADMIN_SECRET_KEY = 'Niloy2314###';
+
+async function verifyAdminPassword(inputPass) {
+  if (!inputPass) return false;
+  const hash = await sha256(inputPass);
+  const storedHash = localStorage.getItem(STORAGE_KEYS.ADMIN_PWD_HASH) || DEFAULT_ADMIN_PWD_HASH;
+  return hash === storedHash;
+}
 
 function isAdmin(user) {
   if (!user) return false;
@@ -1116,7 +1133,7 @@ function closeGoogleSignInModal() {
   if (gDialog) gDialog.close();
 }
 
-function handleGoogleCustomAccount(e) {
+async function handleGoogleCustomAccount(e) {
   if (e && e.preventDefault) e.preventDefault();
   const emailInput = document.getElementById('googleCustomEmailInput');
   const passInput = document.getElementById('googleAdminPassInput');
@@ -1141,7 +1158,8 @@ function handleGoogleCustomAccount(e) {
       return;
     }
 
-    if (pass === ADMIN_SECRET_KEY || pass === 'Niloy2314###' || pass === '2003063') {
+    const isValid = await verifyAdminPassword(pass);
+    if (isValid) {
       currentUser = {
         name: 'Fahim Niloy (Admin)',
         email: email,
@@ -1171,7 +1189,7 @@ function handleGoogleCustomAccount(e) {
   }
 }
 
-function handleStandardAuthSubmit(e) {
+async function handleStandardAuthSubmit(e) {
   if (e && e.preventDefault) e.preventDefault();
   const idInput = document.getElementById('authEmailInput');
   const passInput = document.getElementById('authPasswordInput');
@@ -1186,7 +1204,8 @@ function handleStandardAuthSubmit(e) {
   const isAdminUser = ADMIN_EMAILS_LIST.includes(id.toLowerCase()) || id === '2003063';
 
   if (isAdminUser) {
-    if (pass === ADMIN_SECRET_KEY || pass === 'Niloy2314###' || pass === '2003063') {
+    const isValid = await verifyAdminPassword(pass);
+    if (isValid) {
       currentUser = {
         name: 'Fahim Niloy (Admin)',
         email: 'fahim.cuet.me20@gmail.com',
@@ -1284,6 +1303,10 @@ function renderHome() {
   });
 
   renderHomeVideos();
+  if (typeof renderHomeNotices === 'function') renderHomeNotices();
+  if (typeof renderHomeRoutineViewer === 'function') renderHomeRoutineViewer();
+  if (typeof renderFacultyDirectory === 'function') renderFacultyDirectory();
+  if (typeof renderCgpaRows === 'function') renderCgpaRows();
   lucide.createIcons();
 }
 
@@ -2309,9 +2332,42 @@ function handleFeedbackSubmit(e) {
 
   feedbacks.unshift(newFeedback);
   localStorage.setItem(STORAGE_KEYS.FEEDBACKS, JSON.stringify(feedbacks));
-  
+
+  // Asynchronously dispatch to real inbound webhook if configured by Admin
+  const webhookUrl = portalSettings.feedbackWebhookUrl || localStorage.getItem(STORAGE_KEYS.FEEDBACK_WEBHOOK);
+  if (webhookUrl) {
+    try {
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newFeedback)
+      }).catch(err => console.warn('Inbound webhook dispatch failed:', err));
+    } catch(err) {}
+  }
+
+  // Populate and open real feedback receipt modal with 1-click WhatsApp & Email forwarding
+  const receiptDialog = document.getElementById('feedbackReceiptDialog');
+  if (receiptDialog) {
+    const catEl = document.getElementById('receiptSummaryCategory');
+    const nameEl = document.getElementById('receiptSummaryName');
+    const snipEl = document.getElementById('receiptSummarySnippet');
+    const waLink = document.getElementById('receiptWhatsappLink');
+    const emailLink = document.getElementById('receiptEmailLink');
+
+    if (catEl) catEl.textContent = `${category} • ⭐ ${rating}/5`;
+    if (nameEl) nameEl.textContent = `Student: ${name} (Roll: ${roll})`;
+    if (snipEl) snipEl.textContent = `"${message}"`;
+
+    const encodedMsg = encodeURIComponent(`[ClassroomHub Message]\nCategory: ${category}\nFrom: ${name} (Roll: ${roll})\nRating: ${rating}/5\n\nMessage:\n${message}`);
+    if (waLink) waLink.href = `https://wa.me/8801850162261?text=${encodedMsg}`;
+    if (emailLink) emailLink.href = `mailto:fahimcuet63@gmail.com?subject=${encodeURIComponent(`ClassroomHub ${category} from ${name}`)}&body=${encodedMsg}`;
+
+    receiptDialog.showModal();
+    lucide.createIcons();
+  }
+
   if (e && e.target && e.target.reset) e.target.reset();
-  showToast(currentLang === 'en' ? 'Thank you! Your feedback has been sent to Fahim Niloy.' : 'ধন্যবাদ! আপনার বার্তাটি ফাহিম নিলয়ের কাছে পৌঁছেছে।');
+  showToast(currentLang === 'en' ? 'Thank you! Your feedback has been registered.' : 'ধন্যবাদ! আপনার বার্তাটি নিবন্ধিত হয়েছে।');
   renderAdminWorkspace();
 }
 
@@ -2320,64 +2376,87 @@ function handleFeedbackSubmit(e) {
    ========================================================================= */
 function renderHomeNotices() {
   const container = document.getElementById('homeNoticeContainer');
-  if (!container) return;
+  const subpanelContainer = document.getElementById('homeNoticesContainer');
+  const badge = document.getElementById('homeNoticeCountBadge');
 
-  if (!adminNotices || adminNotices.length === 0) {
-    container.className = 'hidden';
-    container.innerHTML = '';
-    return;
+  if (badge) {
+    badge.textContent = (adminNotices || []).length;
   }
 
-  container.className = 'space-y-3 mb-6';
-  container.innerHTML = adminNotices.map((n, idx) => {
-    let badgeColor = 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
-    let iconName = 'bell';
-    if (n.badge === 'URGENT') {
-      badgeColor = 'bg-red-500/20 text-red-300 border-red-500/30';
-      iconName = 'alert-triangle';
-    } else if (n.badge === 'EXAM') {
-      badgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
-      iconName = 'calendar';
-    } else if (n.badge === 'UPDATE') {
-      badgeColor = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
-      iconName = 'info';
-    }
-
-    return `
-      <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative overflow-hidden group">
-        <div class="absolute left-0 top-0 bottom-0 w-1 ${n.badge === 'URGENT' ? 'bg-red-500' : 'bg-indigo-500'}"></div>
-        <div class="space-y-1 pl-2">
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor} flex items-center gap-1">
-              <i data-lucide="${iconName}" class="w-3 h-3"></i>
-              <span>${n.badge || 'NOTICE'}</span>
-            </span>
-            <span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-300 font-semibold">${n.term || 'All Semesters'}</span>
-            <span class="text-[11px] text-slate-400">• ${n.date || 'Notice'}</span>
-          </div>
-          <h4 class="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">${n.title}</h4>
-          <p class="text-xs text-slate-300 leading-relaxed">${n.message}</p>
+  const renderCards = (list) => {
+    if (!list || list.length === 0) {
+      return `
+        <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-400">
+          বর্তমানে কোনো নতুন নোটিশ নেই। পরবর্তী নোটিশের জন্য অপেক্ষা করুন।
         </div>
-        ${n.link ? `
-          <div class="flex-shrink-0 pl-2 sm:pl-0">
-            <a href="${n.link}" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow transition-all">
-              <span>View Notice</span>
-              <i data-lucide="external-link" class="w-3 h-3"></i>
-            </a>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
+      `;
+    }
+    return list.map((n, idx) => {
+      let badgeColor = 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
+      let iconName = 'bell';
+      if (n.badge === 'URGENT') {
+        badgeColor = 'bg-red-500/20 text-red-300 border-red-500/30';
+        iconName = 'alert-triangle';
+      } else if (n.badge === 'EXAM') {
+        badgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+        iconName = 'calendar';
+      } else if (n.badge === 'UPDATE') {
+        badgeColor = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+        iconName = 'info';
+      }
 
-  lucide.createIcons();
+      return `
+        <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative overflow-hidden group">
+          <div class="absolute left-0 top-0 bottom-0 w-1 ${n.badge === 'URGENT' ? 'bg-red-500' : 'bg-indigo-500'}"></div>
+          <div class="space-y-1 pl-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor} flex items-center gap-1">
+                <i data-lucide="${iconName}" class="w-3 h-3"></i>
+                <span>${n.badge || 'NOTICE'}</span>
+              </span>
+              <span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-300 font-semibold">${n.term || 'All Semesters'}</span>
+              <span class="text-[11px] text-slate-400">• ${n.date || 'Notice'}</span>
+            </div>
+            <h4 class="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">${n.title}</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">${n.message}</p>
+          </div>
+          ${n.link ? `
+            <div class="flex-shrink-0 pl-2 sm:pl-0">
+              <a href="${n.link}" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow transition-all">
+                <span>View Notice</span>
+                <i data-lucide="external-link" class="w-3 h-3"></i>
+              </a>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  };
+
+  const cardsHtml = renderCards(adminNotices);
+
+  if (container) {
+    if (!adminNotices || adminNotices.length === 0) {
+      container.className = 'hidden';
+      container.innerHTML = '';
+    } else {
+      container.className = 'space-y-3 mb-6';
+      container.innerHTML = cardsHtml;
+    }
+  }
+
+  if (subpanelContainer) {
+    subpanelContainer.innerHTML = cardsHtml;
+  }
+
+  if (window.lucide) lucide.createIcons();
 }
 
 /* =========================================================================
    12. ADMIN CMS SUITE (18-POINT ENTERPRISE CONTROL SUITE)
    Full CRUD, Revisions, Recycle Bin, Quality Audit, JSON Backup & Restore
    ========================================================================= */
-const ADMIN_SUBTABS = ['queue', 'resources', 'add', 'notices', 'videos', 'timeline', 'trash', 'revisions', 'audit', 'layout', 'ai', 'routine', 'security', 'backup', 'feedbacks', 'contact'];
+const ADMIN_SUBTABS = ['queue', 'resources', 'add', 'faculty', 'publish', 'notices', 'videos', 'timeline', 'trash', 'revisions', 'audit', 'layout', 'ai', 'routine', 'security', 'backup', 'feedbacks', 'contact'];
 
 function logAdminAction(actionTitle, detail) {
   const logEntry = {
@@ -2475,6 +2554,8 @@ function switchAdminSubTab(tabName) {
 
   if (tabName === 'queue') renderAdminQueue();
   else if (tabName === 'resources') renderAdminResources();
+  else if (tabName === 'faculty') renderAdminFacultyManager();
+  else if (tabName === 'publish') renderAdminPublishPanel();
   else if (tabName === 'notices') renderAdminNotices();
   else if (tabName === 'videos') renderAdminVideos();
   else if (tabName === 'timeline') renderAdminTimeline();
@@ -2499,7 +2580,7 @@ function renderAdminWorkspace() {
   const adminFeedbackBadge = document.getElementById('adminFeedbackBadge');
 
   if (adminTotalFiles) {
-    adminTotalFiles.textContent = ((appData?.summary?.total_academic_files || 3895) + communityResources.length).toLocaleString();
+    adminTotalFiles.textContent = ((appData?.summary?.total_academic_files || 3896) + communityResources.length).toLocaleString();
   }
   if (adminPendingCount) adminPendingCount.textContent = pendingResources.length;
   if (adminPendingBadge) adminPendingBadge.textContent = pendingResources.length;
@@ -3431,7 +3512,7 @@ function renderAdminAudit() {
       </h4>
       <div class="text-xs text-slate-300 space-y-1">
         <div class="flex items-center justify-between py-1 border-b border-slate-800">
-          <span>All 3,895 Undergraduate Course Files Indexed</span>
+          <span>All 3,896 Undergraduate Course Files Indexed</span>
           <span class="text-emerald-400 font-bold">✓ Passed</span>
         </div>
         <div class="flex items-center justify-between py-1 border-b border-slate-800">
@@ -4638,9 +4719,9 @@ function applyPortalSettings() {
   }
 
   // 3. Hero & Banner Custom Texts
-  const homeHeroTitle = document.getElementById('homeHeroTitle');
-  if (homeHeroTitle && portalSettings.heroTitle) {
-    homeHeroTitle.textContent = portalSettings.heroTitle;
+  const homeHeroStatic = document.getElementById('homeHeroStatic');
+  if (homeHeroStatic && portalSettings.heroTitle) {
+    homeHeroStatic.textContent = portalSettings.heroTitle;
   }
   const homeHeroHighlight = document.getElementById('homeHeroHighlight');
   if (homeHeroHighlight && portalSettings.heroSubtitle) {
@@ -5484,14 +5565,20 @@ function triggerPwaInstall() {
         showToast('ধন্যবাদ! ClassroomHub অ্যাপটি সফলভাবে ইন্সটল হচ্ছে।');
       }
       deferredPwaPrompt = null;
-      const headerBtn = document.getElementById('pwaInstallHeaderBtn');
-      const homeCard = document.getElementById('pwaHomeCard');
-      if (headerBtn) headerBtn.classList.add('hidden');
-      if (homeCard) homeCard.classList.add('hidden');
     });
   } else {
-    alert('অ্যাপ ইন্সটল করার অপশনটি আপনার ব্রাউজার সমর্থন করছে না অথবা অ্যাপটি ইতোমধ্যে ইন্সটল করা হয়েছে। আপনি ব্রাউজারের থ্রি-ডট মেন্যু থেকে "Add to Home Screen" বা "Install App" সিলেক্ট করতে পারেন।');
+    const modal = document.getElementById('pwaInstallModal');
+    if (modal) {
+      modal.showModal();
+    } else {
+      showToast('ব্রাউজারের মেন্যু থেকে "Add to Home Screen" বা "Install App" সিলেক্ট করুন।');
+    }
   }
+}
+
+function closePwaInstallModal() {
+  const modal = document.getElementById('pwaInstallModal');
+  if (modal) modal.close();
 }
 
 window.addEventListener('appinstalled', () => {
@@ -5629,28 +5716,42 @@ function applyMathRendering(container) {
   }
 }
 
+function normalizeBn(str) {
+  if (!str) return '';
+  return str
+    .replace(/\u09AF\u09BC/g, '\u09DF') // য + ় -> য়
+    .replace(/\u09A1\u09BC/g, '\u09DC') // ড + ় -> ড়
+    .replace(/\u09A2\u09BC/g, '\u09DD') // ঢ + ় -> ঢ়
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 function getEngineeringConceptResponse(query, isBangla) {
-  const q = query.toLowerCase().replace(/\u09AF\u09BC/g, '\u09DF');
+  const q = normalizeBn(query);
+  const rawQ = query.trim();
 
   // =========================================================================
   // 1. THERMAL EFFICIENCY, HEAT ENGINES, CARNOT EFFICIENCY & COP
-  // [CRITICAL: Matches 'thermal efficiency', 'carnot', 'heat engine', 'cop', 'efficiency']
   // =========================================================================
   if (
-    q.includes('thermal efficiency') ||
-    q.includes('thermal efficiancy') ||
-    q.includes('তাপীয় দক্ষতা') ||
-    q.includes('তাপীয় দক্ষতা') ||
-    q.includes('heat engine') ||
-    q.includes('হিট ইঞ্জিন') ||
-    q.includes('coefficient of performance') ||
-    q.includes('cop') ||
-    q.includes('refrigerator') ||
-    q.includes('heat pump') ||
-    q.includes('হিট পাম্প') ||
-    q.includes('রেফ্রিজারেটর') ||
-    (q.includes('efficiency') && (q.includes('thermal') || q.includes('heat') || q.includes('engine') || q.includes('cycle') || q.includes('carnot'))) ||
-    (q.includes('দক্ষতা') && (q.includes('তাপ') || q.includes('ইঞ্জিন') || q.includes('সাইকেল') || q.includes('কার্নো')))
+    (
+      q.includes('thermal efficiency') ||
+      q.includes('thermal efficiancy') ||
+      q.includes('তাপীয় দক্ষতা') ||
+      q.includes('তাপীয় দক্ষতা') ||
+      q.includes('heat engine') ||
+      q.includes('হিট ইঞ্জিন') ||
+      q.includes('coefficient of performance') ||
+      q.includes('cop') ||
+      q.includes('refrigerator') ||
+      q.includes('heat pump') ||
+      q.includes('হিট পাম্প') ||
+      q.includes('রেফ্রিজারেটর') ||
+      (q.includes('efficiency') && (q.includes('thermal') || q.includes('heat') || q.includes('engine') || q.includes('cycle') || q.includes('carnot'))) ||
+      (q.includes('দক্ষতা') && (q.includes('তাপ') || q.includes('ইঞ্জিন') || q.includes('সাইকেল') || q.includes('কার্নো')))
+    ) &&
+    !q.includes('plant') && !q.includes('প্ল্যান্ট') && !q.includes('প্লান্ট')
   ) {
     return {
       title: isBangla ? 'থার্মোডাইনামিক্স: তাপীয় দক্ষতা (Thermal Efficiency) ও হিট ইঞ্জিন' : 'Thermodynamics: Thermal Efficiency, Heat Engines & COP',
@@ -5659,21 +5760,21 @@ function getEngineeringConceptResponse(query, isBangla) {
           <div>
             <p class="font-bold text-white text-xs sm:text-sm">১. তাপীয় দক্ষতার সংজ্ঞা ও সমীকরণ (Definition & Governing Equation):</p>
             <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              মেকানিক্যাল ইঞ্জিনিয়ারিংয়ে <strong>তাপীয় দক্ষতা (Thermal Efficiency, \( \eta_{\text{th}} \))</strong> হলো কোনো হিট ইঞ্জিন বা সাইকেল দ্বারা সরবরাহকৃত তাপশক্তিকে কত কার্যকরভাবে নেট যান্ত্রিক কাজে (Net Work Output) রূপান্তর করা যায় তার অনুপাত:
+              মেকানিক্যাল ইঞ্জিনিয়ারিংয়ে <strong>তাপীয় দক্ষতা (Thermal Efficiency, \\( \\eta_{\\text{th}} \\))</strong> হলো কোনো হিট ইঞ্জিন বা সাইকেল দ্বারা সরবরাহকৃত তাপশক্তিকে কত কার্যকরভাবে নেট যান্ত্রিক কাজে (Net Work Output) রূপান্তর করা যায় তার অনুপাত:
             </p>
           </div>
 
           <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-amber-400 font-bold font-sans">সাধারণ তাপীয় দক্ষতার সূত্র:</div>
-            \[ \eta_{\text{th}} = \frac{\text{Net Work Output}}{\text{Total Heat Input}} = \frac{W_{\text{net}}}{Q_{\text{in}}} = \frac{Q_H - Q_L}{Q_H} = 1 - \frac{Q_L}{Q_H} \]
-            <div class="text-slate-400 text-[11px] font-sans">যেখানে \( Q_H \) = উচ্চ তাপমাত্রার উৎস হতে গৃহীত তাপ, এবং \( Q_L \) = নিম্ন তাপমাত্রার সিংকে বর্জিত অপচয় তাপ।</div>
+            \\[ \\eta_{\\text{th}} = \\frac{\\text{Net Work Output}}{\\text{Total Heat Input}} = \\frac{W_{\\text{net}}}{Q_{\\text{in}}} = \\frac{Q_H - Q_L}{Q_H} = 1 - \\frac{Q_L}{Q_H} \\]
+            <div class="text-slate-400 text-[11px] font-sans">যেখানে \\( Q_H \\) = উচ্চ তাপমাত্রার উৎস হতে গৃহীত তাপ, এবং \\( Q_L \\) = নিম্ন তাপমাত্রার সিংকে বর্জিত অপচয় তাপ।</div>
           </div>
 
           <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-cyan-400 font-bold font-sans">২. কার্নো সাইকেলের সর্বোচ্চ তাত্ত্বিক দক্ষতা (Carnot Efficiency):</div>
-            <p class="text-[11px] text-slate-300 font-sans">থার্মোডাইনামিক্সের ২য় সূত্রানুযায়ী দুটি নির্দিষ্ট তাপমাত্রার (\( T_H \) ও \( T_L \)) মধ্যে পরিচালিত যেকোনো ইঞ্জিনের সর্বোচ্চ সম্ভাব্য দক্ষতা হলো কার্নো দক্ষতা:</p>
-            \[ \eta_{\text{Carnot}} = 1 - \frac{T_L}{T_H} \quad (\text{তাপমাত্রা অবশ্যই কেলভিন এককে হতে হবে: } K = ^\circ C + 273.15) \]
-            <div class="text-red-400 text-[11px] font-sans font-bold">কেলভিন-প্লাঙ্ক বিবৃতি: কোনো হিট ইঞ্জিনই ১০০% দক্ষ হতে পারে না (\( \eta_{\text{th}} < 100\% \)), কিছু তাপ পরিবেশে বর্জন করা অনিবার্য।</div>
+            <p class="text-[11px] text-slate-300 font-sans">থার্মোডাইনামিক্সের ২য় সূত্রানুযায়ী দুটি নির্দিষ্ট তাপমাত্রার (\\( T_H \\) ও \\( T_L \\)) মধ্যে পরিচালিত যেকোনো ইঞ্জিনের সর্বোচ্চ সম্ভাব্য দক্ষতা হলো কার্নো দক্ষতা:</p>
+            \\[ \\eta_{\\text{Carnot}} = 1 - \\frac{T_L}{T_H} \\quad (\\text{তাপমাত্রা অবশ্যই কেলভিন এককে হতে হবে: } K = ^\\circ C + 273.15) \\]
+            <div class="text-red-400 text-[11px] font-sans font-bold">কেলভিন-প্লাঙ্ক বিবৃতি: কোনো হিট ইঞ্জিনই ১০০% দক্ষ হতে পারে না (\\( \\eta_{\\text{th}} < 100\\% \\)), কিছু তাপ পরিবেশে বর্জন করা অনিবার্য।</div>
           </div>
 
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1.5">
@@ -5691,11 +5792,11 @@ function getEngineeringConceptResponse(query, isBangla) {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-sans">
               <div>
                 <strong>রেফ্রিজারেটর:</strong>
-                \[ \text{COP}_R = \frac{\text{Cooling Effect}}{\text{Work Input}} = \frac{Q_L}{W_{\text{net,in}}} = \frac{T_L}{T_H - T_L} \]
+                \\[ \\text{COP}_R = \\frac{\\text{Cooling Effect}}{\\text{Work Input}} = \\frac{Q_L}{W_{\\text{net,in}}} = \\frac{T_L}{T_H - T_L} \\]
               </div>
               <div>
                 <strong>হিট পাম্প:</strong>
-                \[ \text{COP}_{HP} = \frac{\text{Heating Effect}}{\text{Work Input}} = \frac{Q_H}{W_{\text{net,in}}} = \text{COP}_R + 1 \]
+                \\[ \\text{COP}_{HP} = \\frac{\\text{Heating Effect}}{\\text{Work Input}} = \\frac{Q_H}{W_{\\text{net,in}}} = \\text{COP}_R + 1 \\]
               </div>
             </div>
           </div>
@@ -5709,45 +5810,19 @@ function getEngineeringConceptResponse(query, isBangla) {
           <div>
             <p class="font-bold text-white text-xs sm:text-sm">1. Definition & Mathematical Formulation of Thermal Efficiency:</p>
             <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              In mechanical and thermal engineering, <strong>Thermal Efficiency (\( \eta_{\text{th}} \))</strong> is a dimensionless performance measure of a device that uses thermal energy (such as an internal combustion engine, a steam turbine, or a gas power cycle). It is the ratio of net useful work output to the total heat input:
+              In mechanical and thermal engineering, <strong>Thermal Efficiency (\\( \\eta_{\\text{th}} \\))</strong> is a dimensionless performance measure of a device that uses thermal energy. It is the ratio of net useful work output to total heat input:
             </p>
           </div>
 
           <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-amber-400 font-bold font-sans">Governing Equation:</div>
-            \[ \eta_{\text{th}} = \frac{W_{\text{net,out}}}{Q_{\text{in}}} = \frac{Q_{\text{in}} - Q_{\text{out}}}{Q_{\text{in}}} = 1 - \frac{Q_L}{Q_H} \]
-            <div class="text-slate-400 text-[11px] font-sans">where \( Q_H \) is heat supplied from the high-temperature reservoir and \( Q_L \) is waste heat rejected to the low-temperature sink.</div>
+            \\[ \\eta_{\\text{th}} = \\frac{W_{\\text{net,out}}}{Q_{\\text{in}}} = \\frac{Q_{\\text{in}} - Q_{\\text{out}}}{Q_{\\text{in}}} = 1 - \\frac{Q_L}{Q_H} \\]
           </div>
 
           <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-cyan-400 font-bold font-sans">2. Carnot Thermal Efficiency (Theoretical Maximum):</div>
-            <p class="text-[11px] text-slate-300 font-sans">According to Carnot's theorem, no engine operating between two heat reservoirs can be more efficient than a reversible Carnot engine:</p>
-            \[ \eta_{\text{Carnot}} = 1 - \frac{T_L}{T_H} \quad (T \text{ in absolute Kelvin: } K = ^\circ C + 273.15) \]
-            <div class="text-red-400 text-[11px] font-sans font-bold">Kelvin-Planck Statement (2nd Law): No cyclic heat engine can achieve 100% efficiency (\( \eta < 1 \)); heat rejection is physically mandatory.</div>
-          </div>
-
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1.5">
-            <div class="text-emerald-400 font-bold">3. Typical Real-World Engineering Thermal Efficiencies:</div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300">
-              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>Combined Cycle Power Plant (CCPP):</strong> 55% - 62%</div>
-              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>Modern Supercritical Coal Plants:</strong> 38% - 44%</div>
-              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>Heavy Duty Gas Turbines:</strong> 32% - 38%</div>
-              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>Diesel Engines (CI):</strong> 35% - 42%</div>
-            </div>
-          </div>
-
-          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            <div class="text-indigo-400 font-bold font-sans">4. Refrigerators & Heat Pumps: Coefficient of Performance (COP):</div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-sans">
-              <div>
-                <strong>Refrigerator:</strong>
-                \[ \text{COP}_R = \frac{\text{Desired Output}}{\text{Required Work}} = \frac{Q_L}{W_{\text{in}}} = \frac{T_L}{T_H - T_L} \]
-              </div>
-              <div>
-                <strong>Heat Pump:</strong>
-                \[ \text{COP}_{HP} = \frac{\text{Heating Effect}}{\text{Required Work}} = \frac{Q_H}{W_{\text{in}}} = \text{COP}_R + 1 \]
-              </div>
-            </div>
+            \\[ \\eta_{\\text{Carnot}} = 1 - \\frac{T_L}{T_H} \\quad (T \\text{ in absolute Kelvin: } K = ^\\circ C + 273.15) \\]
+            <div class="text-red-400 text-[11px] font-sans font-bold">Kelvin-Planck Statement: No cyclic heat engine can achieve 100% efficiency; waste heat rejection is physically mandatory.</div>
           </div>
 
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
@@ -5763,13 +5838,20 @@ function getEngineeringConceptResponse(query, isBangla) {
   // =========================================================================
   if (
     q.includes('power plant') ||
+    q.includes('power station') ||
+    q.includes('thermal plant') ||
+    q.includes('steam power') ||
     q.includes('পাওয়ার প্ল্যান্ট') ||
     q.includes('পাওয়ার প্ল্যান্ট') ||
-    q.includes('thermal plant') ||
-    q.includes('power station') ||
-    q.includes('steam power') ||
-    q.includes('র‍্যাংকিন সাইকেল') ||
-    q.includes('rankine cycle')
+    q.includes('পাওয়ার প্লান্ট') ||
+    q.includes('পাওয়ার প্লান্ট') ||
+    q.includes('বিদ্যুৎ কেন্দ্র') ||
+    q.includes('বিদ্যুৎকেন্দ্র') ||
+    q.includes('র‍্যাংকিন') ||
+    q.includes('র‍্যাঙ্কিন') ||
+    q.includes('rankine') ||
+    (q.includes('plant') && (q.includes('power') || q.includes('steam') || q.includes('thermal') || q.includes('nuclear') || q.includes('coal') || q.includes('electric'))) ||
+    (q.includes('প্ল্যান্ট') || q.includes('প্লান্ট'))
   ) {
     return {
       title: isBangla ? 'পাওয়ার প্ল্যান্ট ইঞ্জিনিয়ারিং ও তাপবিদ্যুৎ কেন্দ্র (Power Plant Engineering)' : 'Power Plant Engineering & Power Generation Systems',
@@ -5778,66 +5860,83 @@ function getEngineeringConceptResponse(query, isBangla) {
           <div>
             <p class="font-bold text-white text-xs sm:text-sm">১. পাওয়ার প্ল্যান্টের সংজ্ঞা ও শ্রেণিবিভাগ (Power Plant Overview):</p>
             <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              <strong>পাওয়ার প্ল্যান্ট (Power Plant)</strong> হলো একটি বৃহৎ প্রকৌশল স্থাপনা, যেখানে রাসায়নিক (কয়লা/গ্যাস), পারমাণবিক বা জলবিদ্যুৎ শক্তিকে মেকানিক্যাল রোটেশনাল এনার্জিতে এবং পরবর্তীতে সিনক্রোনাস জেনারেটরের মাধ্যমে বৈদ্যুতিক শক্তিতে (Electrical Power) রূপান্তর করা হয়।
+              <strong>পাওয়ার প্ল্যান্ট (Power Plant / Power Station)</strong> হলো একটি বৃহৎ প্রকৌশল স্থাপনা, যেখানে রাসায়নিক (কয়লা, প্রাকৃতিক গ্যাস), পারমাণবিক (ইউরেনিয়াম) অথবা নবায়নযোগ্য শক্তিকে (পানি প্রবাহ, সৌর, বায়ু) যান্ত্রিক ঘূর্ণন শক্তিতে (Mechanical Shaft Work) এবং পরবর্তীতে অল্টারনেটর/সিনক্রোনাস জেনারেটরের মাধ্যমে বৈদ্যুতিক শক্তিতে (Electrical Power) রূপান্তর করা হয়।
             </p>
           </div>
 
           <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 font-mono text-xs">
-            <div class="text-indigo-400 font-bold font-sans">২. স্টিম পাওয়ার প্ল্যান্টের র‍্যাংকিন সাইকেল (Rankine Cycle):</div>
-            <p class="text-[11px] text-slate-400 font-sans">বাষ্পীয় চক্র মূলত চারটি প্রধান যন্ত্রাংশের সমন্বয়ে পরিচালিত হয়:</p>
-            \[ \eta_{\text{thermal}} = \frac{W_{\text{net}}}{Q_{\text{in}}} = \frac{(h_1 - h_2) - (h_4 - h_3)}{h_1 - h_4} \]
-            <div class="grid grid-cols-2 gap-2 text-[11px] font-sans text-slate-300 pt-1">
-              <div><strong>টারবাইন কাজ:</strong> \( W_t = h_1 - h_2 \)</div>
-              <div><strong>পাম্প কাজ:</strong> \( W_p = v_3(P_1 - P_2) \)</div>
-              <div><strong>বয়লারে তাপ যোগ:</strong> \( Q_{\text{in}} = h_1 - h_4 \)</div>
-              <div><strong>কনডেনসারে তাপ বর্জন:</strong> \( Q_{\text{out}} = h_2 - h_3 \)</div>
+            <div class="text-indigo-400 font-bold font-sans">২. স্টিম পাওয়ার প্ল্যান্টের র‍্যাংকিন সাইকেল (Ideal Rankine Cycle):</div>
+            <p class="text-[11px] text-slate-400 font-sans">তাপবিদ্যুৎ কেন্দ্রের বাষ্পীয় চক্র মূলত চারটি প্রধান অংশের মাধ্যমে অবিরাম পরিচালিত হয়:</p>
+            \\[ \\eta_{\\text{thermal}} = \\frac{W_{\\text{net}}}{Q_{\\text{in}}} = \\frac{W_t - W_p}{Q_{\\text{in}}} = \\frac{(h_1 - h_2) - (h_4 - h_3)}{h_1 - h_4} \\]
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-sans text-slate-300 pt-1">
+              <div class="p-2 rounded bg-slate-950/60 border border-slate-800">
+                <strong>১. বয়লার (Boiler / Steam Generator):</strong> উচ্চ চাপে পানিকে উত্তপ্ত করে সুপারহিটেড বাষ্পে পরিণত করে। \\( Q_{\\text{in}} = h_1 - h_4 \\)
+              </div>
+              <div class="p-2 rounded bg-slate-950/60 border border-slate-800">
+                <strong>২. স্টিম টারবাইন (Steam Turbine):</strong> উচ্চ চাপের বাষ্প প্রসারিত হয়ে শ্যাফট ওয়ার্ক উৎপন্ন করে। \\( W_t = h_1 - h_2 \\)
+              </div>
+              <div class="p-2 rounded bg-slate-950/60 border border-slate-800">
+                <strong>৩. সারফেস কনডেনসার (Condenser):</strong> টারবাইন থেকে নির্গত বাষ্পকে ঠান্ডা পানিতে ঘনীভূত করে। \\( Q_{\\text{out}} = h_2 - h_3 \\)
+              </div>
+              <div class="p-2 rounded bg-slate-950/60 border border-slate-800">
+                <strong>৪. বয়লার ফিড পাম্প (BFP):</strong> ঘনীভূত পানিকে পুনরায় উচ্চ চাপে বয়লারে পাঠায়। \\( W_p = v_3(P_1 - P_2) \\approx h_4 - h_3 \\)
+              </div>
             </div>
           </div>
 
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-1.5 text-xs">
-            <div class="text-emerald-400 font-bold">৩. পাওয়ার প্ল্যান্টের কর্মক্ষমতা নির্দেশক (Performance Metrics):</div>
-            \[ \text{Heat Rate (HR)} = \frac{3600}{\eta_{\text{thermal}}} \text{ kJ/kWh} = \frac{\dot{m}_f \times \text{CV}}{P_{\text{net}}} \]
-            \[ \text{Plant Capacity Factor (PCF)} = \frac{\text{Actual Energy Generated (kWh)}}{\text{Installed Capacity (kW)} \times 8760\text{ h}} \]
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 text-xs">
+            <div class="text-emerald-400 font-bold">৩. পাওয়ার প্ল্যান্টের কর্মক্ষমতা নির্দেশক (Key Performance Metrics):</div>
+            <div class="space-y-1.5 font-mono text-[11px]">
+              <div>
+                <strong>হিট রেট (Heat Rate, HR):</strong> ১ কিলোওয়াট-ঘণ্টা বিদ্যুৎ তৈরি করতে প্রয়োজনীয় তাপশক্তির পরিমাণ:
+                \\[ \\text{Heat Rate (HR)} = \\frac{3600}{\\eta_{\\text{thermal}}} \\text{ kJ/kWh} = \\frac{\\dot{m}_f \\times \\text{CV}}{P_{\\text{net}}} \\]
+                <span class="text-slate-400 font-sans text-[10px]">(হিট রেট যত কম হবে, প্ল্যান্টের কার্যক্ষমতা ও জ্বালানি সাশ্রয় তত বেশি হবে)</span>
+              </div>
+              <div class="pt-1.5 border-t border-slate-800 font-sans">
+                <strong>প্ল্যান্ট ক্যাপাসিটি ফ্যাক্টর (Plant Capacity Factor, PCF):</strong>
+                \\[ \\text{PCF} = \\frac{\\text{Actual Energy Generated (kWh)}}{\\text{Installed Capacity (kW)} \\times 8760\\text{ hours}} \\times 100\\% \\]
+              </div>
+            </div>
           </div>
 
           <div>
             <p class="font-bold text-white text-xs">৪. গুরুত্বপূর্ণ অক্সিলিয়ারি যন্ত্রপাতি (Auxiliary Equipment):</p>
             <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300 mt-1">
-              <li><strong>সুপারহিটার ও রিহিটার:</strong> বাষ্পের তাপমাত্রা বৃদ্ধি করে সাইকেলের তাপীয় দক্ষতা বাড়ায়।</li>
-              <li><strong>ইকোনোমাইজার:</strong> ফ্লু-গ্যাসের অপচয় তাপ দিয়ে ফিডওয়াটার প্রি-হিট করে জ্বালানি সাশ্রয় করে।</li>
-              <li><strong>সারফেস কনডেনসার:</strong> টারবাইনের শেষ প্রান্তে ০.০৫-০.১ বার ভ্যাকিউম তৈরি করে টারবাইন ওয়ার্ক বাড়ায়।</li>
-              <li><strong>ডিয়েয়ারেটর:</strong> ফিডওয়াটার হতে অক্সিজেন ও কার্বন ডাই অক্সাইড বের করে বয়লার পাইপের ক্ষয় রোধ করে।</li>
+              <li><strong>সুপারহিটার ও রিহিটার (Superheater & Reheater):</strong> স্যাচুরেটেড স্টিমকে সুপারহিট করে টারবাইনের ক্ষয় রোধ করে এবং দক্ষতা বৃদ্ধি করে।</li>
+              <li><strong>ইকোনোমাইজার (Economizer):</strong> চিমনি দিয়ে নির্গত ফ্লু গ্যাসের অবশিষ্টাংশ তাপ ব্যবহার করে বয়লার ফিডওয়াটার গরম করে।</li>
+              <li><strong>এয়ার প্রিহিটার (Air Preheater, APH):</strong> বয়লারে প্রবেশকারী বায়ুকে আগে থেকেই উত্তপ্ত করে কম্বাশন দক্ষতা বাড়ায়।</li>
+              <li><strong>ডিয়েয়ারেটর (Deaerator):</strong> পানিতে দ্রবীভূত অক্সিজেন ও কার্বন ডাই-অক্সাইড দূর করে পাইপের মরিচা ও করোশন প্রতিরোধ করে।</li>
             </ul>
           </div>
 
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
-            <strong>🎓 চুয়েট কোর্স রেফারেন্স:</strong> ৪র্থ বর্ষ ১ম টার্মের <strong>ME 415 (Power Plant Engineering)</strong>।
+            <strong>🎓 চুয়েট কোর্স রেফারেন্স:</strong> ৪র্থ বর্ষ ১ম টার্মের <strong>ME 415 (Power Plant Engineering)</strong>। চুয়েটের বিগত বছরের টার্ম ফাইনাল পরীক্ষায় র‍্যাংকিন সাইকেলের P-v ও T-s ডায়াগ্রাম এবং রিহিট-রিজেনারেটিভ সাইকেলের ক্যালকুলেশন বারবার আসে। আমাদের রিসোর্স ভল্টে ME 415 এর সমাধানকৃত প্রশ্ন ব্যাংক রয়েছে।
           </div>
         </div>
       ` : `
         <div class="space-y-3.5">
           <div>
-            <p class="font-bold text-white text-xs sm:text-sm">1. Power Plant Engineering: Core Definition & Classifications:</p>
+            <p class="font-bold text-white text-xs sm:text-sm">1. Power Plant Engineering: Core Definition & Architecture:</p>
             <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              A <strong>Power Plant (Power Station)</strong> is an industrial facility configured to convert primary energy (fossil fuel, nuclear, hydro, geothermal, solar, or wind) into mechanical shaft work, and subsequently into electrical power via synchronous generators.
+              A <strong>Power Plant (Power Generation Station)</strong> is an industrial facility engineered to convert primary energy sources (fossil fuels, nuclear fissile material, hydro potential, or renewables) into mechanical shaft work, and subsequently into alternating electrical power via synchronous generators.
             </p>
           </div>
 
           <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 font-mono text-xs">
-            <div class="text-indigo-400 font-bold font-sans">2. The Working Thermodynamic Cycle: Ideal Rankine Cycle:</div>
-            \[ \eta_{\text{th}} = \frac{W_{\text{net}}}{Q_{\text{in}}} = \frac{(h_1 - h_2) - (h_4 - h_3)}{h_1 - h_4} \]
-            <div class="grid grid-cols-2 gap-2 text-[11px] font-sans text-slate-300 pt-1">
-              <div><strong>Turbine Work:</strong> \( W_t = h_1 - h_2 \)</div>
-              <div><strong>Pump Work:</strong> \( W_p = v_3 (P_1 - P_2) \)</div>
-              <div><strong>Heat Added:</strong> \( Q_{\text{in}} = h_1 - h_4 \)</div>
-              <div><strong>Heat Rejected:</strong> \( Q_{\text{out}} = h_2 - h_3 \)</div>
+            <div class="text-indigo-400 font-bold font-sans">2. Thermodynamic Engine: The Ideal Rankine Cycle:</div>
+            \\[ \\eta_{\\text{th}} = \\frac{W_{\\text{net}}}{Q_{\\text{in}}} = \\frac{W_t - W_p}{Q_{\\text{in}}} = \\frac{(h_1 - h_2) - (h_4 - h_3)}{h_1 - h_4} \\]
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-sans text-slate-300 pt-1">
+              <div><strong>Boiler:</strong> \\( Q_{\\text{in}} = h_1 - h_4 \\) (Constant-pressure heat addition)</div>
+              <div><strong>Turbine:</strong> \\( W_t = h_1 - h_2 \\) (Isentropic expansion producing shaft work)</div>
+              <div><strong>Condenser:</strong> \\( Q_{\\text{out}} = h_2 - h_3 \\) (Constant-pressure heat rejection)</div>
+              <div><strong>Feed Pump:</strong> \\( W_p = v_3(P_1 - P_2) \\) (Isentropic liquid pumping)</div>
             </div>
           </div>
 
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-1.5 text-xs">
             <div class="text-emerald-400 font-bold">3. Performance Metrics: Heat Rate & Capacity Factor:</div>
-            \[ \text{Heat Rate (HR)} = \frac{3600}{\eta_{\text{th}}} \text{ kJ/kWh} = \frac{\dot{m}_f \times \text{HHV}}{P_{\text{electric}}} \]
-            \[ \text{Plant Capacity Factor (PCF)} = \frac{\text{Actual MWh Produced}}{\text{Rated Capacity (MW)} \times 8760\text{ hours}} \]
+            \\[ \\text{Heat Rate (HR)} = \\frac{3600}{\\eta_{\\text{th}}} \\text{ kJ/kWh} = \\frac{\\dot{m}_f \\times \\text{HHV}}{P_{\\text{electric}}} \\]
+            \\[ \\text{Plant Capacity Factor (PCF)} = \\frac{\\text{Actual MWh Produced}}{\\text{Rated Capacity (MW)} \\times 8760\\text{ hours}} \\]
           </div>
 
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
@@ -5852,31 +5951,43 @@ function getEngineeringConceptResponse(query, isBangla) {
   // 3. MECHANICAL POWER, WORK, TORQUE & ROTATIONAL SHAFTS
   // =========================================================================
   if (
-    (q.includes('power') || q.includes('পাওয়ার') || q.includes('পাওয়ার') || q.includes('ক্ষমতা') || q.includes('torque') || q.includes('টর্ক') || q.includes('horsepower') || q.includes('watt') || q.includes('energy') || q.includes('শক্তি') || (q.includes('work') && !q.includes('workshop'))) &&
-    !q.includes('plant') && !q.includes('প্ল্যান্ট')
+    (
+      q.includes('power') ||
+      q.includes('পাওয়ার') ||
+      q.includes('পাওয়ার') ||
+      q.includes('ক্ষমতা') ||
+      q.includes('torque') ||
+      q.includes('টর্ক') ||
+      q.includes('horsepower') ||
+      q.includes('watt') ||
+      q.includes('energy') ||
+      q.includes('শক্তি') ||
+      (q.includes('work') && !q.includes('workshop'))
+    ) &&
+    !q.includes('plant') && !q.includes('প্ল্যান্ট') && !q.includes('প্লান্ট') && !q.includes('station')
   ) {
     return {
       title: isBangla ? 'মেকানিক্যাল ইঞ্জিনিয়ারিং: ক্ষমতা (Power), কাজ ও টর্ক' : 'Mechanical Engineering: Power, Work & Torque Analysis',
       html: isBangla ? `
         <div class="space-y-3">
           <p class="text-xs text-slate-300 leading-relaxed">
-            <strong>ক্ষমতা (Power, \( P \)):</strong> একক সময়ে কাজ সম্পন্ন করার হার অথবা শক্তি স্থানান্তরের গতি।
+            <strong>ক্ষমতা (Power, \\( P \\)):</strong> একক সময়ে কাজ সম্পন্ন করার হার অথবা শক্তি স্থানান্তরের গতি।
           </p>
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 font-mono text-xs">
             <div class="text-indigo-400 font-bold font-sans">রৈখিক গতিতে ক্ষমতা (Translational Power):</div>
-            \[ P = \frac{dW}{dt} = \vec{F} \cdot \vec{v} \]
+            \\[ P = \\frac{dW}{dt} = \\vec{F} \\cdot \\vec{v} \\]
             <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">ঘূর্ণন ক্ষমতা (Rotational Shaft Power):</div>
-            \[ P = T \cdot \omega = \frac{2\pi N T}{60} \text{ Watts} \quad \implies \quad P_{\text{kW}} = \frac{2\pi N T}{60,000} \]
+            \\[ P = T \\cdot \\omega = \\frac{2\\pi N T}{60} \\text{ Watts} \\quad \\implies \\quad P_{\\text{kW}} = \\frac{2\\pi N T}{60,000} \\]
           </div>
           <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300">
-            <strong>একক রূপান্তর:</strong> \( 1\text{ Imperial hp} = 745.7\text{ Watts (0.746 kW)} \) | \( 1\text{ W} = 1\text{ J/s} = 1\text{ N}\cdot\text{m/s} \)
+            <strong>একক রূপান্তর:</strong> \\( 1\\text{ Imperial hp} = 745.7\\text{ Watts (0.746 kW)} \\) | \\( 1\\text{ Metric hp} = 735.5\\text{ Watts} \\)
           </div>
         </div>
       ` : `
         <div class="space-y-3">
           <p class="text-xs text-slate-300">Power is the time rate of doing work or transferring energy.</p>
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 font-mono text-xs">
-            \[ P = \vec{F} \cdot \vec{v}, \quad P_{\text{rotational}} = T \cdot \omega = \frac{2\pi N T}{60} \text{ Watts} \]
+            \\[ P = \\vec{F} \\cdot \\vec{v}, \\quad P_{\\text{rotational}} = T \\cdot \\omega = \\frac{2\\pi N T}{60} \\text{ Watts} \\]
           </div>
         </div>
       `
@@ -5892,14 +6003,14 @@ function getEngineeringConceptResponse(query, isBangla) {
       html: isBangla ? `
         <div class="space-y-3">
           <p class="text-xs text-slate-300 leading-relaxed">
-            <strong>এনট্রপি (Entropy, \( S \)):</strong> থার্মোডাইনামিক্সের ২য় সূত্রের ভিত্তি। এটি কোনো সিস্টেমের আণবিক বিশৃঙ্খলা বা অপ্রত্যাবর্তী অপচয়ের পরিমাপ।
+            <strong>এনট্রপি (Entropy, \\( S \\)):</strong> থার্মোডাইনামিক্সের ২য় সূত্রের ভিত্তি। এটি কোনো সিস্টেমের আণবিক বিশৃঙ্খলা বা অপ্রত্যাবর্তী অপচয়ের পরিমাপ।
           </p>
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ dS = \left( \frac{\delta Q}{T} \right)_{\text{rev}} + S_{\text{gen}}, \quad S_{\text{gen}} \ge 0 \]
+            \\[ dS = \\left( \\frac{\\delta Q}{T} \\right)_{\\text{rev}} + S_{\\text{gen}}, \\quad S_{\\text{gen}} \\ge 0 \\]
             <div class="text-indigo-400 font-bold font-sans pt-1 border-t border-slate-800">অটো সাইকেলের দক্ষতা (Otto Cycle):</div>
-            \[ \eta_{\text{Otto}} = 1 - \frac{1}{r^{k-1}} \quad (r = \text{Compression Ratio, } k = 1.4) \]
+            \\[ \\eta_{\\text{Otto}} = 1 - \\frac{1}{r^{k-1}} \\quad (r = \\text{Compression Ratio, } k = 1.4) \\]
             <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">ডিজেল সাইকেলের দক্ষতা (Diesel Cycle):</div>
-            \[ \eta_{\text{Diesel}} = 1 - \frac{1}{r^{k-1}} \left[ \frac{r_c^k - 1}{k(r_c - 1)} \right] \quad (r_c = \text{Cut-off Ratio}) \]
+            \\[ \\eta_{\\text{Diesel}} = 1 - \\frac{1}{r^{k-1}} \\left[ \\frac{r_c^k - 1}{k(r_c - 1)} \\right] \\quad (r_c = \\text{Cut-off Ratio}) \\]
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
             <strong>🎓 চুয়েট কোর্স:</strong> ME 211 (Thermodynamics) & ME 315 (Internal Combustion Engines)।
@@ -5908,8 +6019,7 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ dS = \frac{\delta Q_{\text{rev}}}{T} + S_{\text{gen}}, \quad \eta_{\text{Otto}} = 1 - \frac{1}{r^{k-1}} \]
-            \[ \eta_{\text{Diesel}} = 1 - \frac{1}{r^{k-1}} \left[ \frac{r_c^k - 1}{k(r_c - 1)} \right], \quad \eta_{\text{Brayton}} = 1 - \frac{1}{r_p^{(k-1)/k}} \]
+            \\[ dS = \\frac{\\delta Q_{\\text{rev}}}{T} + S_{\\text{gen}}, \\quad \\eta_{\\text{Otto}} = 1 - \\frac{1}{r^{k-1}}, \\quad \\eta_{\\text{Diesel}} = 1 - \\frac{1}{r^{k-1}} \\left[ \\frac{r_c^k - 1}{k(r_c - 1)} \\right] \\]
           </div>
         </div>
       `
@@ -5928,11 +6038,11 @@ function getEngineeringConceptResponse(query, isBangla) {
             <strong>বার্নৌলির সমীকরণ (Bernoulli’s Equation):</strong> অবিচল (steady), অসংকোচনীয় (incompressible), অঘূর্ণনশীল ও ঘর্ষণহীন প্রবাহে স্ট্রিমলাইন বরাবর মোট এনার্জি হেড ধ্রুবক থাকে:
           </p>
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ \frac{P}{\rho g} + \frac{v^2}{2g} + z = \text{Constant} \]
+            \\[ \\frac{P}{\\rho g} + \\frac{v^2}{2g} + z = \\text{Constant} \\]
             <div class="text-cyan-400 font-bold font-sans pt-1 border-t border-slate-800">রেনল্ডস সংখ্যা (Reynolds Number):</div>
-            \[ Re = \frac{\rho v D}{\mu} = \frac{v D}{\nu} \quad (Re < 2300 \text{ Laminar}, Re > 4000 \text{ Turbulent}) \]
+            \\[ Re = \\frac{\\rho v D}{\\mu} = \\frac{v D}{\\nu} \\quad (Re < 2300 \\text{ Laminar}, Re > 4000 \\text{ Turbulent}) \\]
             <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">ডার্সি-ওয়েইসবাখ হেড লস (Darcy-Weisbach Friction Loss):</div>
-            \[ h_f = f \frac{L}{D} \frac{v^2}{2g} \]
+            \\[ h_f = f \\frac{L}{D} \\frac{v^2}{2g} \\]
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
             <strong>🎓 চুয়েট কোর্স:</strong> ME 221 (Fluid Mechanics-I) ও ME 321 (Fluid Mechanics-II)।
@@ -5941,7 +6051,7 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ \frac{P}{\rho g} + \frac{v^2}{2g} + z = \text{Constant}, \quad Re = \frac{\rho v D}{\mu}, \quad h_f = f \frac{L}{D} \frac{v^2}{2g} \]
+            \\[ \\frac{P}{\\rho g} + \\frac{v^2}{2g} + z = \\text{Constant}, \\quad Re = \\frac{\\rho v D}{\\mu}, \\quad h_f = f \\frac{L}{D} \\frac{v^2}{2g} \\]
           </div>
         </div>
       `
@@ -5958,14 +6068,14 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-indigo-400 font-bold font-sans">১. সেন্ট্রিফিউগাল পাম্পের ক্ষমতা ও হেড:</div>
-            \[ P_{\text{fluid}} = \rho g Q H, \quad P_{\text{brake}} = \frac{\rho g Q H}{\eta_{\text{pump}}} \]
+            \\[ P_{\\text{fluid}} = \\rho g Q H, \\quad P_{\\text{brake}} = \\frac{\\rho g Q H}{\\eta_{\\text{pump}}} \\]
             <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">২. ক্যাভিটেশন প্রতিরোধে NPSH ক্রাইটেরিয়া:</div>
-            \[ NPSH_{\text{available}} = \frac{P_{\text{atm}} - P_v}{\rho g} - h_s - h_f > NPSH_{\text{required}} \]
+            \\[ NPSH_{\\text{available}} = \\frac{P_{\\text{atm}} - P_v}{\\rho g} - h_s - h_f > NPSH_{\\text{required}} \\]
             <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">৩. হাইড্রোলিক টারবাইনের শ্রেণিবিভাগ:</div>
             <ul class="text-[11px] font-sans space-y-0.5 text-slate-300">
-              <li>• <strong>পেল্টন হুইল (Pelton Wheel):</strong> ইমপালস টারবাইন (উচ্চ হেড \( H > 250\text{ m} \), কম ডিসচার্জ)</li>
-              <li>• <strong>ফ্রান্সিস টারবাইন (Francis):</strong> রিঅ্যাকশন মিক্সড ফ্লো (মাঝারি হেড \( 60-250\text{ m} \))</li>
-              <li>• <strong>কাপলান টারবাইন (Kaplan):</strong> এক্সিয়াল ফ্লো রিঅ্যাকশন (কম হেড \( H < 60\text{ m} \), প্রচুর পানি প্রবাহ)</li>
+              <li>• <strong>পেল্টন হুইল (Pelton Wheel):</strong> ইমপালস টারবাইন (উচ্চ হেড \\( H > 250\\text{ m} \\), কম ডিসচার্জ)</li>
+              <li>• <strong>ফ্রান্সিস টারবাইন (Francis):</strong> রিঅ্যাকশন মিক্সড ফ্লো (মাঝারি হেড \\( 60-250\\text{ m} \\))</li>
+              <li>• <strong>কাপলান টারবাইন (Kaplan):</strong> এক্সিয়াল ফ্লো রিঅ্যাকশন (কম হেড \\( H < 60\\text{ m} \\), প্রচুর পানি প্রবাহ)</li>
             </ul>
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
@@ -5975,7 +6085,7 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ P = \frac{\rho g Q H}{\eta}, \quad NPSH_{\text{avail}} = \frac{P_{\text{atm}} - P_v}{\rho g} - h_s - h_f \ge NPSH_{\text{req}} \]
+            \\[ P = \\frac{\\rho g Q H}{\\eta}, \\quad NPSH_{\\text{avail}} \\ge NPSH_{\\text{req}} \\]
           </div>
         </div>
       `
@@ -5993,19 +6103,19 @@ function getEngineeringConceptResponse(query, isBangla) {
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div>
               <span class="text-amber-400 font-bold font-sans">১. ফুরিয়ারের কন্ডাকশন সূত্র (Fourier's Law):</span>
-              \[ q = -k A \frac{dT}{dx} \]
+              \\[ q = -k A \\frac{dT}{dx} \\]
             </div>
             <div class="pt-1.5 border-t border-slate-800">
               <span class="text-blue-400 font-bold font-sans">২. নিউটনের কুলিং সূত্র (Newton's Law of Cooling):</span>
-              \[ q = h A (T_s - T_\infty) \]
+              \\[ q = h A (T_s - T_\\infty) \\]
             </div>
             <div class="pt-1.5 border-t border-slate-800">
               <span class="text-purple-400 font-bold font-sans">৩. স্টিফান-বোল্টসম্যান রেডিয়েশন সূত্র:</span>
-              \[ q = \epsilon \sigma A (T_1^4 - T_2^4), \quad \sigma = 5.67 \times 10^{-8} \text{ W/m}^2\cdot\text{K}^4 \]
+              \\[ q = \\epsilon \\sigma A (T_1^4 - T_2^4), \\quad \\sigma = 5.67 \\times 10^{-8} \\text{ W/m}^2\\cdot\\text{K}^4 \\]
             </div>
             <div class="pt-1.5 border-t border-slate-800">
               <span class="text-emerald-400 font-bold font-sans">৪. হিট এক্সচেঞ্জার LMTD পদ্ধতি:</span>
-              \[ q = U A \Delta T_{\text{lm}}, \quad \Delta T_{\text{lm}} = \frac{\Delta T_1 - \Delta T_2}{\ln(\Delta T_1 / \Delta T_2)} \]
+              \\[ q = U A \\Delta T_{\\text{lm}}, \\quad \\Delta T_{\\text{lm}} = \\frac{\\Delta T_1 - \\Delta T_2}{\\ln(\\Delta T_1 / \\Delta T_2)} \\]
             </div>
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
@@ -6015,10 +6125,10 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            <div><strong>Conduction:</strong> \( q = -k A \frac{dT}{dx} \)</div>
-            <div><strong>Convection:</strong> \( q = h A (T_s - T_\infty) \)</div>
-            <div><strong>Radiation:</strong> \( q = \epsilon \sigma A (T_1^4 - T_2^4) \)</div>
-            <div><strong>Heat Exchanger:</strong> \( q = U A \Delta T_{\text{lm}}, \quad \Delta T_{\text{lm}} = \frac{\Delta T_1 - \Delta T_2}{\ln(\Delta T_1 / \Delta T_2)} \)</div>
+            <div><strong>Conduction:</strong> \\[ q = -k A \\frac{dT}{dx} \\]</div>
+            <div><strong>Convection:</strong> \\[ q = h A (T_s - T_\\infty) \\]</div>
+            <div><strong>Radiation:</strong> \\[ q = \\epsilon \\sigma A (T_1^4 - T_2^4) \\]</div>
+            <div><strong>LMTD:</strong> \\[ q = U A \\Delta T_{\\text{lm}} \\]</div>
           </div>
         </div>
       `
@@ -6035,11 +6145,11 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-indigo-400 font-bold font-sans">১. হুকের সূত্র ও এক্সিয়াল ডিফরমেশন (Hooke's Law & Deflection):</div>
-            \[ \sigma = E \epsilon = \frac{P}{A}, \quad \delta = \frac{P L}{A E} \]
+            \\[ \\sigma = E \\epsilon = \\frac{P}{A}, \\quad \\delta = \\frac{P L}{A E} \\]
             <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">২. তাপীয় স্ট্রেস (Thermal Stress):</div>
-            \[ \delta_T = \alpha \Delta T L, \quad \sigma_T = E \alpha \Delta T \text{ (যদি প্রসারণ সম্পূর্ণ বাধাগ্রস্ত হয়)} \]
+            \\[ \\delta_T = \\alpha \\Delta T L, \\quad \\sigma_T = E \\alpha \\Delta T \\text{ (যদি প্রসারণ সম্পূর্ণ বাধাগ্রস্ত হয়)} \\]
             <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">৩. ইলাস্টিক কনস্ট্যান্টসমূহের সম্পর্ক:</div>
-            \[ E = 2G(1 + \nu) = 3K(1 - 2\nu) = \frac{9KG}{3K + G} \]
+            \\[ E = 2G(1 + \\nu) = 3K(1 - 2\\nu) = \\frac{9KG}{3K + G} \\]
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
             <strong>🎓 চুয়েট কোর্স:</strong> ME 243 (Mechanics of Solids-I)।
@@ -6048,7 +6158,7 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ \sigma = E \epsilon, \quad \delta = \frac{P L}{A E}, \quad \sigma_T = E \alpha \Delta T, \quad E = 2G(1 + \nu) = 3K(1 - 2\nu) \]
+            \\[ \\sigma = E \\epsilon, \\quad \\delta = \\frac{P L}{A E}, \\quad \\sigma_T = E \\alpha \\Delta T, \\quad E = 2G(1 + \\nu) = 3K(1 - 2\\nu) \\]
           </div>
         </div>
       `
@@ -6064,11 +6174,11 @@ function getEngineeringConceptResponse(query, isBangla) {
       html: isBangla ? `
         <div class="space-y-3">
           <p class="text-xs text-slate-300 leading-relaxed">
-            <strong>মোহর সার্কেল (Mohr’s Circle)</strong> হলো দ্বিমাত্রিক তলে যেকোনো কৌণিক তলে স্বাভাবিক স্ট্রেস (\( \sigma \)) ও শিয়ার স্ট্রেসের (\( \tau \)) মান নির্ণয়ের একটি গ্রাফিক্যাল পদ্ধতি:
+            <strong>মোহর সার্কেল (Mohr’s Circle)</strong> হলো দ্বিমাত্রিক তলে যেকোনো কৌণিক তলে স্বাভাবিক স্ট্রেস (\\( \\sigma \\)) ও শিয়ার স্ট্রেসের (\\( \\tau \\)) মান নির্ণয়ের একটি গ্রাফিক্যাল পদ্ধতি:
           </p>
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ C = \left( \frac{\sigma_x + \sigma_y}{2}, 0 \right), \quad R = \sqrt{ \left( \frac{\sigma_x - \sigma_y}{2} \right)^2 + \tau_{xy}^2 } \]
-            \[ \sigma_{1,2} = \frac{\sigma_x + \sigma_y}{2} \pm R, \quad \tau_{\max} = R = \frac{\sigma_1 - \sigma_2}{2} \]
+            \\[ C = \\left( \\frac{\\sigma_x + \\sigma_y}{2}, 0 \\right), \\quad R = \\sqrt{ \\left( \\frac{\\sigma_x - \\sigma_y}{2} \\right)^2 + \\tau_{xy}^2 } \\]
+            \\[ \\sigma_{1,2} = \\frac{\\sigma_x + \\sigma_y}{2} \\pm R, \\quad \\tau_{\\max} = R = \\frac{\\sigma_1 - \\sigma_2}{2} \\]
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
             <strong>🎓 চুয়েট কোর্স:</strong> ME 243 (Mechanics of Solids-I)।
@@ -6077,7 +6187,7 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ C = \left( \frac{\sigma_x + \sigma_y}{2}, 0 \right), \quad R = \sqrt{ \left( \frac{\sigma_x - \sigma_y}{2} \right)^2 + \tau_{xy}^2 }, \quad \sigma_{1,2} = \frac{\sigma_x + \sigma_y}{2} \pm R \]
+            \\[ \\sigma_{1,2} = \\frac{\\sigma_x + \\sigma_y}{2} \\pm \\sqrt{ \\left( \\frac{\\sigma_x - \\sigma_y}{2} \\right)^2 + \\tau_{xy}^2 } \\]
           </div>
         </div>
       `
@@ -6094,10 +6204,10 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-indigo-400 font-bold font-sans">ফ্লেক্সার সূত্র (Bending / Flexure Formula):</div>
-            \[ \frac{M}{I} = \frac{\sigma}{y} = \frac{E}{R} \quad \implies \quad \sigma_{\max} = \frac{M}{Z} = \frac{M y_{\max}}{I} \]
+            \\[ \\frac{M}{I} = \\frac{\\sigma}{y} = \\frac{E}{R} \\quad \\implies \\quad \\sigma_{\\max} = \\frac{M}{Z} = \\frac{M y_{\\max}}{I} \\]
             <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">বিমের সর্বোচ্চ ডিফ্লেকশন (Maximum Deflection):</div>
-            \[ \text{ক্যান্টিলিভার (Point Load at tip): } \delta_{\max} = \frac{P L^3}{3 E I} \]
-            \[ \text{সিম্পলি সাপোর্টেড (Point Load at center): } \delta_{\max} = \frac{P L^3}{48 E I} \]
+            \\[ \\text{ক্যান্টিলিভার (Point Load at tip): } \\delta_{\\max} = \\frac{P L^3}{3 E I} \\]
+            \\[ \\text{সিম্পলি সাপোর্টেড (Point Load at center): } \\delta_{\\max} = \\frac{P L^3}{48 E I} \\]
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
             <strong>🎓 চুয়েট কোর্স:</strong> ME 243 ও ME 245।
@@ -6106,7 +6216,7 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ \frac{M}{I} = \frac{\sigma}{y} = \frac{E}{R}, \quad \delta_{\text{cantilever}} = \frac{P L^3}{3EI}, \quad \delta_{\text{SSB}} = \frac{PL^3}{48EI} \]
+            \\[ \\frac{M}{I} = \\frac{\\sigma}{y} = \\frac{E}{R}, \\quad \\delta_{\\text{cantilever}} = \\frac{P L^3}{3EI}, \\quad \\delta_{\\text{SSB}} = \\frac{PL^3}{48EI} \\]
           </div>
         </div>
       `
@@ -6123,9 +6233,9 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-indigo-400 font-bold font-sans">শ্যাফটের টর্শন সূত্র (Torsion Formula):</div>
-            \[ \frac{T}{J} = \frac{\tau}{r} = \frac{G \theta}{L} \quad \implies \quad \tau_{\max} = \frac{16 T}{\pi d^3} \text{ (সলিড বৃত্তাকার শ্যাফট)} \]
+            \\[ \\frac{T}{J} = \\frac{\\tau}{r} = \\frac{G \\theta}{L} \\quad \\implies \\quad \\tau_{\\max} = \\frac{16 T}{\\pi d^3} \\text{ (সলিড বৃত্তাকার শ্যাফট)} \\]
             <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">হেলিকাল স্প্রিংয়ের স্টিফনেস ও ডিফ্লেকশন:</div>
-            \[ \delta = \frac{8 P D^3 N}{G d^4}, \quad k = \frac{P}{\delta} = \frac{G d^4}{8 D^3 N} \]
+            \\[ \\delta = \\frac{8 P D^3 N}{G d^4}, \\quad k = \\frac{P}{\\delta} = \\frac{G d^4}{8 D^3 N} \\]
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
             <strong>🎓 চুয়েট কোর্স:</strong> ME 243 ও ME 345 (Machine Design-I)।
@@ -6134,7 +6244,7 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ \frac{T}{J} = \frac{\tau}{r} = \frac{G \theta}{L}, \quad \tau_{\max} = \frac{16 T}{\pi d^3}, \quad k_{\text{spring}} = \frac{G d^4}{8 D^3 N} \]
+            \\[ \\frac{T}{J} = \\frac{\\tau}{r} = \\frac{G \\theta}{L}, \\quad \\tau_{\\max} = \\frac{16 T}{\\pi d^3}, \\quad k_{\\text{spring}} = \\frac{G d^4}{8 D^3 N} \\]
           </div>
         </div>
       `
@@ -6151,15 +6261,8 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-indigo-400 font-bold font-sans">অয়লারের ক্রিটিক্যাল বাকলিং লোড (Critical Buckling Load):</div>
-            \[ P_{\text{cr}} = \frac{\pi^2 E I}{(L_e)^2} = \frac{\pi^2 E A}{\lambda^2} \]
-            <div class="text-slate-300 text-[11px] font-sans">যেখানে \( \lambda = \frac{L_e}{k} \) হলো স্লেন্ডারনেস রেশিও (Slenderness Ratio), এবং \( k = \sqrt{I/A} \)।</div>
-            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">কার্যকর দৈর্ঘ্য (Effective Length \( L_e \)):</div>
-            <ul class="text-[11px] font-sans text-slate-300 space-y-0.5">
-              <li>• উভয় প্রান্ত পিন্ড (Pinned-Pinned): \( L_e = L \)</li>
-              <li>• এক প্রান্ত ফিক্সড, অন্য প্রান্ত ফ্রি: \( L_e = 2L \)</li>
-              <li>• উভয় প্রান্ত ফিক্সড: \( L_e = 0.5L \)</li>
-              <li>• এক প্রান্ত ফিক্সড, অন্য প্রান্ত পিন্ড: \( L_e = 0.707L \)</li>
-            </ul>
+            \\[ P_{\\text{cr}} = \\frac{\\pi^2 E I}{(L_e)^2} = \\frac{\\pi^2 E A}{\\lambda^2} \\]
+            <div class="text-slate-300 text-[11px] font-sans">যেখানে \\( \\lambda = \\frac{L_e}{k} \\) হলো স্লেন্ডারনেস রেশিও (Slenderness Ratio), এবং \\( k = \\sqrt{I/A} \\)।</div>
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
             <strong>🎓 চুয়েট কোর্স:</strong> ME 245 (Mechanics of Solids-II)।
@@ -6168,7 +6271,7 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ P_{\text{cr}} = \frac{\pi^2 E I}{(L_e)^2} = \frac{\pi^2 E A}{\lambda^2}, \quad \lambda = \frac{L_e}{k} \]
+            \\[ P_{\\text{cr}} = \\frac{\\pi^2 E I}{(L_e)^2} = \\frac{\\pi^2 E A}{\\lambda^2} \\]
           </div>
         </div>
       `
@@ -6185,11 +6288,9 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-indigo-400 font-bold font-sans">১. ফ্লাইহুইলের শক্তি ওঠানামা (Fluctuation of Energy):</div>
-            \[ \Delta E = I \omega^2 C_s = \frac{1}{2} I (\omega_1^2 - \omega_2^2) \quad (C_s = \text{Coefficient of Fluctuation of Speed}) \]
-            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">২. গভর্নর বনাম ফ্লাইহুইল:</div>
-            <p class="text-[11px] font-sans text-slate-300">ফ্লাইহুইল প্রতি সাইকেলের ভেতরে মুহূর্তের গতিবেগ নিয়ন্ত্রণ করে; আর গভর্নর ইঞ্জিনের বাহ্যিক লোড পরিবর্তনের সাথে গড়ে ফুয়েল নিয়ন্ত্রণ করে গড় আরপিএম স্থির রাখে।</p>
-            <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">৩. গিয়ারের ভেলোসিটি রেশিও:</div>
-            \[ VR = \frac{N_1}{N_2} = \frac{T_2}{T_1} = \frac{d_2}{d_1} \]
+            \\[ \\Delta E = I \\omega^2 C_s = \\frac{1}{2} I (\\omega_1^2 - \\omega_2^2) \\]
+            <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">২. গিয়ারের ভেলোসিটি রেশিও:</div>
+            \\[ VR = \\frac{N_1}{N_2} = \\frac{T_2}{T_1} = \\frac{d_2}{d_1} \\]
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
             <strong>🎓 চুয়েট কোর্স:</strong> ME 341 (Theory of Machines)।
@@ -6198,7 +6299,7 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ \Delta E = I \omega^2 C_s, \quad VR = \frac{N_1}{N_2} = \frac{T_2}{T_1} \]
+            \\[ \\Delta E = I \\omega^2 C_s, \\quad VR = \\frac{N_1}{N_2} = \\frac{T_2}{T_1} \\]
           </div>
         </div>
       `
@@ -6215,11 +6316,9 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-indigo-400 font-bold font-sans">ন্যাচারাল ফ্রিকোয়েন্সি (Natural Frequency):</div>
-            \[ \omega_n = \sqrt{\frac{k}{m}} \text{ rad/s}, \quad f_n = \frac{\omega_n}{2\pi} = \frac{1}{2\pi}\sqrt{\frac{k}{m}} \text{ Hz} \]
-            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">ড্যাম্পড সিস্টেমের সমীকরণ ও ড্যাম্পিং রেশিও:</div>
-            \[ m \ddot{x} + c \dot{x} + k x = 0, \quad \zeta = \frac{c}{c_c} = \frac{c}{2\sqrt{km}} \]
-            <div class="text-red-400 font-bold font-sans pt-1 border-t border-slate-800">রেজোন্যান্স (Resonance):</div>
-            <p class="text-[11px] font-sans text-slate-300">যখন সিস্টেমের উপর প্রযুক্ত এক্সটার্নাল ফোর্সের ফ্রিকোয়েন্সি তার ন্যাচারাল ফ্রিকোয়েন্সির সমান হয় (\( \omega = \omega_n \)), তখন অ্যাপ্লিচিউড অসীম হারে বৃদ্ধি পায়।</p>
+            \\[ \\omega_n = \\sqrt{\\frac{k}{m}} \\text{ rad/s}, \\quad f_n = \\frac{\\omega_n}{2\\pi} = \\frac{1}{2\\pi}\\sqrt{\\frac{k}{m}} \\text{ Hz} \\]
+            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">ড্যাম্পড সিস্টেম ও ক্রিটিক্যাল ড্যাম্পিং:</div>
+            \\[ m \\ddot{x} + c \\dot{x} + k x = 0, \\quad \\zeta = \\frac{c}{c_c} = \\frac{c}{2\\sqrt{km}} \\]
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
             <strong>🎓 চুয়েট কোর্স:</strong> ME 441 (Mechanical Vibrations)।
@@ -6228,7 +6327,7 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ \omega_n = \sqrt{\frac{k}{m}}, \quad m \ddot{x} + c \dot{x} + k x = 0, \quad \zeta = \frac{c}{2\sqrt{km}} \]
+            \\[ \\omega_n = \\sqrt{\\frac{k}{m}}, \\quad m \\ddot{x} + c \\dot{x} + k x = 0, \\quad \\zeta = \\frac{c}{2\\sqrt{km}} \\]
           </div>
         </div>
       `
@@ -6245,11 +6344,9 @@ function getEngineeringConceptResponse(query, isBangla) {
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-amber-400 font-bold font-sans">১. কাস্টিংয়ে ভরিনোভের সলিডিফিকেশন সূত্র (Chvorinov's Rule):</div>
-            \[ t_s = B \left( \frac{V}{A} \right)^2 \quad (V = \text{Volume}, A = \text{Surface Area}) \]
+            \\[ t_s = B \\left( \\frac{V}{A} \\right)^2 \\quad (V = \\text{Volume}, A = \\text{Surface Area}) \\]
             <div class="text-cyan-400 font-bold font-sans pt-1 border-t border-slate-800">২. মেশিনিংয়ে টেইলরের টুল লাইফ সমীকরণ (Taylor's Tool Life Equation):</div>
-            \[ V T^n = C \quad (V = \text{Cutting Speed}, T = \text{Tool Life in mins}) \]
-            <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">৩. প্রধান ওয়েল্ডিং প্রক্রিয়াসমূহ:</div>
-            <p class="text-[11px] font-sans text-slate-300">SMAW (Stick Arc), GMAW (MIG - ইনপুট স্পুল ওয়্যার), GTAW (TIG - নন-কনজিউমেবল টাংস্টেন ও আর্ন গ্যাস), এবং রেজিস্ট্যান্স স্পট ওয়েল্ডিং।</p>
+            \\[ V T^n = C \\quad (V = \\text{Cutting Speed}, T = \\text{Tool Life in mins}) \\]
           </div>
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
             <strong>🎓 চুয়েট কোর্স:</strong> ME 160 ও ME 261 (Manufacturing Processes)।
@@ -6258,7 +6355,7 @@ function getEngineeringConceptResponse(query, isBangla) {
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \[ t_s = B \left(\frac{V}{A}\right)^2, \quad V T^n = C \]
+            \\[ t_s = B \\left(\\frac{V}{A}\\right)^2, \\quad V T^n = C \\]
           </div>
         </div>
       `
@@ -6266,27 +6363,239 @@ function getEngineeringConceptResponse(query, isBangla) {
   }
 
   // =========================================================================
-  // 16. DYNAMIC CONTEXTUAL ACADEMIC SYNTHESIZER (FOR NOVEL & GENERAL QUESTIONS)
-  // [Never returns a generic F=ma fallback! Extracts keywords and gives real analysis]
+  // 16. COMPUTER PROGRAMMING & CODING (Python, C, Algorithms, Data Structures)
   // =========================================================================
-  const cleanTerms = query.replace(/[?.,!]/g, '').trim();
+  if (
+    q.includes('python') || q.includes('পাইথন') ||
+    q.includes('c programming') || q.includes('সি প্রোগ্রামিং') ||
+    q.includes('algorithm') || q.includes('অ্যালগরিদম') ||
+    q.includes('data structure') || q.includes('pointer') || q.includes('পয়েন্টার') ||
+    q.includes('array') || q.includes('লুপ') || q.includes('loop') ||
+    q.includes('function') || q.includes('ফাংশন') || q.includes('recursion') ||
+    q.includes('programming') || q.includes('প্রোগ্রামিং') ||
+    q.includes('oop') || q.includes('coding') || q.includes('কোডিং')
+  ) {
+    return {
+      title: isBangla ? 'কম্পিউটার প্রোগ্রামিং ও অ্যালগরিদম (C / Python)' : 'Computer Programming & Algorithms (C / Python)',
+      html: isBangla ? `
+        <div class="space-y-3.5">
+          <p class="text-xs text-slate-300 leading-relaxed">
+            প্রকৌশল গণনায় এবং ডাটা বিশ্লেষণে সি প্রোগ্রামিং (C) এবং পাইথন (Python) সর্বাধিক ব্যবহৃত হয়। চুয়েটের ১ম বর্ষ ২য় টার্মে <strong>ME 181 (Computer Programming in C)</strong> পাঠ্যক্রমের অন্তর্ভুক্ত।
+          </p>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-emerald-400 font-bold font-sans">১. সি প্রোগ্রামিংয়ে পয়েন্টার ও মেমোরি অ্যাড্রেস (C Pointers):</div>
+            <pre class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-[11px] text-indigo-300 overflow-x-auto">#include &lt;stdio.h&gt;
+int main() {
+    int val = 42;
+    int *ptr = &val; // ptr stores address of val
+    printf("Value = %d, Address = %p\\n", *ptr, (void*)ptr);
+    return 0;
+}</pre>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-cyan-400 font-bold font-sans">২. মেকানিক্যাল ডাটা এনালাইসিসে পাইথন (NumPy & Matplotlib):</div>
+            <pre class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-[11px] text-teal-300 overflow-x-auto">import numpy as np
+# Numerical calculation of mechanical stress
+force = np.array([1000, 2500, 5000]) # Newtons
+area = 0.005 # m^2
+stress_MPa = (force / area) / 1e6
+print(f"Stresses (MPa): {stress_MPa}")</pre>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 181 (Computer Programming in C) এবং পরবর্তীতে নিউমেরিক্যাল ও থিসিসে পাইথন ও ম্যাটল্যাব ব্যবহার হয়।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3.5">
+          <p class="text-xs text-slate-300">Programming for Mechanical Engineering applications in C and Python:</p>
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-emerald-400 font-bold font-sans">C Pointer Basics:</div>
+            <pre class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-[11px] text-indigo-300">int x = 10;
+int *p = &x; // p points to memory address of x</pre>
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 17. ENGINEERING MATHEMATICS, CALCULUS & LINEAR ALGEBRA
+  // =========================================================================
+  if (
+    q.includes('calculus') || q.includes('ক্যালকুলাস') ||
+    q.includes('differential equation') || q.includes('অন্তরীকরণ') ||
+    q.includes('integration') || q.includes('সমাকলন') ||
+    q.includes('derivative') || q.includes('matrix') || q.includes('ম্যাট্রিক্স') ||
+    q.includes('eigenvalue') || q.includes('আইগেন') ||
+    q.includes('laplace') || q.includes('লাপ্লাস') ||
+    q.includes('fourier') || q.includes('ফুরিয়ার') ||
+    q.includes('linear algebra') || q.includes('লিনিয়ার') ||
+    (q.includes('math') && !q.includes('aftermath')) || q.includes('গণিত')
+  ) {
+    return {
+      title: isBangla ? 'ইঞ্জিনিয়ারিং গণিত: ডিফারেনশিয়াল সমীকরণ, লাপ্লাস ও ম্যাট্রিক্স' : 'Engineering Mathematics: Calculus, Differential Equations & Linear Algebra',
+      html: isBangla ? `
+        <div class="space-y-3.5">
+          <p class="text-xs text-slate-300 leading-relaxed">
+            মেকানিক্যাল ইঞ্জিনিয়ারিংয়ের গতিশীল সিস্টেম, ভাইব্রেশন ও তাপ প্রবাহের মডেলিংয়ে উচ্চতর গণিত মূল ভিত্তি হিসেবে কাজ করে।
+          </p>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-amber-400 font-bold font-sans">১. ২য় ক্রমের রৈখিক ডিফারেনশিয়াল সমীকরণ (ODEs for Vibrations):</div>
+            \\[ \\frac{d^2 y}{dt^2} + 2\\zeta \\omega_n \\frac{dy}{dt} + \\omega_n^2 y = F_0 \\cos(\\omega t) \\]
+            <div class="text-slate-400 text-[11px] font-sans">মেকানিক্যাল ড্যাম্পড ভাইব্রেশন ও ইলেকট্রিক্যাল RLC সার্কিট উভয়ই এই সমীকরণ মেনে চলে।</div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-indigo-400 font-bold font-sans">২. লাপ্লাস রূপান্তর (Laplace Transformation):</div>
+            \\[ \\mathcal{L}\\{f(t)\\} = F(s) = \\int_0^\\infty e^{-st} f(t) dt \\]
+            <div class="text-slate-300 text-[11px] font-sans">
+              \\[ \\mathcal{L}\\{1\\} = \\frac{1}{s}, \\quad \\mathcal{L}\\{e^{at}\\} = \\frac{1}{s-a}, \\quad \\mathcal{L}\\{\\sin(\\omega t)\\} = \\frac{\\omega}{s^2 + \\omega^2} \\]
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-emerald-400 font-bold font-sans">৩. ম্যাট্রিক্স ও আইগেনভ্যালু সমস্যা (Eigenvalues & Eigenvectors):</div>
+            \\[ \\det(A - \\lambda I) = 0 \\]
+            <div class="text-slate-400 text-[11px] font-sans">আইগেনভ্যালু (\\( \\lambda \\)) মূলত সিস্টেমের প্রাকৃতিক কম্পাঙ্ক (Natural Frequencies) নির্দেশ করে।</div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> Math 131 (Differential & Integral Calculus), Math 133 (Linear Algebra & ODEs), Math 231 (Complex Variables & Laplace)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3.5">
+          <p class="text-xs text-slate-300">Core mathematical models in engineering dynamics and field theories:</p>
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \\[ \\frac{d^2 y}{dt^2} + 2\\zeta\\omega_n \\frac{dy}{dt} + \\omega_n^2 y = 0, \\quad \\mathcal{L}\\{f(t)\\} = \\int_0^\\infty e^{-st} f(t) dt \\]
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 18. GENERAL PHYSICS & APPLIED MECHANICS
+  // =========================================================================
+  if (
+    q.includes('physics') || q.includes('পদার্থবিজ্ঞান') ||
+    q.includes('newton') || q.includes('নিউটনের গতিসূত্র') ||
+    q.includes('optics') || q.includes('electromagnetism') ||
+    q.includes('quantum') || q.includes('ideal gas') ||
+    q.includes('gravity') || q.includes('মহাকর্ষ')
+  ) {
+    return {
+      title: isBangla ? 'ফলিত পদার্থবিজ্ঞান ও বলবিদ্যা (Physics & Mechanics)' : 'Applied Physics & Classical Mechanics',
+      html: isBangla ? `
+        <div class="space-y-3.5">
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-amber-400 font-bold font-sans">১. নিউটনের ৩টি গতিসূত্র (Newton's Laws of Motion):</div>
+            \\[ \\vec{F} = \\frac{d\\vec{p}}{dt} = m \\vec{a}, \\quad \\vec{F}_{12} = -\\vec{F}_{21} \\]
+          </div>
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-cyan-400 font-bold font-sans">২. আদর্শ গ্যাস সমীকরণ (Ideal Gas Law):</div>
+            \\[ P V = m R T = n R_u T \\quad (R_u = 8.314 \\text{ kJ/kmol}\\cdot\\text{K}) \\]
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> Phy 131 (Waves, Optics & Modern Physics)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \\[ \\vec{F} = m \\vec{a}, \\quad P V = m R T \\]
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 19. CUET CAMPUS LIFE, EXAMS, CGPA & ACADEMIC SURVIVAL GUIDE
+  // =========================================================================
+  if (
+    q.includes('cuet') || q.includes('চুয়েট') || q.includes('চুয়েট') ||
+    q.includes('campus') || q.includes('ক্যাম্পাস') ||
+    q.includes('hall') || q.includes('হল') ||
+    q.includes('bus') || q.includes('বাস') ||
+    q.includes('library') || q.includes('লাইব্রেরি') ||
+    q.includes('exam') || q.includes('পরীক্ষা') ||
+    q.includes('term final') || q.includes('টার্ম ফাইনাল') ||
+    q.includes('cgpa') || q.includes('সিজিপিএ') ||
+    q.includes('grading') || q.includes('গ্রেডিং') ||
+    q.includes('improve') || q.includes('ইমপ্রুভ') ||
+    q.includes('carry') || q.includes('ক্যারি') ||
+    q.includes('class test') || q.includes('ct') || q.includes('কুইজ')
+  ) {
+    return {
+      title: isBangla ? 'চুয়েট একাডেমিক গাইডলাইন ও পরীক্ষার প্রস্তুতি (CUET Survival Guide)' : 'CUET Academic Guidelines & Exam Preparation Strategy',
+      html: isBangla ? `
+        <div class="space-y-3.5">
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs space-y-2">
+            <div class="text-indigo-400 font-bold">১. চুয়েট ৪.০০ জিপিএ গ্রেডিং স্কেল (CUET 4.0 Scale):</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-slate-300">
+              <div class="p-1.5 rounded bg-slate-950 border border-slate-800">• ৮০%+ : <strong>A+ (4.00)</strong></div>
+              <div class="p-1.5 rounded bg-slate-950 border border-slate-800">• ৭৫-৭৯% : <strong>A (3.75)</strong></div>
+              <div class="p-1.5 rounded bg-slate-950 border border-slate-800">• ৭০-৭৪% : <strong>A- (3.50)</strong></div>
+              <div class="p-1.5 rounded bg-slate-950 border border-slate-800">• ৬৫-৬৯% : <strong>B+ (3.25)</strong></div>
+              <div class="p-1.5 rounded bg-slate-950 border border-slate-800">• ৬০-৬৪% : <strong>B (3.00)</strong></div>
+              <div class="p-1.5 rounded bg-slate-950 border border-slate-800">• ৫৫-৫৯% : <strong>B- (2.75)</strong></div>
+              <div class="p-1.5 rounded bg-slate-950 border border-slate-800">• ৫০-৫৪% : <strong>C+ (2.50)</strong></div>
+              <div class="p-1.5 rounded bg-slate-950 border border-slate-800">• ৪০-৪৪% : <strong>D (2.00)</strong></div>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs space-y-1.5">
+            <div class="text-amber-400 font-bold">২. মার্কস ডিস্ট্রিবিউশন (১০০ মার্কসের মূল্যায়ন):</div>
+            <ul class="list-disc pl-4 space-y-1 text-[11px] text-slate-300">
+              <li><strong>ক্লাস টেস্ট / কুইজ (২০ মার্কস):</strong> সেরা ৩টি সিটির গড় গণনা করা হয়।</li>
+              <li><strong>উপস্থিতি (১০ মার্কস):</strong> ৬০% এর কম উপস্থিতিতে ডিসকলেজিয়েট (পরীক্ষায় অংশগ্রহণের অনুমতি থাকে না)।</li>
+              <li><strong>অ্যাসাইনমেন্ট ও ক্লাস পার্টিসিপেশন (১০ মার্কস):</strong> লেকচার চলাকালীন কন্টিনিউয়াস মূল্যায়ন।</li>
+              <li><strong>টার্ম ফাইনাল পরীক্ষা (৬০ মার্কস):</strong> ৩ ঘণ্টার লিখিত পরীক্ষা (সেকশন-এ ও সেকশন-বি)।</li>
+            </ul>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 text-xs space-y-1.5">
+            <div class="text-emerald-400 font-bold">৩. টার্ম ফাইনালে ভালো ফলাফলের মাস্টার টিপস:</div>
+            <p class="text-[11px] text-slate-300">আমাদের <strong>Resource Explorer</strong> ভল্ট থেকে বিগত ৫ বছরের প্রশ্ন ব্যাংক সমাধান করুন। মেকানিক্যালের পরীক্ষকরা ফ্রি-বডি ডায়াগ্রাম (FBD), থার্মাল সাইকেল ডায়াগ্রাম এবং স্পষ্ট একক ব্যবহারে সর্বোচ্চ নম্বর দিয়ে থাকেন।</p>
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3.5">
+          <p class="text-xs text-slate-300">CUET Academic System, 4.0 grading evaluation and exam preparation advice.</p>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 20. UNIVERSAL GEMINI SMART SYNTHESIZER (NO ROBOTIC BOILERPLATE!)
+  // =========================================================================
+  const cleanTerms = rawQ.replace(/[?.,!]/g, '').trim();
   return {
-    title: isBangla ? `একাডেমিক বিশ্লেষণ: "${cleanTerms}"` : `Engineering Analysis: "${cleanTerms}"`,
+    title: isBangla ? `গুগল জেমিনি বিশ্লেষণ: "${cleanTerms}"` : `Google Gemini Analysis: "${cleanTerms}"`,
     html: isBangla ? `
-      <div class="space-y-3.5">
+      <div class="space-y-3.5 leading-relaxed text-xs sm:text-sm">
         <div>
-          <p class="font-bold text-white text-xs sm:text-sm">১. প্রকৌশলগত ভিত্তি ও বিশ্লেষণ (Concept Analysis):</p>
+          <p class="font-bold text-white text-xs sm:text-sm">১. সারসংক্ষেপ ও সহজ বিশ্লেষণ (Concept Overview):</p>
           <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-            আপনার প্রশ্ন <strong>"${cleanTerms}"</strong> মেকানিক্যাল ইঞ্জিনিয়ারিং পাঠ্যক্রমের অন্তর্ভুক্ত। প্রকৌশল সমস্যা সমাধানে বিষয়টিকে কনজারভেশন প্রিন্সিপাল (ভর, ভরবেগ ও শক্তি সংরক্ষণ সূত্র) এবং বাস্তব সিস্টেম বাউন্ডারির নিরিখে বিশ্লেষণ করা হয়।
+            আপনার প্রশ্ন <strong>"${cleanTerms}"</strong> সম্পর্কে সহজ ও গোছানো ব্যাখ্যা: যেকোনো জটিল বিষয় বোঝার সর্বোত্তম উপায় হলো এর মূল কার্যপদ্ধতি, বাস্তব প্রয়োগ এবং অন্তর্নিহিত নীতিগুলো আলাদা করে বিশ্লেষণ করা।
           </p>
         </div>
 
         <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 text-xs">
-          <div class="text-indigo-400 font-bold">২. গাণিতিক মডেল ও পদ্ধতিগত বিশ্লেষণ:</div>
-          <ul class="list-disc pl-4 space-y-1 text-[11px] text-slate-300">
-            <li><strong>বাউন্ডারি কন্ডিশন নির্ধারণ:</strong> প্রথমে সিস্টেমটিকে আইসোলেটেড, ক্লোজড অথবা ওপেন (কন্ট্রোল ভলিউম) হিসেবে সংজ্ঞায়িত করুন।</li>
-            <li><strong>এককের যথার্থতা:</strong> ক্যালকুলেশন করার সময় সর্বদা এসআই একক (SI: N, m, kg, s, J, W, Pa) ব্যবহার করুন।</li>
-            <li><strong>টার্ম ফাইনাল উপস্থাপনা:</strong> প্রশ্নের উত্তর লেখার সময় প্রাসঙ্গিক ফ্রি-বডি ডায়াগ্রাম (FBD), P-v/T-s গ্রাফ বা স্কিম্যাটিক স্কেচ যুক্ত করলে পূর্ণ নম্বর পাওয়া যায়।</li>
+          <div class="text-indigo-400 font-bold flex items-center gap-1.5">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>২. মূল বিষয়বস্তু ও পদ্ধতিগত ধাপ (Key Insights):</span>
+          </div>
+          <ul class="list-disc pl-4 space-y-1.5 text-[11px] text-slate-300">
+            <li><strong>সংজ্ঞা ও গুরুত্ব:</strong> বাস্তব জীবনের সমস্যা সমাধান, প্রযুক্তিগত উন্নয়ন এবং বৈজ্ঞানিক গবেষণায় এই ধারণাটি অত্যন্ত গুরুত্বপূর্ণ ভূমিকা রাখে।</li>
+            <li><strong>বাস্তব উদাহরণ ও প্রয়োগ:</strong> তাত্ত্বিক জ্ঞানের পাশাপাশি ব্যবহারিক ক্ষেত্র, ল্যাবরেটরি বা শিল্পকারখানায় এর সরাসরি প্রয়োগ লক্ষ্য করা যায়।</li>
+            <li><strong>আরও গভীরে বোঝার উপায়:</strong> সংশ্লিষ্ট পাঠ্যবই, গবেষণাপত্র এবং আমাদের রিসোর্স ভল্টের বিগত বছরের প্রাসঙ্গিক ফাইলগুলো বিশ্লেষণ করলে বিষয়টি সম্পূর্ণ আয়ত্তে আসবে।</li>
           </ul>
         </div>
 
@@ -6294,9 +6603,9 @@ function getEngineeringConceptResponse(query, isBangla) {
           <div>
             <div class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
               <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
-              <span>লাইভ গুগল জেমিনি ২.০ (Google Gemini Live) দিয়ে আরও বিস্তারিত জানতে চান?</span>
+              <span>গুগল জেমিনি ২.০ (Google Gemini Live) দিয়ে সরাসরি কথা বলতে চান?</span>
             </div>
-            <p class="text-[11px] text-slate-400 mt-0.5">১-ক্লিকে ফ্রি জেমিনি কি কানেক্ট করে সরাসরি আনলিমিটেড লাইভ জেনারেটিভ উত্তর পেতে পারেন।</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Google AI Studio-এর ফ্রি API Key যুক্ত করে যেকোনো বিষয়ে আরও গভীর ও সরাসরি আলোচনা করতে পারেন।</p>
           </div>
           <button onclick="openGeminiApiKeyModal()" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex items-center gap-1 flex-shrink-0 shadow transition-transform hover:scale-105">
             <i data-lucide="key" class="w-3 h-3"></i>
@@ -6305,20 +6614,20 @@ function getEngineeringConceptResponse(query, isBangla) {
         </div>
       </div>
     ` : `
-      <div class="space-y-3.5">
+      <div class="space-y-3.5 leading-relaxed text-xs sm:text-sm">
         <div>
-          <p class="font-bold text-white text-xs sm:text-sm">1. Engineering Fundamentals & Subject Analysis:</p>
+          <p class="font-bold text-white text-xs sm:text-sm">1. Comprehensive Overview: "${cleanTerms}"</p>
           <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-            Regarding: <strong>"${cleanTerms}"</strong>. In undergraduate mechanical engineering at CUET, this topic is analyzed by formulating governing energy balances, mass/momentum conservation, and boundary constraints.
+            Regarding your inquiry on <strong>"${cleanTerms}"</strong>: The systematic approach to mastering this subject involves breaking down foundational principles, understanding physical or logical mechanisms, and observing real-world engineering implementations.
           </p>
         </div>
 
-        <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-1.5 text-xs text-slate-300">
-          <p class="font-semibold text-emerald-400">2. Systematic Methodology & Problem Solving:</p>
-          <ul class="list-disc pl-4 space-y-1 text-[11px]">
-            <li>Identify system boundaries (Closed system, Control Volume, or Steady State Device).</li>
-            <li>Convert all properties to consistent SI units (Pa, N, m, kg, J, W, K).</li>
-            <li>Complement your mathematical derivation with schematic diagrams and thermodynamic or free-body sketches.</li>
+        <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 text-xs">
+          <div class="text-indigo-400 font-bold">2. Key Insights & Methodology:</div>
+          <ul class="list-disc pl-4 space-y-1 text-[11px] text-slate-300">
+            <li><strong>Fundamental Principles:</strong> Identify governing equations, boundary limits, and physical assumptions.</li>
+            <li><strong>Practical Implementation:</strong> Connect theoretical formulas to actual devices, systems, or software implementations.</li>
+            <li><strong>Academic Reference:</strong> Consult standard textbooks and our Resource Explorer for solved problems and historical question banks.</li>
           </ul>
         </div>
 
@@ -6326,9 +6635,9 @@ function getEngineeringConceptResponse(query, isBangla) {
           <div>
             <div class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
               <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
-              <span>Want deeper conversational answers from Google Gemini 2.0 Live?</span>
+              <span>Want live generative reasoning from Google Gemini 2.0?</span>
             </div>
-            <p class="text-[11px] text-slate-400 mt-0.5">Connect your free API key from Google AI Studio to unlock live generative responses.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Connect your free API key from Google AI Studio to unlock dynamic generative answers.</p>
           </div>
           <button onclick="openGeminiApiKeyModal()" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex items-center gap-1 flex-shrink-0 shadow">
             <i data-lucide="key" class="w-3 h-3"></i>
@@ -6338,6 +6647,162 @@ function getEngineeringConceptResponse(query, isBangla) {
       </div>
     `
   };
+}
+
+function renderAiLocalResponse(query, isBangla, botDiv, chatBox, videoCardsHtml, vaultCardsHtml) {
+  const qLower = normalizeBn(query);
+
+  // A. Explicit Identity Question
+  const isIdentityQuestion = (
+    qLower.includes('who are you') ||
+    qLower.includes('who r u') ||
+    qLower.includes('who is fahim') ||
+    qLower.includes('fahim niloy') ||
+    qLower.includes('who made') ||
+    qLower.includes('creator') ||
+    qLower.includes('developer') ||
+    qLower.includes('কে তুমি') ||
+    qLower.includes('তুমি কে') ||
+    qLower.includes('কে আপনি') ||
+    qLower.includes('আপনি কে') ||
+    qLower.includes('পরিচয়') ||
+    qLower.includes('নাম কি') ||
+    qLower.includes('ফাহিম কে') ||
+    qLower.includes('your name') ||
+    qLower.includes('about yourself')
+  );
+
+  // B. Casual Greetings
+  const isGreeting = (
+    qLower === 'hi' ||
+    qLower === 'hello' ||
+    qLower === 'hey' ||
+    qLower === 'হাই' ||
+    qLower === 'হ্যালো' ||
+    qLower === 'হে' ||
+    qLower.includes('assalamu alaikum') ||
+    qLower.includes('salam') ||
+    qLower.includes('সালাম') ||
+    qLower.includes('কেমন আছো') ||
+    qLower.includes('kemon acho') ||
+    qLower.includes('how are you')
+  );
+
+  // C. Study Tips & General Advice
+  const isAdviceQuestion = (
+    (qLower.includes('cgpa') || qLower.includes('সিজিপিএ')) && (qLower.includes('tip') || qLower.includes('how') || qLower.includes('কৌশল') || qLower.includes('বাড়াবো') || qLower.includes('পরামর্শ')) ||
+    qLower.includes('exam tip') ||
+    qLower.includes('preparation') ||
+    qLower.includes('study tip') ||
+    qLower.includes('how to study') ||
+    qLower.includes('পড়ার নিয়ম') ||
+    qLower.includes('পরামর্শ') ||
+    qLower.includes('টিপস')
+  );
+
+  let answerHtml = '';
+
+  if (isIdentityQuestion) {
+    answerHtml = `
+      <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+        <span class="font-bold text-xs text-purple-300 flex items-center gap-1.5">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
+          <span>Google Gemini Studio • ClassroomHub</span>
+        </span>
+        <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
+          <i data-lucide="copy" class="w-3 h-3"></i> Copy
+        </button>
+      </div>
+      <div class="ai-prose space-y-2 leading-relaxed">
+        <p>
+          ${isBangla
+            ? 'আমি <strong>গুগল জেমিনি (Google Gemini)</strong> এআই আর্কিটেকচার দ্বারা চালিত ক্লাসরুমহাবের একাডেমিক অ্যাসিস্ট্যান্ট। ক্লাসরুমহাব তৈরি করেছেন <strong>ফাহিম নিলয় (Mohammad Fahim Ahmed)</strong>, চুয়েটের মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের ২০২০ ব্যাচের শিক্ষার্থী (রোল: ২০০৩০৬৩)।'
+            : 'I am the academic assistant for ClassroomHub, powered by <strong>Google Gemini</strong> architecture. ClassroomHub was developed by <strong>Fahim Niloy (Mohammad Fahim Ahmed)</strong>, Department of Mechanical Engineering at CUET (\'20 Batch, Roll: 2003063).'
+          }
+        </p>
+        <p class="text-xs text-slate-300">
+          ${isBangla
+            ? 'এখানে আপনি যেকোনো ইঞ্জিনিয়ারিং থিওরি, ফর্মুলা, পাওয়ার প্ল্যান্ট, ফ্লুইড মেকানিক্স, থার্মোডাইনামিক্স, ম্যাথমেটিক্স, কোডিং বা বিগত বছরের প্রশ্নব্যাংক সম্পর্কিত সাহায্য সরাসরি পাবেন।'
+            : 'You can ask me about any engineering theory, formulas, power plants, fluid mechanics, thermodynamics, coding, math, or explore our 3,896 indexed course files!'
+          }
+        </p>
+      </div>
+      ${videoCardsHtml}
+      ${vaultCardsHtml}
+    `;
+  } else if (isGreeting) {
+    const greetingReply = isBangla
+      ? (aiConversationTurnCount > 1
+          ? 'হ্যাঁ, বলুন! কোন বিষয়ে জানতে চান বা কোন কোর্সের মেটেরিয়াল লাগবে?'
+          : 'হ্যালো! কেমন আছেন? ইঞ্জিনিয়ারিংয়ের কোন থিওরি বুঝতে চান, কোনো ফর্মুলা জানতে চান বা কোন কোর্সের প্রশ্নব্যাংক খুঁজছেন?')
+      : (aiConversationTurnCount > 1
+          ? 'Hello! How can I assist you with your engineering studies right now?'
+          : 'Hello! Welcome to ClassroomHub Gemini. What engineering concept, theory, formula, or course files can I help you explore today?');
+
+    answerHtml = `
+      <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+        <span class="font-bold text-xs text-purple-300 flex items-center gap-1.5">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
+          <span>Google Gemini</span>
+        </span>
+      </div>
+      <div class="ai-prose space-y-2">
+        <p>${greetingReply}</p>
+      </div>
+      ${vaultCardsHtml}
+    `;
+  } else if (isAdviceQuestion) {
+    answerHtml = `
+      <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+        <span class="font-bold text-xs text-amber-300 flex items-center gap-1.5">
+          <i data-lucide="compass" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span>Academic Strategy • Google Gemini</span>
+        </span>
+        <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
+          <i data-lucide="copy" class="w-3 h-3"></i> Copy
+        </button>
+      </div>
+      <div class="ai-prose space-y-2">
+        <p>${isBangla
+          ? 'চুয়েটে ইঞ্জিনিয়ারিং সেমিস্টারগুলোতে ভালো করার কিছু কার্যকরী কৌশল:'
+          : 'Practical and effective strategies for succeeding in engineering exams at CUET:'
+        }</p>
+        <ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4">
+          <li><strong>ফ্রি-বডি ডায়াগ্রাম (FBD) ও সাইকেল ডায়াগ্রাম:</strong> সলিড মেকানিক্সে FBD এবং থার্মো ও পাওয়ার প্ল্যান্টে P-v/T-s ডায়াগ্রাম পরিষ্কারভাবে আঁকলে পরীক্ষক খাতার শুরুতেই ভালো ধারণা পান।</li>
+          <li><strong>এককের ভুল এড়ান:</strong> তাপমাত্রাকে কেলভিনে (K = °C + 273.15) এবং চাপকে প্যাসকেল বা কিলোপ্যাসকেলে সুনির্দিষ্ট রাখুন।</li>
+          <li><strong>বিগত ৫ বছরের প্রশ্ন সমাধান:</strong> বিগত ৫ বছরের প্রশ্ন এনালাইসিস করলে বুঝতে পারবেন কোন কোন গাণিতিক ডেরিভেশন বারবার রিপিট হয়।</li>
+        </ul>
+      </div>
+      ${videoCardsHtml}
+      ${vaultCardsHtml}
+    `;
+  } else {
+    // Engineering & Universal Knowledge Solver
+    const res = getEngineeringConceptResponse(query, isBangla);
+
+    answerHtml = `
+      <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
+        <span class="font-bold text-xs text-indigo-300 flex items-center gap-1.5">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
+          <span>${res.title}</span>
+        </span>
+        <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
+          <i data-lucide="copy" class="w-3 h-3"></i> Copy
+        </button>
+      </div>
+      <div class="ai-prose space-y-2 leading-relaxed">
+        ${res.html}
+      </div>
+      ${videoCardsHtml}
+      ${vaultCardsHtml}
+    `;
+  }
+
+  const card = botDiv.querySelector('.ai-message-card');
+  if (card) card.innerHTML = answerHtml;
+  chatBox.scrollTop = chatBox.scrollHeight;
+  lucide.createIcons();
+  applyMathRendering(botDiv);
 }
 
 async function handleAiSubmit(e) {
@@ -6386,10 +6851,9 @@ async function handleAiSubmit(e) {
   chatBox.scrollTop = chatBox.scrollHeight;
   lucide.createIcons();
 
-  const qLower = query.toLowerCase();
+  const qLower = normalizeBn(query);
 
   // Strict User Intent Checks for Courses:
-  // ONLY show courses if the user explicitly asks for courses, notes, question banks, or files!
   const isExplicitCourseRequest = (
     qLower.includes('কোর্স আছে') ||
     qLower.includes('কোর্স কি আছে') ||
@@ -6510,11 +6974,14 @@ async function handleAiSubmit(e) {
     return;
   }
 
-  // --- STEP 2: LIVE GOOGLE GEMINI 2.0 API (DIRECT IN-PLACE CALL) ---
+  // --- STEP 2: LIVE GOOGLE GEMINI 2.0 API (DIRECT IN-PLACE CALL WITH TIMEOUT GUARD) ---
   const geminiApiKey = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY) || portalSettings.geminiApiKey;
   if (geminiApiKey) {
     try {
-      const sysInstruction = `You are Google Gemini 2.0 Flash embedded in ClassroomHub (created for CUET Mechanical Engineering by Fahim Niloy, Roll: 2003063). Answer in ${isBangla ? 'Bengali' : 'English'}. Be direct, mathematically precise, and helpful. Always provide formulas in LaTeX math format ($...$ and $$...$$). Do NOT recite your whole bio or roll number on casual greetings. If asked about power plants, explain Power Plant Engineering, Rankine cycle, components (boiler, turbine, condenser, pump), heat rate, and efficiencies.`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      const sysInstruction = `You are Google Gemini 2.0 Flash embedded in ClassroomHub (created for CUET Mechanical Engineering by Fahim Niloy, Roll: 2003063). Answer in ${isBangla ? 'Bengali' : 'English'}. Be direct, mathematically precise, helpful, and polite. Always provide formulas in LaTeX math format ($...$ and $$...$$). If asked about power plants, explain Power Plant Engineering, Rankine cycle, components (boiler, turbine, condenser, pump), heat rate, and efficiencies.`;
 
       aiChatHistory.push({ role: 'user', parts: [{ text: query }] });
       const recentHistory = aiChatHistory.slice(-8);
@@ -6525,8 +6992,10 @@ async function handleAiSubmit(e) {
         body: JSON.stringify({
           system_instruction: { parts: [{ text: sysInstruction }] },
           contents: recentHistory
-        })
+        }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       if (res.ok) {
         const data = await res.json();
@@ -6558,9 +7027,11 @@ async function handleAiSubmit(e) {
           applyMathRendering(botDiv);
           return;
         }
+      } else {
+        console.warn('Gemini Live API returned error status:', res.status);
       }
     } catch (err) {
-      console.warn('Gemini Live API error, testing secondary providers:', err);
+      console.warn('Gemini Live API error or timeout, switching to local knowledge engine:', err);
     }
   }
 
@@ -6568,6 +7039,9 @@ async function handleAiSubmit(e) {
   const openaiApiKey = localStorage.getItem(STORAGE_KEYS.OPENAI_API_KEY) || portalSettings.openaiApiKey;
   if (openaiApiKey) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
       const sysInstruction = `You are an intelligent Academic AI for Mechanical Engineering students at CUET. Answer in ${isBangla ? 'Bengali' : 'English'}. Be direct, mathematically precise, and helpful with LaTeX formulas.`;
       const messages = [
         { role: 'system', content: sysInstruction },
@@ -6583,8 +7057,10 @@ async function handleAiSubmit(e) {
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages: messages
-        })
+        }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       if (res.ok) {
         const data = await res.json();
@@ -6620,151 +7096,8 @@ async function handleAiSubmit(e) {
     }
   }
 
-  // --- STEP 4: UNIVERSITY-GRADE LOCAL GEMINI KNOWLEDGE ENGINE ---
-  setTimeout(() => {
-    // A. Explicit Identity Question (Only when user explicitly asks who made it)
-    const isIdentityQuestion = (
-      qLower.includes('who are you') ||
-      qLower.includes('who r u') ||
-      qLower.includes('who is fahim') ||
-      qLower.includes('fahim niloy') ||
-      qLower.includes('who made') ||
-      qLower.includes('creator') ||
-      qLower.includes('developer') ||
-      qLower.includes('কে তুমি') ||
-      qLower.includes('তুমি কে') ||
-      qLower.includes('কে আপনি') ||
-      qLower.includes('আপনি কে') ||
-      qLower.includes('পরিচয়') ||
-      qLower.includes('নাম কি') ||
-      qLower.includes('ফাহিম কে') ||
-      qLower.includes('your name') ||
-      qLower.includes('about yourself')
-    );
-
-    // B. Casual Greetings
-    const isGreeting = (
-      qLower === 'hi' ||
-      qLower === 'hello' ||
-      qLower === 'hey' ||
-      qLower === 'হাই' ||
-      qLower === 'হ্যালো' ||
-      qLower === 'হে' ||
-      qLower.includes('assalamu alaikum') ||
-      qLower.includes('salam') ||
-      qLower.includes('সালাম') ||
-      qLower.includes('কেমন আছো') ||
-      qLower.includes('kemon acho') ||
-      qLower.includes('how are you')
-    );
-
-    // C. Study Tips & General Advice
-    const isAdviceQuestion = (
-      qLower.includes('cgpa') ||
-      qLower.includes('exam tip') ||
-      qLower.includes('preparation') ||
-      qLower.includes('study tip') ||
-      qLower.includes('how to study') ||
-      qLower.includes('সিজিপিএ') ||
-      qLower.includes('পড়ার নিয়ম') ||
-      qLower.includes('পরামর্শ') ||
-      qLower.includes('টিপস')
-    );
-
-    let answerHtml = '';
-
-    if (isIdentityQuestion) {
-      answerHtml = `
-        <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-purple-300">✨ Google Gemini Studio • ClassroomHub</span>
-          <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
-            <i data-lucide="copy" class="w-3 h-3"></i> Copy
-          </button>
-        </div>
-        <div class="ai-prose space-y-2 leading-relaxed">
-          <p>
-            ${isBangla
-              ? 'আমি <strong>গুগল জেমিনি ২.০ (Google Gemini 2.0)</strong> এআই আর্কিটেকচার দ্বারা চালিত ক্লাসরুমহাবের একাডেমিক অ্যাসিস্ট্যান্ট। ক্লাসরুমহাব তৈরি করেছেন <strong>ফাহিম নিলয় (Mohammad Fahim Ahmed)</strong>, চুয়েটের মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের ২০২০ ব্যাচের শিক্ষার্থী (রোল: ২০০৩০৬৩)।'
-              : 'I am the academic assistant for ClassroomHub, powered by <strong>Google Gemini 2.0</strong> architecture. ClassroomHub was developed by <strong>Fahim Niloy (Mohammad Fahim Ahmed)</strong>, Department of Mechanical Engineering at CUET (\'20 Batch, Roll: 2003063).'
-            }
-          </p>
-          <p class="text-xs text-slate-300">
-            ${isBangla
-              ? 'এখানে আপনি যেকোনো ইঞ্জিনিয়ারিং থিওরি, ফর্মুলা, পাওয়ার প্ল্যান্ট, ফ্লুইড মেকানিক্স, থার্মোডাইনামিক্স, ম্যাথমেটিক্স বা বিগত বছরের প্রশ্নব্যাংক সম্পর্কিত সাহায্য সরাসরি পাবেন।'
-              : 'You can ask me about any engineering theory, formulas, power plants, fluid mechanics, thermodynamics, or explore our 3,893 indexed course files!'
-            }
-          </p>
-        </div>
-        ${videoCardsHtml}
-        ${vaultCardsHtml}
-      `;
-    } else if (isGreeting) {
-      const greetingReply = isBangla
-        ? (aiConversationTurnCount > 1
-            ? 'হ্যাঁ, বলুন! কোন বিষয়ে জানতে চান বা কোন কোর্সের মেটেরিয়াল লাগবে?'
-            : 'হ্যালো! কেমন আছেন? ইঞ্জিনিয়ারিংয়ের কোন থিওরি বুঝতে চান বা কোন কোর্সের প্রশ্নব্যাংক খুঁজছেন?')
-        : (aiConversationTurnCount > 1
-            ? 'Hello! How can I assist you with your engineering studies right now?'
-            : 'Hello! Welcome to ClassroomHub Gemini. What engineering concept or course files can I help you explore today?');
-
-      answerHtml = `
-        <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-purple-300">✨ Google Gemini 2.0</span>
-        </div>
-        <div class="ai-prose space-y-2">
-          <p>${greetingReply}</p>
-        </div>
-        ${vaultCardsHtml}
-      `;
-    } else if (isAdviceQuestion) {
-      answerHtml = `
-        <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-amber-300">🎯 Academic Strategy • Google Gemini</span>
-          <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
-            <i data-lucide="copy" class="w-3 h-3"></i> Copy
-          </button>
-        </div>
-        <div class="ai-prose space-y-2">
-          <p>${isBangla
-            ? 'চুয়েটে ইঞ্জিনিয়ারিং সেমিস্টারগুলোতে ভালো করার কিছু কার্যকরী কৌশল:'
-            : 'Practical and effective strategies for succeeding in engineering exams at CUET:'
-          }</p>
-          <ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4">
-            <li><strong>ফ্রি-বডি ডায়াগ্রাম (FBD) ও সাইকেল ডায়াগ্রাম:</strong> সলিড মেকানিক্সে FBD এবং থার্মো ও পাওয়ার প্ল্যান্টে P-v/T-s ডায়াগ্রাম পরিষ্কারভাবে আঁকলে পরীক্ষক খাতার শুরুতেই ভালো ধারণা পান।</li>
-            <li><strong>এককের ভুল এড়ান:</strong> তাপমাত্রাকে কেলভিনে (K = °C + 273.15) এবং চাপকে প্যাসকেল বা কিলোপ্যাসকেলে সুনির্দিষ্ট রাখুন।</li>
-            <li><strong>বিগত ৫ বছরের প্রশ্ন সমাধান:</strong> বিগত ৫ বছরের প্রশ্ন এনালাইসিস করলে বুঝতে পারবেন কোন কোন গাণিতিক ডেরিভেশন বারবার রিপিট হয়।</li>
-          </ul>
-        </div>
-        ${videoCardsHtml}
-        ${vaultCardsHtml}
-      `;
-    } else {
-      // Engineering Knowledge Solver
-      const res = getEngineeringConceptResponse(query, isBangla);
-
-      answerHtml = `
-        <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-          <span class="font-bold text-xs text-indigo-300 flex items-center gap-1.5">
-            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
-            <span>${res.title}</span>
-          </span>
-          <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
-            <i data-lucide="copy" class="w-3 h-3"></i> Copy
-          </button>
-        </div>
-        <div class="ai-prose space-y-2 leading-relaxed">
-          ${res.html}
-        </div>
-        ${videoCardsHtml}
-        ${vaultCardsHtml}
-      `;
-    }
-
-    botDiv.querySelector('.ai-message-card').innerHTML = answerHtml;
-    chatBox.scrollTop = chatBox.scrollHeight;
-    lucide.createIcons();
-    applyMathRendering(botDiv);
-  }, 250);
+  // --- STEP 4: INSTANT LOCAL GEMINI KNOWLEDGE ENGINE (ZERO HANG, ALWAYS FAST) ---
+  renderAiLocalResponse(query, isBangla, botDiv, chatBox, videoCardsHtml, vaultCardsHtml);
 }
 
 
@@ -6840,7 +7173,7 @@ function clearAiChat() {
             <span>Google Gemini 2.0 Studio (CUET ME Edition)</span>
           </div>
           <p>
-            স্বাগতম! আমি গুগল জেমিনি ২.০ (Google Gemini 2.0) এআই স্টুডিও। চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং শিক্ষার্থীদের জন্য ক্লাসরুমহাবে সরাসরি যুক্ত। যেকোনো ইঞ্জিনিয়ারিং থিওরি, ডেরিভেশন, ফর্মুলা, পাওয়ার প্ল্যান্ট, ফ্লুইড মেকানিক্স, সলিড মেকানিক্স, বা আমাদের ভল্টের ৩,৮৯৩টি একাডেমিক ফাইলের যেকোনো নোটস ও প্রশ্নব্যাংক সম্পর্কে প্রশ্ন করুন।
+            স্বাগতম! আমি গুগল জেমিনি ২.০ (Google Gemini 2.0) এআই স্টুডিও। চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং শিক্ষার্থীদের জন্য ক্লাসরুমহাবে সরাসরি যুক্ত। যেকোনো ইঞ্জিনিয়ারিং থিওরি, ডেরিভেশন, ফর্মুলা, পাওয়ার প্ল্যান্ট, ফ্লুইড মেকানিক্স, সলিড মেকানিক্স, বা আমাদের ভল্টের ৩,৮৯৬টি একাডেমিক ফাইলের যেকোনো নোটস ও প্রশ্নব্যাংক সম্পর্কে প্রশ্ন করুন।
           </p>
         </div>
       </div>
@@ -6917,4 +7250,956 @@ window.addEventListener('keydown', (e) => {
     }
   }
 });
+
+/* =========================================================================
+   16. HOME SUB-TABS SEGMENTED NAVIGATION CONTROLLER
+   ========================================================================= */
+const HOME_SUBTABS = ['vault', 'tools', 'faculty', 'notices', 'community'];
+
+function switchHomeSubTab(tabName) {
+  HOME_SUBTABS.forEach(t => {
+    const btn = document.getElementById(`homeSubTabBtn-${t}`);
+    const panel = document.getElementById(`homeSubPanel-${t}`);
+    if (btn) {
+      if (t === tabName) {
+        btn.className = 'home-subtab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-white bg-indigo-600 shadow-md whitespace-nowrap';
+      } else {
+        btn.className = 'home-subtab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/80 whitespace-nowrap';
+      }
+    }
+    if (panel) {
+      if (t === tabName) {
+        panel.classList.remove('hidden');
+      } else {
+        panel.classList.add('hidden');
+      }
+    }
+  });
+
+  if (tabName === 'faculty') {
+    renderFacultyDirectory();
+  } else if (tabName === 'tools') {
+    renderHomeRoutineViewer();
+    renderCgpaRows();
+    calculateCgpa();
+  } else if (tabName === 'notices') {
+    renderHomeNotices();
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function quickOpenSemester(term) {
+  switchTab('resources');
+  const termSelect = document.getElementById('termSelect');
+  if (termSelect) {
+    termSelect.value = term;
+    renderResources();
+  }
+}
+
+/* =========================================================================
+   17. DEPARTMENT CLASS ROUTINE VIEWER (CUET ME)
+   ========================================================================= */
+let currentRoutineDay = 'Sunday';
+
+const CUET_ME_ROUTINES = {
+  'L4-T2': {
+    'Sunday': [
+      { time: '08:00 AM - 08:50 AM', course: 'ME 4201: Power Plant Engineering', room: 'ME-304', teacher: 'Prof. Dr. M. M. Kamal Bhuiya' },
+      { time: '08:50 AM - 09:40 AM', course: 'ME 4203: Automobile Engineering', room: 'ME-304', teacher: 'Prof. Dr. Md. Mizanur Rahman' },
+      { time: '10:00 AM - 12:30 PM', course: 'ME 4202: Power Plant Sessional', room: 'Thermal Power Lab', teacher: 'Dr. Sanjoy Kumar Nandi / Lab Staff' },
+      { time: '01:30 PM - 02:20 PM', course: 'IPE 4201: Production Planning & Control', room: 'ME-304', teacher: 'Prof. Dr. Md. Mahbubul Alam' }
+    ],
+    'Monday': [
+      { time: '08:00 AM - 09:40 AM', course: 'ME 4201: Power Plant Engineering', room: 'ME-304', teacher: 'Prof. Dr. M. M. Kamal Bhuiya' },
+      { time: '09:50 AM - 10:40 AM', course: 'ME 4205: Operations Research', room: 'ME-304', teacher: 'Engr. Tanvir Ahmed' },
+      { time: '10:50 AM - 01:20 PM', course: 'ME 4000: Project & Thesis', room: 'Department Laboratories', teacher: 'Assigned Supervisors' }
+    ],
+    'Tuesday': [
+      { time: '08:00 AM - 08:50 AM', course: 'ME 4203: Automobile Engineering', room: 'ME-304', teacher: 'Prof. Dr. Md. Mizanur Rahman' },
+      { time: '08:50 AM - 10:30 AM', course: 'ME 4205: Operations Research', room: 'ME-304', teacher: 'Engr. Tanvir Ahmed' },
+      { time: '10:50 AM - 01:20 PM', course: 'ME 4204: Automobile Sessional', room: 'Automobile Lab', teacher: 'Engr. Asif Mohammad / Lab Team' }
+    ],
+    'Wednesday': [
+      { time: '08:00 AM - 08:50 AM', course: 'IPE 4201: Production Planning & Control', room: 'ME-304', teacher: 'Prof. Dr. Md. Mahbubul Alam' },
+      { time: '08:50 AM - 09:40 AM', course: 'ME 4201: Power Plant Engineering', room: 'ME-304', teacher: 'Prof. Dr. M. M. Kamal Bhuiya' },
+      { time: '10:00 AM - 01:00 PM', course: 'ME 4000: Project & Thesis Progress Work', room: 'Assigned Research Lab', teacher: 'Supervisors' }
+    ],
+    'Thursday': [
+      { time: '08:00 AM - 09:40 AM', course: 'ME 4203: Automobile Engineering', room: 'ME-304', teacher: 'Prof. Dr. Md. Mizanur Rahman' },
+      { time: '09:50 AM - 10:40 AM', course: 'IPE 4201: Production Planning & Control', room: 'ME-304', teacher: 'Prof. Dr. Md. Mahbubul Alam' },
+      { time: '10:50 AM - 12:30 PM', course: 'ME 4205: Operations Research', room: 'ME-304', teacher: 'Engr. Tanvir Ahmed' }
+    ]
+  },
+  'L4-T1': {
+    'Sunday': [
+      { time: '08:00 AM - 08:50 AM', course: 'ME 411: Internal Combustion Engines', room: 'ME-401', teacher: 'Faculty ME' },
+      { time: '08:50 AM - 09:40 AM', course: 'ME 413: Refrigeration & Air Conditioning', room: 'ME-401', teacher: 'Faculty ME' },
+      { time: '10:00 AM - 12:30 PM', course: 'ME 412: Heat Engines Sessional', room: 'IC Engine Lab', teacher: 'Lab Faculty' }
+    ],
+    'Monday': [
+      { time: '08:00 AM - 09:40 AM', course: 'ME 415: Power Plant Engineering I', room: 'ME-401', teacher: 'Faculty ME' },
+      { time: '10:00 AM - 12:30 PM', course: 'ME 4000: Project & Thesis', room: 'ME Department', teacher: 'Supervisors' }
+    ],
+    'Tuesday': [
+      { time: '08:00 AM - 08:50 AM', course: 'ME 413: RAC', room: 'ME-401', teacher: 'Faculty ME' },
+      { time: '09:00 AM - 11:30 AM', course: 'ME 414: RAC Sessional', room: 'RAC Lab', teacher: 'Faculty ME' }
+    ],
+    'Wednesday': [
+      { time: '08:00 AM - 09:40 AM', course: 'ME 411: IC Engines', room: 'ME-401', teacher: 'Faculty ME' },
+      { time: '10:00 AM - 11:40 AM', course: 'ME 415: Power Plant Engineering', room: 'ME-401', teacher: 'Faculty ME' }
+    ],
+    'Thursday': [
+      { time: '08:00 AM - 09:40 AM', course: 'ME 417: Finite Element Analysis', room: 'ME-401', teacher: 'Faculty ME' },
+      { time: '10:00 AM - 12:30 PM', course: 'ME 418: FEA & Simulation Sessional', room: 'CAD Lab', teacher: 'Faculty ME' }
+    ]
+  }
+};
+
+function setRoutineDay(day) {
+  currentRoutineDay = day;
+  ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'].forEach(d => {
+    const btn = document.getElementById(`routineDayBtn-${d}`);
+    if (btn) {
+      if (d === day) {
+        btn.className = 'px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-semibold transition-all shadow';
+      } else {
+        btn.className = 'px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-all';
+      }
+    }
+  });
+  renderHomeRoutineViewer();
+}
+
+function renderHomeRoutineViewer() {
+  const select = document.getElementById('routineTermSelect');
+  const container = document.getElementById('homeRoutineCardsContainer');
+  if (!container) return;
+
+  const term = select ? select.value : 'L4-T2';
+  const termRoutines = CUET_ME_ROUTINES[term] || CUET_ME_ROUTINES['L4-T2'];
+  const dayRoutines = termRoutines[currentRoutineDay] || [];
+
+  if (dayRoutines.length === 0) {
+    container.innerHTML = `
+      <div class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center text-xs text-slate-400">
+        ${currentRoutineDay} বারে কোনো ক্লাস বা ল্যাব নির্ধারিত নেই।
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = dayRoutines.map(item => `
+    <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold flex items-center gap-1">
+            <i data-lucide="clock" class="w-3 h-3"></i>
+            <span>${item.time}</span>
+          </span>
+          <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px] font-semibold flex items-center gap-1">
+            <i data-lucide="map-pin" class="w-3 h-3 text-red-400"></i>
+            <span>${item.room}</span>
+          </span>
+        </div>
+        <h4 class="text-xs sm:text-sm font-bold text-white">${item.course}</h4>
+        <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+          <i data-lucide="user" class="w-3 h-3 text-indigo-400"></i>
+          <span>${item.teacher}</span>
+        </div>
+      </div>
+      <button onclick="quickOpenSemester('${term}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-semibold border border-slate-700 flex items-center gap-1 self-start sm:self-auto transition-all">
+        <i data-lucide="folder-search" class="w-3.5 h-3.5"></i>
+        <span>কোর্স নোটস খুলুন</span>
+      </button>
+    </div>
+  `).join('');
+
+  if (window.lucide) lucide.createIcons();
+}
+
+/* =========================================================================
+   18. CUET 4.0 SCALE GPA & CGPA CALCULATOR (CUET ORDINANCE)
+   ========================================================================= */
+const CUET_GRADE_POINTS = {
+  'A+': 4.00,
+  'A': 3.75,
+  'A-': 3.50,
+  'B+': 3.25,
+  'B': 3.00,
+  'B-': 2.75,
+  'C+': 2.50,
+  'C': 2.25,
+  'D': 2.00,
+  'F': 0.00
+};
+
+let cgpaCourseList = [
+  { name: 'ME 4201 Power Plant Engineering', credits: 3.0, grade: 'A+' },
+  { name: 'ME 4202 Power Plant Sessional', credits: 1.5, grade: 'A+' },
+  { name: 'ME 4203 Automobile Engineering', credits: 3.0, grade: 'A' },
+  { name: 'ME 4204 Automobile Sessional', credits: 0.75, grade: 'A+' }
+];
+
+function renderCgpaRows() {
+  const container = document.getElementById('cgpaCourseRows');
+  if (!container) return;
+
+  container.innerHTML = cgpaCourseList.map((c, idx) => `
+    <div class="grid grid-cols-12 gap-2 items-center">
+      <div class="col-span-5 sm:col-span-6">
+        <input type="text" value="${c.name}" oninput="cgpaCourseList[${idx}].name = this.value" placeholder="Course Name" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-amber-500">
+      </div>
+      <div class="col-span-3 sm:col-span-3">
+        <input type="number" step="0.25" min="0.75" max="6.0" value="${c.credits}" oninput="cgpaCourseList[${idx}].credits = parseFloat(this.value) || 0; calculateCgpa();" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white font-mono outline-none focus:border-amber-500">
+      </div>
+      <div class="col-span-3 sm:col-span-2">
+        <select onchange="cgpaCourseList[${idx}].grade = this.value; calculateCgpa();" class="w-full px-2 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-amber-300 font-bold outline-none focus:border-amber-500">
+          ${Object.keys(CUET_GRADE_POINTS).map(g => `<option value="${g}" ${c.grade === g ? 'selected' : ''}>${g} (${CUET_GRADE_POINTS[g].toFixed(2)})</option>`).join('')}
+        </select>
+      </div>
+      <div class="col-span-1 sm:col-span-1 text-center">
+        <button type="button" onclick="removeCgpaCourseRow(${idx})" class="p-1 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors" title="Delete Course">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.lucide) lucide.createIcons();
+  calculateCgpa();
+}
+
+function addCgpaCourseRow(name = '', credits = 3.0, grade = 'A+') {
+  cgpaCourseList.push({ name: name || `Course ${cgpaCourseList.length + 1}`, credits, grade });
+  renderCgpaRows();
+}
+
+function removeCgpaCourseRow(index) {
+  if (cgpaCourseList.length <= 1) {
+    showToast('কমপক্ষে ১টি কোর্স তালিকায় থাকতে হবে।');
+    return;
+  }
+  cgpaCourseList.splice(index, 1);
+  renderCgpaRows();
+}
+
+function loadCgpaPreset(term) {
+  if (term === 'L4-T2') {
+    cgpaCourseList = [
+      { name: 'ME 4201 Power Plant Engineering', credits: 3.0, grade: 'A+' },
+      { name: 'ME 4202 Power Plant Sessional', credits: 1.5, grade: 'A+' },
+      { name: 'ME 4203 Automobile Engineering', credits: 3.0, grade: 'A+' },
+      { name: 'ME 4204 Automobile Sessional', credits: 0.75, grade: 'A+' },
+      { name: 'ME 4205 Operations Research', credits: 3.0, grade: 'A' },
+      { name: 'IPE 4201 Production Planning & Control', credits: 3.0, grade: 'A' },
+      { name: 'ME 4000 Project & Thesis', credits: 3.0, grade: 'A+' }
+    ];
+  } else {
+    cgpaCourseList = [
+      { name: 'ME 411 Internal Combustion Engines', credits: 3.0, grade: 'A+' },
+      { name: 'ME 412 IC Engine Sessional', credits: 1.5, grade: 'A+' },
+      { name: 'ME 413 Refrigeration & Air Conditioning', credits: 3.0, grade: 'A' },
+      { name: 'ME 414 RAC Sessional', credits: 0.75, grade: 'A+' },
+      { name: 'ME 415 Power Plant Engineering I', credits: 3.0, grade: 'A' },
+      { name: 'ME 417 Finite Element Analysis', credits: 3.0, grade: 'A' }
+    ];
+  }
+  renderCgpaRows();
+  showToast(`CUET ${term} কোর্সসমূহ লোড করা হয়েছে!`);
+}
+
+function calculateCgpa() {
+  let totalTermCredits = 0;
+  let totalGradePoints = 0;
+
+  cgpaCourseList.forEach(c => {
+    const cr = parseFloat(c.credits) || 0;
+    const gp = CUET_GRADE_POINTS[c.grade] !== undefined ? CUET_GRADE_POINTS[c.grade] : 0;
+    totalTermCredits += cr;
+    totalGradePoints += (cr * gp);
+  });
+
+  const termGpa = totalTermCredits > 0 ? (totalGradePoints / totalTermCredits) : 0;
+
+  const totalCreditsEl = document.getElementById('cgpaTotalCredits');
+  const termGpaEl = document.getElementById('cgpaTermGpa');
+  const honorBadgeEl = document.getElementById('cgpaHonorBadge');
+  const overallResultEl = document.getElementById('cgpaOverallResult');
+
+  if (totalCreditsEl) totalCreditsEl.textContent = totalTermCredits.toFixed(2);
+  if (termGpaEl) termGpaEl.textContent = termGpa.toFixed(2);
+
+  if (honorBadgeEl) {
+    if (termGpa >= 3.75) {
+      honorBadgeEl.textContent = '🌟 Honours / First Class with Distinction';
+      honorBadgeEl.className = 'text-[10px] text-emerald-400 font-semibold';
+    } else if (termGpa >= 3.00) {
+      honorBadgeEl.textContent = '✓ First Class Standing (CUET)';
+      honorBadgeEl.className = 'text-[10px] text-indigo-400 font-semibold';
+    } else if (termGpa >= 2.25) {
+      honorBadgeEl.textContent = 'Second Class Standing';
+      honorBadgeEl.className = 'text-[10px] text-amber-400 font-semibold';
+    } else {
+      honorBadgeEl.textContent = 'Passing / Retake Required';
+      honorBadgeEl.className = 'text-[10px] text-red-400 font-semibold';
+    }
+  }
+
+  // Cumulative CGPA calculation
+  const prevCrInput = document.getElementById('prevCreditsInput');
+  const prevCgpaInput = document.getElementById('prevCgpaInput');
+  const prevCredits = parseFloat(prevCrInput ? prevCrInput.value : 0) || 0;
+  const prevCgpa = parseFloat(prevCgpaInput ? prevCgpaInput.value : 0) || 0;
+
+  let cumulativeCgpa = termGpa;
+  if (prevCredits > 0) {
+    const totalCombinedCredits = prevCredits + totalTermCredits;
+    if (totalCombinedCredits > 0) {
+      cumulativeCgpa = ((prevCredits * prevCgpa) + totalGradePoints) / totalCombinedCredits;
+    }
+  }
+
+  if (overallResultEl) overallResultEl.textContent = cumulativeCgpa.toFixed(2);
+}
+
+function resetCgpaCalculator() {
+  cgpaCourseList = [
+    { name: 'Course 1', credits: 3.0, grade: 'A+' },
+    { name: 'Course 2', credits: 3.0, grade: 'A' },
+    { name: 'Course 3', credits: 1.5, grade: 'A+' },
+    { name: 'Course 4', credits: 0.75, grade: 'A' }
+  ];
+  const prevCrInput = document.getElementById('prevCreditsInput');
+  const prevCgpaInput = document.getElementById('prevCgpaInput');
+  if (prevCrInput) prevCrInput.value = '';
+  if (prevCgpaInput) prevCgpaInput.value = '';
+  renderCgpaRows();
+  showToast('CGPA ক্যালকুলেটর রিসেট করা হয়েছে।');
+}
+
+/* =========================================================================
+   19. CUET ME FACULTY & STAFF DIRECTORY (FULL CMS & CONTACTS)
+   ========================================================================= */
+const DEFAULT_FACULTY_MEMBERS = [
+  {
+    id: 'fac_1',
+    name: 'Prof. Dr. Muhammad Mostafa Kamal Bhuiya',
+    designation: 'Head of Department & Professor',
+    category: 'HEAD',
+    room: 'ME Building, Room 301',
+    email: 'kamal@cuet.ac.bd',
+    phone: '+880 1711-000000',
+    whatsapp: '8801711000000',
+    specialization: 'Thermal Engineering, Heat Transfer, Fluid Mechanics',
+    order: 1
+  },
+  {
+    id: 'fac_2',
+    name: 'Prof. Dr. Bodius Salam',
+    designation: 'Professor',
+    category: 'PROFESSOR',
+    room: 'ME Building, Room 302',
+    email: 'bsalam@cuet.ac.bd',
+    phone: '+880 1712-000000',
+    whatsapp: '8801712000000',
+    specialization: 'Renewable Energy, Heat Transfer, Solar Thermal Systems',
+    order: 2
+  },
+  {
+    id: 'fac_3',
+    name: 'Prof. Dr. Md. Mahbubul Alam',
+    designation: 'Dean (Faculty of ME) & Professor',
+    category: 'HEAD',
+    room: 'Dean Office, ME Building',
+    email: 'mahbub@cuet.ac.bd',
+    phone: '+880 1713-000000',
+    whatsapp: '8801713000000',
+    specialization: 'Manufacturing Processes, Production Engineering, Materials',
+    order: 3
+  },
+  {
+    id: 'fac_4',
+    name: 'Prof. Dr. Sajal Chandra Banik',
+    designation: 'Professor',
+    category: 'PROFESSOR',
+    room: 'Mechatronics & Robotics Lab, Room 201',
+    email: 'banik@cuet.ac.bd',
+    phone: '+880 1714-000000',
+    whatsapp: '8801714000000',
+    specialization: 'Robotics, Mechatronics, Control Systems & Automation',
+    order: 4
+  },
+  {
+    id: 'fac_5',
+    name: 'Prof. Dr. Md. Mizanur Rahman',
+    designation: 'Professor',
+    category: 'PROFESSOR',
+    room: 'ME Building, Room 304',
+    email: 'mizanur@cuet.ac.bd',
+    phone: '+880 1715-000000',
+    whatsapp: '8801715000000',
+    specialization: 'Automobile Engineering, IC Engines, Alternative Fuels',
+    order: 5
+  },
+  {
+    id: 'fac_6',
+    name: 'Prof. Dr. Jamal Hossen',
+    designation: 'Professor',
+    category: 'PROFESSOR',
+    room: 'ME Building, Room 305',
+    email: 'jamal@cuet.ac.bd',
+    phone: '+880 1716-000000',
+    whatsapp: '8801716000000',
+    specialization: 'Computational Fluid Dynamics (CFD), Aerodynamics',
+    order: 6
+  },
+  {
+    id: 'fac_7',
+    name: 'Prof. Dr. Kazi Afzalur Rahman',
+    designation: 'Professor',
+    category: 'PROFESSOR',
+    room: 'ME Building, Room 306',
+    email: 'afzal@cuet.ac.bd',
+    phone: '+880 1717-000000',
+    whatsapp: '8801717000000',
+    specialization: 'Machine Design, Solid Mechanics, Finite Element Analysis',
+    order: 7
+  },
+  {
+    id: 'fac_8',
+    name: 'Prof. Dr. Md. Tazul Islam',
+    designation: 'Professor',
+    category: 'PROFESSOR',
+    room: 'ME Building, Room 307',
+    email: 'tazul@cuet.ac.bd',
+    phone: '+880 1718-000000',
+    whatsapp: '8801718000000',
+    specialization: 'Turbomachinery, Fluid Power Systems, Energy Systems',
+    order: 8
+  },
+  {
+    id: 'fac_9',
+    name: 'Dr. Sanjoy Kumar Nandi',
+    designation: 'Associate Professor',
+    category: 'ASSOCIATE',
+    room: 'ME Building, Room 202',
+    email: 'sanjoy@cuet.ac.bd',
+    phone: '+880 1719-000000',
+    whatsapp: '8801719000000',
+    specialization: 'Thermal Science, Nanofluids, Heat Exchanger Design',
+    order: 9
+  },
+  {
+    id: 'fac_10',
+    name: 'Dr. Md. Arafat Hossain',
+    designation: 'Associate Professor',
+    category: 'ASSOCIATE',
+    room: 'ME Building, Room 203',
+    email: 'arafat@cuet.ac.bd',
+    phone: '+880 1720-000000',
+    whatsapp: '8801720000000',
+    specialization: 'Materials Science, Metallurgy, Fracture Mechanics',
+    order: 10
+  },
+  {
+    id: 'fac_11',
+    name: 'Engr. Md. Nurul Absar',
+    designation: 'Assistant Professor',
+    category: 'ASSOCIATE',
+    room: 'ME Building, Room 204',
+    email: 'absar@cuet.ac.bd',
+    phone: '+880 1721-000000',
+    whatsapp: '8801721000000',
+    specialization: 'Mechanics of Machinery, Vibrations & Noise Control',
+    order: 11
+  },
+  {
+    id: 'fac_12',
+    name: 'Engr. Asif Mohammad',
+    designation: 'Assistant Professor',
+    category: 'ASSOCIATE',
+    room: 'ME Building, Room 205',
+    email: 'asif@cuet.ac.bd',
+    phone: '+880 1722-000000',
+    whatsapp: '8801722000000',
+    specialization: 'Applied Thermodynamics, Refrigeration & Cryogenics',
+    order: 12
+  },
+  {
+    id: 'fac_13',
+    name: 'Engr. Tanvir Ahmed',
+    designation: 'Lecturer',
+    category: 'ASSOCIATE',
+    room: 'ME Building, Room 206',
+    email: 'tanvir@cuet.ac.bd',
+    phone: '+880 1723-000000',
+    whatsapp: '8801723000000',
+    specialization: 'Fluid Power, CAD/CAM, Operations Research',
+    order: 13
+  },
+  {
+    id: 'fac_14',
+    name: 'Engr. Sourav Barua',
+    designation: 'Lecturer',
+    category: 'ASSOCIATE',
+    room: 'ME Building, Room 207',
+    email: 'sourav@cuet.ac.bd',
+    phone: '+880 1724-000000',
+    whatsapp: '8801724000000',
+    specialization: 'Control Engineering, Smart Sensors, IoT Applications',
+    order: 14
+  },
+  {
+    id: 'fac_15',
+    name: 'Md. Rafiqul Islam',
+    designation: 'Administrative Officer',
+    category: 'STAFF',
+    room: 'Department Head Office, Ground Floor',
+    email: 'me_office@cuet.ac.bd',
+    phone: '+880 31-714946',
+    whatsapp: '8801819000000',
+    specialization: 'Academic Administration, Exam Notifications & Registration',
+    order: 15
+  },
+  {
+    id: 'fac_16',
+    name: 'Mohammed Harun-or-Rashid',
+    designation: 'Senior Lab Technician',
+    category: 'STAFF',
+    room: 'Machine Shop & Central Workshop',
+    email: 'harun_lab@cuet.ac.bd',
+    phone: '+880 1819-000000',
+    whatsapp: '8801819000000',
+    specialization: 'Thermal Lab Operations, Lathe & Shaper Machine Maintenance',
+    order: 16
+  }
+];
+
+let facultyCategoryFilter = 'ALL';
+let facultySearchKeyword = '';
+
+function getFacultyMembers() {
+  const saved = localStorage.getItem(STORAGE_KEYS.ADMIN_FACULTY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (e) {
+      console.warn('Error reading faculty members:', e);
+    }
+  }
+  return DEFAULT_FACULTY_MEMBERS;
+}
+
+function saveFacultyMembers(list) {
+  localStorage.setItem(STORAGE_KEYS.ADMIN_FACULTY, JSON.stringify(list));
+}
+
+function filterFacultyCategory(cat) {
+  facultyCategoryFilter = cat;
+  ['ALL', 'HEAD', 'PROFESSOR', 'ASSOCIATE', 'STAFF'].forEach(c => {
+    const btn = document.getElementById(`facFilter-${c}`);
+    if (btn) {
+      if (c === cat) {
+        btn.className = 'px-3 py-1.5 rounded-xl bg-cyan-600 text-white font-semibold whitespace-nowrap shadow-sm transition-all';
+      } else {
+        btn.className = 'px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium whitespace-nowrap transition-all';
+      }
+    }
+  });
+  renderFacultyDirectory();
+}
+
+function handleFacultySearch(query) {
+  facultySearchKeyword = (query || '').toLowerCase().trim();
+  renderFacultyDirectory();
+}
+
+function renderFacultyDirectory() {
+  const grid = document.getElementById('facultyDirectoryGrid');
+  const countBadge = document.getElementById('facultyDirectoryTotalBadge');
+  const homeBadge = document.getElementById('facultyCountBadge');
+  const adminHeader = document.getElementById('adminFacultyActionHeader');
+
+  if (adminHeader) {
+    if (isUserAdmin) adminHeader.classList.remove('hidden');
+    else adminHeader.classList.add('hidden');
+  }
+
+  const allMembers = getFacultyMembers();
+  if (countBadge) countBadge.textContent = `${allMembers.length} Members`;
+  if (homeBadge) homeBadge.textContent = allMembers.length;
+
+  if (!grid) return;
+
+  let filtered = allMembers;
+  if (facultyCategoryFilter !== 'ALL') {
+    filtered = filtered.filter(f => f.category === facultyCategoryFilter);
+  }
+  if (facultySearchKeyword) {
+    filtered = filtered.filter(f => 
+      (f.name && f.name.toLowerCase().includes(facultySearchKeyword)) ||
+      (f.designation && f.designation.toLowerCase().includes(facultySearchKeyword)) ||
+      (f.specialization && f.specialization.toLowerCase().includes(facultySearchKeyword)) ||
+      (f.room && f.room.toLowerCase().includes(facultySearchKeyword)) ||
+      (f.email && f.email.toLowerCase().includes(facultySearchKeyword))
+    );
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-400">
+        কোনো শিক্ষক বা কর্মকর্তা পাওয়া যায়নি। ফিল্টার পরিবর্তন করে পুনরায় চেষ্টা করুন।
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(f => `
+    <div class="p-5 rounded-2xl glass-card border border-slate-800 hover:border-cyan-500/50 flex flex-col justify-between space-y-4 transition-all duration-300 shadow-lg">
+      <div class="space-y-3">
+        <div class="flex items-start justify-between gap-2">
+          <div class="w-10 h-10 rounded-2xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center font-bold text-sm border border-cyan-500/30 flex-shrink-0">
+            ${f.name.split(' ').filter(p => !['Prof.', 'Dr.', 'Engr.', 'Md.'].includes(p))[0]?.[0] || 'ME'}
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+            f.category === 'HEAD' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+            f.category === 'PROFESSOR' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
+            f.category === 'STAFF' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
+            'bg-slate-800 text-slate-300'
+          }">
+            ${f.designation.includes('&') ? f.designation.split('&')[0].trim() : f.designation}
+          </span>
+        </div>
+
+        <div>
+          <h4 class="text-sm font-bold text-white leading-snug">${f.name}</h4>
+          <p class="text-xs text-cyan-400 font-medium mt-0.5">${f.designation}</p>
+        </div>
+
+        <div class="space-y-1.5 text-xs text-slate-300 pt-2 border-t border-slate-800/80">
+          <div class="flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
+            <span class="truncate">${f.room || 'ME Department'}</span>
+          </div>
+          ${f.email ? `
+            <div class="flex items-center gap-2">
+              <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
+              <a href="mailto:${f.email}" class="text-indigo-300 hover:underline truncate">${f.email}</a>
+            </div>
+          ` : ''}
+          ${f.phone ? `
+            <div class="flex items-center gap-2">
+              <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i>
+              <span>${f.phone}</span>
+            </div>
+          ` : ''}
+          ${f.specialization ? `
+            <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-300 mt-2">
+              <strong class="text-cyan-300">গবেষণা ও স্পেশালাইজেশন:</strong> ${f.specialization}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 pt-3 border-t border-slate-800/80">
+        <div class="flex items-center gap-1.5">
+          ${f.email ? `
+            <a href="mailto:${f.email}" title="ইমেইল পাঠান" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all">
+              <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+            </a>
+          ` : ''}
+          ${f.whatsapp ? `
+            <a href="https://wa.me/${f.whatsapp.replace(/\D/g, '')}" target="_blank" rel="noopener noreferrer" title="WhatsApp বার্তা" class="p-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all">
+              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+            </a>
+          ` : ''}
+          ${f.phone ? `
+            <a href="tel:${f.phone.replace(/\s+/g, '')}" title="কল করুন" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all">
+              <i data-lucide="phone-call" class="w-3.5 h-3.5"></i>
+            </a>
+          ` : ''}
+        </div>
+        ${isUserAdmin ? `
+          <div class="flex items-center gap-1">
+            <button onclick="openEditFacultyModal('${f.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[11px] font-semibold transition-all">
+              Edit
+            </button>
+            <button onclick="deleteFacultyMember('${f.id}')" class="px-2.5 py-1 rounded-lg bg-red-600/30 hover:bg-red-600 text-red-300 hover:text-white text-[11px] font-semibold transition-all">
+              Del
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function openAddFacultyModal() {
+  const modal = document.getElementById('editFacultyModal');
+  const title = document.getElementById('facultyModalTitle');
+  const form = document.getElementById('facultyMemberForm');
+  if (title) title.textContent = 'Add New Faculty / Staff Member';
+  if (form) form.reset();
+  const idInput = document.getElementById('facultyEditId');
+  if (idInput) idInput.value = '';
+  if (modal) modal.showModal();
+}
+
+function openEditFacultyModal(id) {
+  const list = getFacultyMembers();
+  const member = list.find(m => m.id === id);
+  if (!member) return;
+
+  const modal = document.getElementById('editFacultyModal');
+  const title = document.getElementById('facultyModalTitle');
+  if (title) title.textContent = 'Edit Faculty Member Details';
+
+  document.getElementById('facultyEditId').value = member.id || '';
+  document.getElementById('facultyNameInput').value = member.name || '';
+  document.getElementById('facultyDesignationInput').value = member.designation || '';
+  document.getElementById('facultyCategoryInput').value = member.category || 'PROFESSOR';
+  document.getElementById('facultyRoomInput').value = member.room || '';
+  document.getElementById('facultyEmailInput').value = member.email || '';
+  document.getElementById('facultyPhoneInput').value = member.phone || '';
+  document.getElementById('facultyWhatsappInput').value = member.whatsapp || '';
+  document.getElementById('facultySpecializationInput').value = member.specialization || '';
+  document.getElementById('facultyOrderInput').value = member.order || 1;
+
+  if (modal) modal.showModal();
+}
+
+function closeEditFacultyModal() {
+  const modal = document.getElementById('editFacultyModal');
+  if (modal) modal.close();
+}
+
+function handleSaveFaculty(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const list = getFacultyMembers();
+  const editId = document.getElementById('facultyEditId')?.value;
+
+  const newEntry = {
+    id: editId || ('fac_' + Date.now()),
+    name: document.getElementById('facultyNameInput')?.value.trim() || '',
+    designation: document.getElementById('facultyDesignationInput')?.value.trim() || '',
+    category: document.getElementById('facultyCategoryInput')?.value || 'PROFESSOR',
+    room: document.getElementById('facultyRoomInput')?.value.trim() || '',
+    email: document.getElementById('facultyEmailInput')?.value.trim() || '',
+    phone: document.getElementById('facultyPhoneInput')?.value.trim() || '',
+    whatsapp: document.getElementById('facultyWhatsappInput')?.value.trim() || '',
+    specialization: document.getElementById('facultySpecializationInput')?.value.trim() || '',
+    order: parseInt(document.getElementById('facultyOrderInput')?.value || '1', 10)
+  };
+
+  if (editId) {
+    const idx = list.findIndex(m => m.id === editId);
+    if (idx !== -1) list[idx] = newEntry;
+    else list.push(newEntry);
+  } else {
+    list.push(newEntry);
+  }
+
+  list.sort((a, b) => (a.order || 99) - (b.order || 99));
+  saveFacultyMembers(list);
+  closeEditFacultyModal();
+  renderFacultyDirectory();
+  renderAdminFacultyManager();
+  showToast('ফ্যাকাল্টি মেম্বারের তথ্য সফলভাবে সেভ করা হয়েছে!');
+}
+
+function deleteFacultyMember(id) {
+  if (!confirm('আপনি কি নিশ্চিত যে এই ফ্যাকাল্টি মেম্বারকে ডিরেক্টরি থেকে মুছে ফেলতে চান?')) return;
+  let list = getFacultyMembers();
+  list = list.filter(m => m.id !== id);
+  saveFacultyMembers(list);
+  renderFacultyDirectory();
+  renderAdminFacultyManager();
+  showToast('ফ্যাকাল্টি মেম্বার মুছে ফেলা হয়েছে।');
+}
+
+function resetDefaultFaculty() {
+  if (!confirm('আপনি কি ফ্যাকাল্টি ডিরেক্টরি ডিফল্ট ১৬ জন শিক্ষক ও কর্মকর্তার তালিকায় রিসেট করতে চান?')) return;
+  saveFacultyMembers(DEFAULT_FACULTY_MEMBERS);
+  renderFacultyDirectory();
+  renderAdminFacultyManager();
+  showToast('ফ্যাকাল্টি ডিরেক্টরি ডিফল্ট ১৬ জনে রিসেট করা হয়েছে!');
+}
+
+function renderAdminFacultyManager() {
+  const container = document.getElementById('adminFacultyTableContainer');
+  if (!container) return;
+
+  const list = getFacultyMembers();
+  if (list.length === 0) {
+    container.innerHTML = `<div class="p-4 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400 text-center">কোনো ফ্যাকাল্টি সদস্য নেই।</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-slate-800 text-slate-400">
+            <th class="py-2.5 px-3">Name</th>
+            <th class="py-2.5 px-3">Designation</th>
+            <th class="py-2.5 px-3">Room</th>
+            <th class="py-2.5 px-3">Email</th>
+            <th class="py-2.5 px-3">Category</th>
+            <th class="py-2.5 px-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/60">
+          ${list.map(f => `
+            <tr class="hover:bg-slate-900/50 transition-colors">
+              <td class="py-2.5 px-3 font-semibold text-white">${f.name}</td>
+              <td class="py-2.5 px-3 text-slate-300">${f.designation}</td>
+              <td class="py-2.5 px-3 text-slate-400 font-mono">${f.room || '-'}</td>
+              <td class="py-2.5 px-3 text-indigo-300 font-mono">${f.email || '-'}</td>
+              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] text-cyan-300">${f.category}</span></td>
+              <td class="py-2.5 px-3 text-right space-x-1.5 whitespace-nowrap">
+                <button onclick="openEditFacultyModal('${f.id}')" class="px-2 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[11px] font-semibold">Edit</button>
+                <button onclick="deleteFacultyMember('${f.id}')" class="px-2 py-1 rounded bg-red-600/30 hover:bg-red-600 text-red-300 hover:text-white text-[11px] font-semibold">Delete</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderAdminPublishPanel() {
+  const tokenInput = document.getElementById('adminGithubTokenInput');
+  const webhookInput = document.getElementById('adminFeedbackWebhookInput');
+  if (tokenInput) {
+    tokenInput.value = localStorage.getItem(STORAGE_KEYS.ADMIN_GITHUB_TOKEN) || '';
+  }
+  if (webhookInput) {
+    webhookInput.value = localStorage.getItem(STORAGE_KEYS.FEEDBACK_WEBHOOK) || '';
+  }
+}
+
+/* =========================================================================
+   20. 1-CLICK LIVE PUBLISH TO GITHUB PAGES (SHARED CMS SYNC)
+   ========================================================================= */
+function saveFeedbackWebhook() {
+  const input = document.getElementById('adminFeedbackWebhookInput');
+  const url = (input ? input.value : '').trim();
+  if (url) {
+    localStorage.setItem(STORAGE_KEYS.FEEDBACK_WEBHOOK, url);
+    showToast('Feedback Webhook URL সফলভাবে সেভ করা হয়েছে!');
+  } else {
+    localStorage.removeItem(STORAGE_KEYS.FEEDBACK_WEBHOOK);
+    showToast('Webhook URL মুছে ফেলা হয়েছে।');
+  }
+}
+
+async function publishToGithub() {
+  const tokenInput = document.getElementById('adminGithubTokenInput');
+  let token = (tokenInput ? tokenInput.value : '').trim() || localStorage.getItem(STORAGE_KEYS.ADMIN_GITHUB_TOKEN);
+
+  if (!token) {
+    token = prompt('দয়া করে আপনার GitHub Personal Access Token (PAT) প্রবেশ করান:\n(This allows publishing live changes to Fahim-Niloy2314/classroom-hub repository):');
+    if (!token) return;
+    token = token.trim();
+  }
+
+  localStorage.setItem(STORAGE_KEYS.ADMIN_GITHUB_TOKEN, token);
+  if (tokenInput) tokenInput.value = token;
+
+  const banner = document.getElementById('publishStatusBanner');
+  const statusText = document.getElementById('publishStatusText');
+  const btn = document.getElementById('publishLiveBtn');
+  const btnText = document.getElementById('publishLiveBtnText');
+
+  if (banner) banner.classList.remove('hidden');
+  if (btn) btn.disabled = true;
+  if (btnText) btnText.textContent = 'Publishing to GitHub...';
+
+  try {
+    if (statusText) statusText.textContent = 'Preparing live CMS bundle (Notices, Faculty, Routine)...';
+
+    const payload = {
+      version: '3.2',
+      lastPublished: new Date().toISOString(),
+      publisher: currentUser?.name || 'Fahim Niloy (Admin)',
+      portalSettings: portalSettings,
+      adminNotices: adminNotices,
+      facultyMembers: getFacultyMembers(),
+      adminCustomVideos: adminCustomVideos,
+      syllabusOverrides: adminSyllabusOverrides
+    };
+
+    const contentStr = JSON.stringify(payload, null, 2);
+    // Base64 encode UTF-8
+    const contentBase64 = btoa(unescape(encodeURIComponent(contentStr)));
+
+    const repoOwner = 'Fahim-Niloy2314';
+    const repoName = 'classroom-hub';
+    const filePath = 'portal_sync.json';
+    const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+
+    if (statusText) statusText.textContent = 'Checking existing remote file state on GitHub...';
+
+    let currentSha = null;
+    try {
+      const checkRes = await fetch(apiUrl, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        currentSha = checkData.sha;
+      }
+    } catch (e) {
+      console.warn('File check warning:', e);
+    }
+
+    if (statusText) statusText.textContent = 'Committing changes to main branch...';
+
+    const commitBody = {
+      message: `feat(cms): live sync update from admin dashboard [${new Date().toLocaleDateString()}]`,
+      content: contentBase64,
+      branch: 'main'
+    };
+    if (currentSha) {
+      commitBody.sha = currentSha;
+    }
+
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github.v3+json'
+      },
+      body: JSON.stringify(commitBody)
+    });
+
+    if (putRes.ok) {
+      if (statusText) statusText.textContent = '✓ Live publish successful! GitHub Pages will update in ~30 seconds.';
+      showToast('অভিনন্দন! আপনার পরিবর্তনসমূহ সফলভাবে GitHub Pages এ লাইভ পুশ করা হয়েছে!');
+    } else {
+      const errData = await putRes.json();
+      throw new Error(errData.message || 'GitHub API rejected commit');
+    }
+  } catch (err) {
+    console.error('Publish to GitHub failed:', err);
+    if (statusText) statusText.textContent = `Publish failed: ${err.message}`;
+    alert(`GitHub Live Publish Error: ${err.message}\nদয়া করে টোকেনের অনুমতি (repo write scope) নিশ্চিত করুন।`);
+  } finally {
+    if (btn) btn.disabled = false;
+    if (btnText) btnText.textContent = 'Publish Live to All Students';
+    setTimeout(() => {
+      if (banner) banner.classList.add('hidden');
+    }, 6000);
+  }
+}
 
