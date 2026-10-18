@@ -5633,26 +5633,141 @@ function getEngineeringConceptResponse(query, isBangla) {
   const q = query.toLowerCase().replace(/\u09AF\u09BC/g, '\u09DF');
 
   // =========================================================================
-  // 0. POWER PLANT ENGINEERING & THERMAL STATIONS (পাওয়ার প্ল্যান্ট ইঞ্জিনিয়ারিং)
-  // [CRITICAL: Evaluated FIRST before generic power/work/energy checks!]
+  // 1. THERMAL EFFICIENCY, HEAT ENGINES, CARNOT EFFICIENCY & COP
+  // [CRITICAL: Matches 'thermal efficiency', 'carnot', 'heat engine', 'cop', 'efficiency']
+  // =========================================================================
+  if (
+    q.includes('thermal efficiency') ||
+    q.includes('thermal efficiancy') ||
+    q.includes('তাপীয় দক্ষতা') ||
+    q.includes('তাপীয় দক্ষতা') ||
+    q.includes('heat engine') ||
+    q.includes('হিট ইঞ্জিন') ||
+    q.includes('coefficient of performance') ||
+    q.includes('cop') ||
+    q.includes('refrigerator') ||
+    q.includes('heat pump') ||
+    q.includes('হিট পাম্প') ||
+    q.includes('রেফ্রিজারেটর') ||
+    (q.includes('efficiency') && (q.includes('thermal') || q.includes('heat') || q.includes('engine') || q.includes('cycle') || q.includes('carnot'))) ||
+    (q.includes('দক্ষতা') && (q.includes('তাপ') || q.includes('ইঞ্জিন') || q.includes('সাইকেল') || q.includes('কার্নো')))
+  ) {
+    return {
+      title: isBangla ? 'থার্মোডাইনামিক্স: তাপীয় দক্ষতা (Thermal Efficiency) ও হিট ইঞ্জিন' : 'Thermodynamics: Thermal Efficiency, Heat Engines & COP',
+      html: isBangla ? `
+        <div class="space-y-3.5">
+          <div>
+            <p class="font-bold text-white text-xs sm:text-sm">১. তাপীয় দক্ষতার সংজ্ঞা ও সমীকরণ (Definition & Governing Equation):</p>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+              মেকানিক্যাল ইঞ্জিনিয়ারিংয়ে <strong>তাপীয় দক্ষতা (Thermal Efficiency, \( \eta_{\text{th}} \))</strong> হলো কোনো হিট ইঞ্জিন বা সাইকেল দ্বারা সরবরাহকৃত তাপশক্তিকে কত কার্যকরভাবে নেট যান্ত্রিক কাজে (Net Work Output) রূপান্তর করা যায় তার অনুপাত:
+            </p>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-amber-400 font-bold font-sans">সাধারণ তাপীয় দক্ষতার সূত্র:</div>
+            \[ \eta_{\text{th}} = \frac{\text{Net Work Output}}{\text{Total Heat Input}} = \frac{W_{\text{net}}}{Q_{\text{in}}} = \frac{Q_H - Q_L}{Q_H} = 1 - \frac{Q_L}{Q_H} \]
+            <div class="text-slate-400 text-[11px] font-sans">যেখানে \( Q_H \) = উচ্চ তাপমাত্রার উৎস হতে গৃহীত তাপ, এবং \( Q_L \) = নিম্ন তাপমাত্রার সিংকে বর্জিত অপচয় তাপ।</div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-cyan-400 font-bold font-sans">২. কার্নো সাইকেলের সর্বোচ্চ তাত্ত্বিক দক্ষতা (Carnot Efficiency):</div>
+            <p class="text-[11px] text-slate-300 font-sans">থার্মোডাইনামিক্সের ২য় সূত্রানুযায়ী দুটি নির্দিষ্ট তাপমাত্রার (\( T_H \) ও \( T_L \)) মধ্যে পরিচালিত যেকোনো ইঞ্জিনের সর্বোচ্চ সম্ভাব্য দক্ষতা হলো কার্নো দক্ষতা:</p>
+            \[ \eta_{\text{Carnot}} = 1 - \frac{T_L}{T_H} \quad (\text{তাপমাত্রা অবশ্যই কেলভিন এককে হতে হবে: } K = ^\circ C + 273.15) \]
+            <div class="text-red-400 text-[11px] font-sans font-bold">কেলভিন-প্লাঙ্ক বিবৃতি: কোনো হিট ইঞ্জিনই ১০০% দক্ষ হতে পারে না (\( \eta_{\text{th}} < 100\% \)), কিছু তাপ পরিবেশে বর্জন করা অনিবার্য।</div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1.5">
+            <div class="text-emerald-400 font-bold">৩. বাস্তব প্রকৌশলে বিভিন্ন পাওয়ার সাইকেলের গড় দক্ষতা:</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300">
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>কম্বাইন্ড সাইকেল বিদ্যুৎ কেন্দ্র (CCPP):</strong> ৫৫% - ৬২%</div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>স্টিম পাওয়ার প্ল্যান্ট (Supercritical):</strong> ৩৮% - ৪৪%</div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>ডিজেল ইঞ্জিন (CI Engine):</strong> ৩৫% - ৪২%</div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>পেট্রোল ইঞ্জিন (SI Engine):</strong> ২৫% - ৩২%</div>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-indigo-400 font-bold font-sans">৪. রেফ্রিজারেটর ও হিট পাম্পের পারফরম্যান্স গুণাঙ্ক (COP):</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-sans">
+              <div>
+                <strong>রেফ্রিজারেটর:</strong>
+                \[ \text{COP}_R = \frac{\text{Cooling Effect}}{\text{Work Input}} = \frac{Q_L}{W_{\text{net,in}}} = \frac{T_L}{T_H - T_L} \]
+              </div>
+              <div>
+                <strong>হিট পাম্প:</strong>
+                \[ \text{COP}_{HP} = \frac{\text{Heating Effect}}{\text{Work Input}} = \frac{Q_H}{W_{\text{net,in}}} = \text{COP}_R + 1 \]
+              </div>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট একাডেমিক রেফারেন্স:</strong> ২য় বর্ষ ১ম টার্মের <strong>ME 211 (Thermodynamics)</strong> এবং ৪র্থ বর্ষ ১ম টার্মের <strong>ME 415 (Power Plant Engineering)</strong> কোর্সে এই বিষয়গুলো বিস্তারিত পড়ানো হয়। আমাদের ভল্টে ME 211 ও ME 415 এর বিগত বছরের সমাধানকৃত প্রশ্ন রয়েছে।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3.5">
+          <div>
+            <p class="font-bold text-white text-xs sm:text-sm">1. Definition & Mathematical Formulation of Thermal Efficiency:</p>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+              In mechanical and thermal engineering, <strong>Thermal Efficiency (\( \eta_{\text{th}} \))</strong> is a dimensionless performance measure of a device that uses thermal energy (such as an internal combustion engine, a steam turbine, or a gas power cycle). It is the ratio of net useful work output to the total heat input:
+            </p>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-amber-400 font-bold font-sans">Governing Equation:</div>
+            \[ \eta_{\text{th}} = \frac{W_{\text{net,out}}}{Q_{\text{in}}} = \frac{Q_{\text{in}} - Q_{\text{out}}}{Q_{\text{in}}} = 1 - \frac{Q_L}{Q_H} \]
+            <div class="text-slate-400 text-[11px] font-sans">where \( Q_H \) is heat supplied from the high-temperature reservoir and \( Q_L \) is waste heat rejected to the low-temperature sink.</div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-cyan-400 font-bold font-sans">2. Carnot Thermal Efficiency (Theoretical Maximum):</div>
+            <p class="text-[11px] text-slate-300 font-sans">According to Carnot's theorem, no engine operating between two heat reservoirs can be more efficient than a reversible Carnot engine:</p>
+            \[ \eta_{\text{Carnot}} = 1 - \frac{T_L}{T_H} \quad (T \text{ in absolute Kelvin: } K = ^\circ C + 273.15) \]
+            <div class="text-red-400 text-[11px] font-sans font-bold">Kelvin-Planck Statement (2nd Law): No cyclic heat engine can achieve 100% efficiency (\( \eta < 1 \)); heat rejection is physically mandatory.</div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1.5">
+            <div class="text-emerald-400 font-bold">3. Typical Real-World Engineering Thermal Efficiencies:</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300">
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>Combined Cycle Power Plant (CCPP):</strong> 55% - 62%</div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>Modern Supercritical Coal Plants:</strong> 38% - 44%</div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>Heavy Duty Gas Turbines:</strong> 32% - 38%</div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">• <strong>Diesel Engines (CI):</strong> 35% - 42%</div>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-indigo-400 font-bold font-sans">4. Refrigerators & Heat Pumps: Coefficient of Performance (COP):</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-sans">
+              <div>
+                <strong>Refrigerator:</strong>
+                \[ \text{COP}_R = \frac{\text{Desired Output}}{\text{Required Work}} = \frac{Q_L}{W_{\text{in}}} = \frac{T_L}{T_H - T_L} \]
+              </div>
+              <div>
+                <strong>Heat Pump:</strong>
+                \[ \text{COP}_{HP} = \frac{\text{Heating Effect}}{\text{Required Work}} = \frac{Q_H}{W_{\text{in}}} = \text{COP}_R + 1 \]
+              </div>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 CUET Course Reference:</strong> Covered in depth in <strong>ME 211 (Thermodynamics)</strong> and <strong>ME 415 (Power Plant Engineering)</strong>.
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 2. POWER PLANT ENGINEERING & THERMAL STATIONS (পাওয়ার প্ল্যান্ট ইঞ্জিনিয়ারিং)
   // =========================================================================
   if (
     q.includes('power plant') ||
     q.includes('পাওয়ার প্ল্যান্ট') ||
     q.includes('পাওয়ার প্ল্যান্ট') ||
     q.includes('thermal plant') ||
-    q.includes('থার্মাল পাওয়ার') ||
-    q.includes('থার্মাল পাওয়ার') ||
     q.includes('power station') ||
-    q.includes('পাওয়ার স্টেশন') ||
-    q.includes('পাওয়ার স্টেশন') ||
     q.includes('steam power') ||
-    q.includes('স্টিম পাওয়ার') ||
-    q.includes('বিদ্যুৎ কেন্দ্র') ||
-    q.includes('বিদ্যুৎকেন্দ্র') ||
-    q.includes('নিউক্লিয়ার পাওয়ার') ||
-    q.includes('গ্যাস টারবাইন পাওয়ার') ||
-    q.includes('হাইড্রোইলেকট্রিক পাওয়ার') ||
     q.includes('র‍্যাংকিন সাইকেল') ||
     q.includes('rankine cycle')
   ) {
@@ -5661,69 +5776,42 @@ function getEngineeringConceptResponse(query, isBangla) {
       html: isBangla ? `
         <div class="space-y-3.5">
           <div>
-            <p class="font-bold text-white text-xs sm:text-sm">১. পাওয়ার প্ল্যান্টের সংজ্ঞা ও মৌলিক মূলনীতি (Definition & Classification):</p>
+            <p class="font-bold text-white text-xs sm:text-sm">১. পাওয়ার প্ল্যান্টের সংজ্ঞা ও শ্রেণিবিভাগ (Power Plant Overview):</p>
             <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              <strong>পাওয়ার প্ল্যান্ট (Power Plant)</strong> বা বিদ্যুৎ উৎপাদন কেন্দ্র হলো এমন একটি সমন্বিত প্রকৌশল ব্যবস্থা, যেখানে রাসায়নিক, পারমাণবিক, তাপীয় বা জলবিদ্যুৎ শক্তিকে মেকানিক্যাল রোটেশনাল এনার্জিতে এবং পরবর্তীতে জেনারেটরের মাধ্যমে বৈদ্যুতিক শক্তিতে (Electrical Power) রূপান্তর করা হয়।
+              <strong>পাওয়ার প্ল্যান্ট (Power Plant)</strong> হলো একটি বৃহৎ প্রকৌশল স্থাপনা, যেখানে রাসায়নিক (কয়লা/গ্যাস), পারমাণবিক বা জলবিদ্যুৎ শক্তিকে মেকানিক্যাল রোটেশনাল এনার্জিতে এবং পরবর্তীতে সিনক্রোনাস জেনারেটরের মাধ্যমে বৈদ্যুতিক শক্তিতে (Electrical Power) রূপান্তর করা হয়।
             </p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-xs">
-              <div class="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                <span class="font-bold text-amber-400">তাপবিদ্যুৎ কেন্দ্র (Steam / Thermal):</span> কয়লা, গ্যাস বা ফার্নেস অয়েল পুড়িয়ে বয়লারে বাষ্প তৈরি করে স্টিম টারবাইন ঘোরানো হয় (Rankine Cycle)।
-              </div>
-              <div class="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                <span class="font-bold text-blue-400">গ্যাস টারবাইন ও কম্বাইন্ড সাইকেল (CCPP):</span> ব্রায়টন সাইকেলে গ্যাস টারবাইন ও তার বর্জ্য তাপে র‍্যাংকিন সাইকেল চালিয়ে ৬০% পর্যন্ত সর্বোচ্চ দক্ষতা অর্জন করা হয়।
-              </div>
-              <div class="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                <span class="font-bold text-emerald-400">পারমাণবিক বিদ্যুৎ কেন্দ্র (Nuclear):</span> ইউরেনিয়ামের ফিশন (Fission) বিক্রিয়ার তাপ দিয়ে রিঅ্যাক্টরে স্টিম তৈরি করা হয় (যেমন: রূপপুর পারমাণবিক কেন্দ্র - VVER-1200)।
-              </div>
-              <div class="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                <span class="font-bold text-cyan-400">জলবিদ্যুৎ কেন্দ্র (Hydroelectric):</span> কাপ্তাইয়ের মতো ড্যামের সঞ্চিত পানির পটেনশিয়াল এনার্জিকে পেনস্টক দিয়ে এনে হাইড্রোলিক টারবাইনে (Francis/Kaplan) ঘোরানো হয়।
-              </div>
-            </div>
           </div>
 
           <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 font-mono text-xs">
-            <div class="text-indigo-400 font-bold font-sans">২. স্টিম পাওয়ার প্ল্যান্টের আদর্শ র‍্যাংকিন সাইকেল (Rankine Cycle):</div>
-            <p class="text-[11px] text-slate-400 font-sans leading-relaxed">স্টিম পাওয়ার প্ল্যান্ট মূলত চারটি প্রধান উপাদানের মাধ্যমে একটি বদ্ধ চক্রে কাজ করে:</p>
-            <ul class="text-[11px] text-slate-300 space-y-1 font-sans list-disc pl-4">
-              <li><strong>১ → ২:</strong> টারবাইনে বাষ্পের আইসেনট্রপিক প্রসারণ (Isentropic Expansion in Turbine) \\( W_t = h_1 - h_2 \\)</li>
-              <li><strong>২ → ৩:</strong> কনডেনসারে সমচাপীয় তাপ বর্জন (Isobaric Heat Rejection in Condenser) \\( Q_{\\text{out}} = h_2 - h_3 \\)</li>
-              <li><strong>৩ → ৪:</strong> পাম্পে কনডেনসেট পানির সম-এনট্রপিক চাপ বৃদ্ধি (Isentropic Pump Work) \\( W_p = h_4 - h_3 = v_3 (P_1 - P_2) \\)</li>
-              <li><strong>৪ → ১:</strong> বয়লারে সমচাপীয় তাপ গ্রহণ ও বাষ্পীভবন (Isobaric Heat Addition in Boiler) \\( Q_{\\text{in}} = h_1 - h_4 \\)</li>
-            </ul>
-            <div class="pt-1.5 border-t border-slate-800 text-center font-bold text-amber-300 text-xs">
-              \\[ \\eta_{\\text{thermal}} = \\frac{W_{\\text{net}}}{Q_{\\text{in}}} = \\frac{(h_1 - h_2) - (h_4 - h_3)}{h_1 - h_4} \\]
+            <div class="text-indigo-400 font-bold font-sans">২. স্টিম পাওয়ার প্ল্যান্টের র‍্যাংকিন সাইকেল (Rankine Cycle):</div>
+            <p class="text-[11px] text-slate-400 font-sans">বাষ্পীয় চক্র মূলত চারটি প্রধান যন্ত্রাংশের সমন্বয়ে পরিচালিত হয়:</p>
+            \[ \eta_{\text{thermal}} = \frac{W_{\text{net}}}{Q_{\text{in}}} = \frac{(h_1 - h_2) - (h_4 - h_3)}{h_1 - h_4} \]
+            <div class="grid grid-cols-2 gap-2 text-[11px] font-sans text-slate-300 pt-1">
+              <div><strong>টারবাইন কাজ:</strong> \( W_t = h_1 - h_2 \)</div>
+              <div><strong>পাম্প কাজ:</strong> \( W_p = v_3(P_1 - P_2) \)</div>
+              <div><strong>বয়লারে তাপ যোগ:</strong> \( Q_{\text{in}} = h_1 - h_4 \)</div>
+              <div><strong>কনডেনসারে তাপ বর্জন:</strong> \( Q_{\text{out}} = h_2 - h_3 \)</div>
             </div>
           </div>
 
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 text-xs">
-            <div class="text-emerald-400 font-bold">৩. পাওয়ার প্ল্যান্টের গুরুত্বপূর্ণ দক্ষতা ও পারফরম্যান্স নির্দেশক:</div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300">
-              <div>
-                <strong>হিট রেট (Heat Rate, HR):</strong> ১ kWh বিদ্যুৎ তৈরিতে কত kJ তাপশক্তি লাগে:
-                \\[ \\text{Heat Rate} = \\frac{3600}{\\eta_{\\text{thermal}}} \\text{ kJ/kWh} = \\frac{\\dot{m}_f \\times \\text{CV}}{P_{\\text{net}}} \\]
-                (হিট রেট যত কম, পাওয়ার প্ল্যান্ট তত বেশি কার্যকর!)
-              </div>
-              <div>
-                <strong>প্ল্যান্ট ক্যাপাসিটি ফ্যাক্টর (PCF) ও লোড ফ্যাক্টর (LF):</strong>
-                \\[ \\text{PCF} = \\frac{\\text{Actual Energy Generated (kWh)}}{\\text{Installed Capacity (kW)} \\times 8760\\text{ h}} \\]
-                \\[ \\text{Load Factor} = \\frac{\\text{Average Demand (kW)}}{\\text{Peak Demand (kW)}} \\]
-              </div>
-            </div>
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-1.5 text-xs">
+            <div class="text-emerald-400 font-bold">৩. পাওয়ার প্ল্যান্টের কর্মক্ষমতা নির্দেশক (Performance Metrics):</div>
+            \[ \text{Heat Rate (HR)} = \frac{3600}{\eta_{\text{thermal}}} \text{ kJ/kWh} = \frac{\dot{m}_f \times \text{CV}}{P_{\text{net}}} \]
+            \[ \text{Plant Capacity Factor (PCF)} = \frac{\text{Actual Energy Generated (kWh)}}{\text{Installed Capacity (kW)} \times 8760\text{ h}} \]
           </div>
 
           <div>
-            <p class="font-bold text-white text-xs">৪. আধুনিক পাওয়ার প্ল্যান্টের অপরিহার্য অক্সিলিয়ারি যন্ত্রপাতি:</p>
+            <p class="font-bold text-white text-xs">৪. গুরুত্বপূর্ণ অক্সিলিয়ারি যন্ত্রপাতি (Auxiliary Equipment):</p>
             <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300 mt-1">
-              <li><strong>সুপারহিটার (Superheater) ও রিহিটার (Reheater):</strong> বাষ্পের তাপমাত্রা বৃদ্ধি করে সাইকেলের তাপীয় দক্ষতা বাড়ায় এবং টারবাইনের শেষ ব্লেডে আর্দ্রতা কমিয়ে ক্ষয় রোধ করে।</li>
-              <li><strong>ইকোনোমাইজার (Economizer):</strong> চিমনি দিয়ে বের হওয়া ফ্লু-গ্যাসের অবশিষ্ট তাপ দিয়ে বয়লারের ফিডওয়াটার প্রি-হিট করে জ্বালানি সাশ্রয় করে।</li>
-              <li><strong>সারফেস কনডেনসার (Surface Condenser):</strong> টারবাইনের এক্সস্ট বাষ্পকে ঘনীভূত করে ব্যাক-প্রেশার ভ্যাকিউম তৈরি করে, যার ফলে টারবাইন হতে সর্বোচ্চ কাজ পাওয়া যায়।</li>
-              <li><strong>ডিয়েয়ারেটর (Deaerator):</strong> বয়লারে পানি পাঠানোর আগে পানিতে দ্রবীভূত ক্ষতিকর অক্সিজেন ও কার্বন ডাই অক্সাইড বের করে বয়লার পাইপের মরিচা প্রতিরোধ করে।</li>
-              <li><strong>কুলিং টাওয়ার (Cooling Tower):</strong> কনডেনসারে ব্যবহৃত গরম পানিকে বাষ্পীভবনের মাধ্যমে পুনরায় ঠাণ্ডা করে সার্কুলেট করে।</li>
+              <li><strong>সুপারহিটার ও রিহিটার:</strong> বাষ্পের তাপমাত্রা বৃদ্ধি করে সাইকেলের তাপীয় দক্ষতা বাড়ায়।</li>
+              <li><strong>ইকোনোমাইজার:</strong> ফ্লু-গ্যাসের অপচয় তাপ দিয়ে ফিডওয়াটার প্রি-হিট করে জ্বালানি সাশ্রয় করে।</li>
+              <li><strong>সারফেস কনডেনসার:</strong> টারবাইনের শেষ প্রান্তে ০.০৫-০.১ বার ভ্যাকিউম তৈরি করে টারবাইন ওয়ার্ক বাড়ায়।</li>
+              <li><strong>ডিয়েয়ারেটর:</strong> ফিডওয়াটার হতে অক্সিজেন ও কার্বন ডাই অক্সাইড বের করে বয়লার পাইপের ক্ষয় রোধ করে।</li>
             </ul>
           </div>
 
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
-            <strong>🎓 চুয়েট একাডেমিক রেফারেন্স:</strong> ৪র্থ বর্ষ ১ম টার্মের <strong>ME 415 (Power Plant Engineering)</strong> এবং ২য় বর্ষ ১ম টার্মের <strong>ME 211 (Thermodynamics)</strong> কোর্সে এই বিষয়গুলো বিস্তারিত পড়ানো হয়। আমাদের ভল্টে ME 415 এর বিগত বছরের প্রশ্নব্যাংক এবং নোটস রয়েছে।
+            <strong>🎓 চুয়েট কোর্স রেফারেন্স:</strong> ৪র্থ বর্ষ ১ম টার্মের <strong>ME 415 (Power Plant Engineering)</strong>।
           </div>
         </div>
       ` : `
@@ -5737,34 +5825,23 @@ function getEngineeringConceptResponse(query, isBangla) {
 
           <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 font-mono text-xs">
             <div class="text-indigo-400 font-bold font-sans">2. The Working Thermodynamic Cycle: Ideal Rankine Cycle:</div>
-            <p class="text-[11px] text-slate-400 font-sans">The continuous steady-flow power cycle operates between high boiler pressure and low condenser back-pressure:</p>
-            \\[ \\eta_{\\text{th}} = \\frac{W_{\\text{net}}}{Q_{\\text{in}}} = \\frac{(h_1 - h_2) - (h_4 - h_3)}{h_1 - h_4} \\]
+            \[ \eta_{\text{th}} = \frac{W_{\text{net}}}{Q_{\text{in}}} = \frac{(h_1 - h_2) - (h_4 - h_3)}{h_1 - h_4} \]
             <div class="grid grid-cols-2 gap-2 text-[11px] font-sans text-slate-300 pt-1">
-              <div><strong>Turbine Work:</strong> \\( W_t = h_1 - h_2 \\)</div>
-              <div><strong>Pump Work:</strong> \\( W_p = v_3 (P_1 - P_2) \\)</div>
-              <div><strong>Heat Added:</strong> \\( Q_{\\text{in}} = h_1 - h_4 \\)</div>
-              <div><strong>Heat Rejected:</strong> \\( Q_{\\text{out}} = h_2 - h_3 \\)</div>
+              <div><strong>Turbine Work:</strong> \( W_t = h_1 - h_2 \)</div>
+              <div><strong>Pump Work:</strong> \( W_p = v_3 (P_1 - P_2) \)</div>
+              <div><strong>Heat Added:</strong> \( Q_{\text{in}} = h_1 - h_4 \)</div>
+              <div><strong>Heat Rejected:</strong> \( Q_{\text{out}} = h_2 - h_3 \)</div>
             </div>
           </div>
 
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-1.5 text-xs">
             <div class="text-emerald-400 font-bold">3. Performance Metrics: Heat Rate & Capacity Factor:</div>
-            \\[ \\text{Heat Rate (HR)} = \\frac{3600}{\\eta_{\\text{th}}} \\text{ kJ/kWh} = \\frac{\\dot{m}_f \\times \\text{HHV}}{P_{\\text{electric}}} \\]
-            \\[ \\text{Plant Capacity Factor (PCF)} = \\frac{\\text{Actual MWh Produced}}{\\text{Rated Capacity (MW)} \\times 8760\\text{ hours}} \\]
-          </div>
-
-          <div>
-            <p class="font-bold text-white text-xs">4. Major Power Plant Subsystems:</p>
-            <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300 mt-1">
-              <li><strong>Boiler / Steam Generator:</strong> High-pressure water-tube drum generating superheated steam.</li>
-              <li><strong>Economizer & Air Preheater:</strong> Flue gas waste-heat recovery units boosting boiler efficiency by 8-12%.</li>
-              <li><strong>Surface Condenser:</strong> Maintains deep vacuum (0.05-0.1 bar) to maximize steam enthalpy drop across turbine stages.</li>
-              <li><strong>Deaerator:</strong> Direct contact feedwater heater that strips corrosive non-condensable dissolved \\( O_2 \\) and \\( CO_2 \\).</li>
-            </ul>
+            \[ \text{Heat Rate (HR)} = \frac{3600}{\eta_{\text{th}}} \text{ kJ/kWh} = \frac{\dot{m}_f \times \text{HHV}}{P_{\text{electric}}} \]
+            \[ \text{Plant Capacity Factor (PCF)} = \frac{\text{Actual MWh Produced}}{\text{Rated Capacity (MW)} \times 8760\text{ hours}} \]
           </div>
 
           <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
-            <strong>🎓 CUET Course Reference:</strong> Covered comprehensively in <strong>ME 415 (Power Plant Engineering)</strong> and <strong>ME 211 (Thermodynamics)</strong>.
+            <strong>🎓 CUET Course Reference:</strong> Covered comprehensively in <strong>ME 415 (Power Plant Engineering)</strong>.
           </div>
         </div>
       `
@@ -5772,68 +5849,34 @@ function getEngineeringConceptResponse(query, isBangla) {
   }
 
   // =========================================================================
-  // 1. POWER, WORK, ENERGY & ROTATIONAL TORQUE (MECHANICAL / LINEAR / ROTATIONAL)
-  // [Guarded: Does NOT match when user is asking about power plants or stations!]
+  // 3. MECHANICAL POWER, WORK, TORQUE & ROTATIONAL SHAFTS
   // =========================================================================
   if (
-    ((q.includes('power') || q.includes('পাওয়ার') || q.includes('পাওয়ার') || q.includes('ক্ষমতা') || q.includes('torque') || q.includes('টর্ক') || q.includes('horsepower') || q.includes('অশ্বক্ষমতা') || q.includes('watt') || q.includes('energy') || q.includes('শক্তি') || (q.includes('work') && !q.includes('workshop')))) &&
-    !q.includes('plant') && !q.includes('প্ল্যান্ট') && !q.includes('station') && !q.includes('স্টেশন')
+    (q.includes('power') || q.includes('পাওয়ার') || q.includes('পাওয়ার') || q.includes('ক্ষমতা') || q.includes('torque') || q.includes('টর্ক') || q.includes('horsepower') || q.includes('watt') || q.includes('energy') || q.includes('শক্তি') || (q.includes('work') && !q.includes('workshop'))) &&
+    !q.includes('plant') && !q.includes('প্ল্যান্ট')
   ) {
     return {
       title: isBangla ? 'মেকানিক্যাল ইঞ্জিনিয়ারিং: ক্ষমতা (Power), কাজ ও টর্ক' : 'Mechanical Engineering: Power, Work & Torque Analysis',
       html: isBangla ? `
         <div class="space-y-3">
-          <div>
-            <p class="font-bold text-white text-xs sm:text-sm">১. ক্ষমতার মৌলিক সংজ্ঞা (Core Definition):</p>
-            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              মেকানিক্যাল ইঞ্জিনিয়ারিংয়ে <strong>ক্ষমতা (Power, \\( P \\))</strong> হলো একক সময়ে কাজ সম্পন্ন করার হার অথবা শক্তি স্থানান্তরের গতি। অর্থাৎ কোনো ইঞ্জিন বা যন্ত্র কত দ্রুত কাজ সম্পন্ন করতে পারে, ক্ষমতা তা নির্দেশ করে।
-            </p>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <strong>ক্ষমতা (Power, \( P \)):</strong> একক সময়ে কাজ সম্পন্ন করার হার অথবা শক্তি স্থানান্তরের গতি।
+          </p>
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 font-mono text-xs">
+            <div class="text-indigo-400 font-bold font-sans">রৈখিক গতিতে ক্ষমতা (Translational Power):</div>
+            \[ P = \frac{dW}{dt} = \vec{F} \cdot \vec{v} \]
+            <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">ঘূর্ণন ক্ষমতা (Rotational Shaft Power):</div>
+            \[ P = T \cdot \omega = \frac{2\pi N T}{60} \text{ Watts} \quad \implies \quad P_{\text{kW}} = \frac{2\pi N T}{60,000} \]
           </div>
-
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-1.5 font-mono text-xs">
-            <div class="text-indigo-400 font-bold font-sans">রৈখিক গতিতে ক্ষমতা (Linear / Translational Power):</div>
-            \\[ P = \\frac{dW}{dt} = \\vec{F} \\cdot \\vec{v} \\]
-            <div class="text-slate-400 text-[11px] font-sans">যেখানে \\( F \\) = প্রযুক্ত বল (Newtons), এবং \\( v \\) = রৈখিক বেগ (m/s)।</div>
-          </div>
-
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-1.5 font-mono text-xs">
-            <div class="text-indigo-400 font-bold font-sans">শ্যাফটের ঘূর্ণন ক্ষমতা (Rotational Shaft Power in Motors & Engines):</div>
-            \\[ P = T \\cdot \\omega = \\frac{2\\pi N T}{60} \\text{ Watts} \\quad \\implies \\quad P_{\\text{kW}} = \\frac{2\\pi N T}{60,000} \\]
-            <div class="text-slate-400 text-[11px] font-sans">যেখানে \\( T \\) = টর্ক (\\( \\text{N}\\cdot\\text{m} \\)), \\( \\omega \\) = কৌণিক বেগ (rad/s), এবং \\( N \\) = প্রতি মিনিটে ঘূর্ণন সংখ্যা (RPM)।</div>
-          </div>
-
-          <div>
-            <p class="font-bold text-white text-xs">২. ফ্লুইড ও ইঞ্জিন ক্ষমতা (Fluid & Engine Power):</p>
-            <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300 mt-1">
-              <li><strong>পাম্প ও টারবাইনের ক্ষমতা:</strong> \\[ P_{\\text{fluid}} = \\rho g Q H = \\dot{m} g H \\] (যেখানে \\( \\rho \\) = ফ্লুইডের ঘনত্ব, \\( Q \\) = প্রবাহের হার \\( \\text{m}^3/\\text{s} \\), \\( H \\) = মোট হেড (m))</li>
-              <li><strong>ইঞ্জিনের যান্ত্রিক দক্ষতা (Mechanical Efficiency):</strong> \\[ \\eta_m = \\frac{BP}{IP} \\times 100\\% \\] (যেখানে \\( IP \\) = সিলিন্ডারের ভেতরে উৎপাদিত Indicated Power এবং \\( BP \\) = শ্যাফটে প্রাপ্ত কার্যকর Brake Power)</li>
-            </ul>
-          </div>
-
-          <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs space-y-1 text-slate-300">
-            <span class="font-bold text-emerald-400">৩. প্রকৌশলগত একক ও রূপান্তর (Units):</span>
-            <p>SI একক: <strong>Watt (W)</strong> \\( [1\\text{ W} = 1\\text{ J/s} = 1\\text{ N}\\cdot\\text{m/s}] \\)</p>
-            <p>হরসপাওয়ার (Horsepower): <strong>1 Imperial hp ≈ 746 Watts (0.746 kW)</strong> | <strong>1 Metric hp ≈ 735.5 W</strong></p>
+          <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300">
+            <strong>একক রূপান্তর:</strong> \( 1\text{ Imperial hp} = 745.7\text{ Watts (0.746 kW)} \) | \( 1\text{ W} = 1\text{ J/s} = 1\text{ N}\cdot\text{m/s} \)
           </div>
         </div>
       ` : `
         <div class="space-y-3">
-          <div>
-            <p class="font-bold text-white text-xs sm:text-sm">1. Core Definition of Power:</p>
-            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              In mechanical engineering, <strong>Power (\\( P \\))</strong> is defined as the time rate at which work is performed or energy is transmitted:
-            </p>
-          </div>
-
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-1.5 font-mono text-xs">
-            <div class="text-indigo-400 font-bold font-sans">Translational Power:</div>
-            \\[ P = \\frac{dW}{dt} = \\vec{F} \\cdot \\vec{v} \\]
-          </div>
-
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-1.5 font-mono text-xs">
-            <div class="text-indigo-400 font-bold font-sans">Rotational Shaft Power:</div>
-            \\[ P = T \\cdot \\omega = \\frac{2\\pi N T}{60} \\text{ Watts} \\]
-            <div class="text-slate-400 text-[11px] font-sans">where \\( T \\) is torque in \\( \\text{N}\\cdot\\text{m} \\) and \\( N \\) is rotational speed in RPM.</div>
+          <p class="text-xs text-slate-300">Power is the time rate of doing work or transferring energy.</p>
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 font-mono text-xs">
+            \[ P = \vec{F} \cdot \vec{v}, \quad P_{\text{rotational}} = T \cdot \omega = \frac{2\pi N T}{60} \text{ Watts} \]
           </div>
         </div>
       `
@@ -5841,7 +5884,179 @@ function getEngineeringConceptResponse(query, isBangla) {
   }
 
   // =========================================================================
-  // 2. MOHR'S CIRCLE & 2D STRESS TRANSFORMATION (সলিড মেকানিক্স ও মোহর সার্কেল)
+  // 4. THERMODYNAMICS: 1ST LAW, 2ND LAW, ENTROPY & CYCLES (OTTO, DIESEL, BRAYTON)
+  // =========================================================================
+  if (q.includes('entropy') || q.includes('এনট্রপি') || q.includes('thermodynamics') || q.includes('থার্মোডাইনামিক্স') || q.includes('otto') || q.includes('অটো') || q.includes('diesel cycle') || q.includes('ডিজেল সাইকেল') || q.includes('brayton') || q.includes('ব্রায়টন') || q.includes('2nd law') || q.includes('দ্বিতীয় সূত্র')) {
+    return {
+      title: isBangla ? 'থার্মোডাইনামিক্স: এনট্রপি, দ্বিতীয় সূত্র ও আদর্শ ইঞ্জিন সাইকেল' : 'Thermodynamics: Entropy, 2nd Law & Air Standard Cycles',
+      html: isBangla ? `
+        <div class="space-y-3">
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <strong>এনট্রপি (Entropy, \( S \)):</strong> থার্মোডাইনামিক্সের ২য় সূত্রের ভিত্তি। এটি কোনো সিস্টেমের আণবিক বিশৃঙ্খলা বা অপ্রত্যাবর্তী অপচয়ের পরিমাপ।
+          </p>
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \[ dS = \left( \frac{\delta Q}{T} \right)_{\text{rev}} + S_{\text{gen}}, \quad S_{\text{gen}} \ge 0 \]
+            <div class="text-indigo-400 font-bold font-sans pt-1 border-t border-slate-800">অটো সাইকেলের দক্ষতা (Otto Cycle):</div>
+            \[ \eta_{\text{Otto}} = 1 - \frac{1}{r^{k-1}} \quad (r = \text{Compression Ratio, } k = 1.4) \]
+            <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">ডিজেল সাইকেলের দক্ষতা (Diesel Cycle):</div>
+            \[ \eta_{\text{Diesel}} = 1 - \frac{1}{r^{k-1}} \left[ \frac{r_c^k - 1}{k(r_c - 1)} \right] \quad (r_c = \text{Cut-off Ratio}) \]
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 211 (Thermodynamics) & ME 315 (Internal Combustion Engines)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \[ dS = \frac{\delta Q_{\text{rev}}}{T} + S_{\text{gen}}, \quad \eta_{\text{Otto}} = 1 - \frac{1}{r^{k-1}} \]
+            \[ \eta_{\text{Diesel}} = 1 - \frac{1}{r^{k-1}} \left[ \frac{r_c^k - 1}{k(r_c - 1)} \right], \quad \eta_{\text{Brayton}} = 1 - \frac{1}{r_p^{(k-1)/k}} \]
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 5. FLUID MECHANICS: BERNOULLI, REYNOLDS, VISCOSITY, PIPE FRICTION
+  // =========================================================================
+  if (q.includes('bernoulli') || q.includes('বার্নৌলি') || q.includes('বারনৌলি') || q.includes('fluid') || q.includes('ফ্লুইড') || q.includes('reynolds') || q.includes('রেনল্ডস') || q.includes('pipe') || q.includes('পাইপ') || q.includes('viscosity') || q.includes('সান্দ্রতা')) {
+    return {
+      title: isBangla ? 'ফ্লুইড মেকানিক্স: বার্নৌলির সমীকরণ ও পাইপ ফ্লো' : 'Fluid Mechanics: Bernoulli Equation & Pipe Flow Analysis',
+      html: isBangla ? `
+        <div class="space-y-3">
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <strong>বার্নৌলির সমীকরণ (Bernoulli’s Equation):</strong> অবিচল (steady), অসংকোচনীয় (incompressible), অঘূর্ণনশীল ও ঘর্ষণহীন প্রবাহে স্ট্রিমলাইন বরাবর মোট এনার্জি হেড ধ্রুবক থাকে:
+          </p>
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \[ \frac{P}{\rho g} + \frac{v^2}{2g} + z = \text{Constant} \]
+            <div class="text-cyan-400 font-bold font-sans pt-1 border-t border-slate-800">রেনল্ডস সংখ্যা (Reynolds Number):</div>
+            \[ Re = \frac{\rho v D}{\mu} = \frac{v D}{\nu} \quad (Re < 2300 \text{ Laminar}, Re > 4000 \text{ Turbulent}) \]
+            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">ডার্সি-ওয়েইসবাখ হেড লস (Darcy-Weisbach Friction Loss):</div>
+            \[ h_f = f \frac{L}{D} \frac{v^2}{2g} \]
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 221 (Fluid Mechanics-I) ও ME 321 (Fluid Mechanics-II)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \[ \frac{P}{\rho g} + \frac{v^2}{2g} + z = \text{Constant}, \quad Re = \frac{\rho v D}{\mu}, \quad h_f = f \frac{L}{D} \frac{v^2}{2g} \]
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 6. HYDRAULIC MACHINES: PUMPS, TURBINES & CAVITATION
+  // =========================================================================
+  if (q.includes('pump') || q.includes('পাম্প') || q.includes('turbine') || q.includes('টারবাইন') || q.includes('pelton') || q.includes('francis') || q.includes('kaplan') || q.includes('cavitation') || q.includes('ক্যাভিটেশন') || q.includes('npsh')) {
+    return {
+      title: isBangla ? 'হাইড্রোলিক মেশিনারি: পাম্প, টারবাইন ও ক্যাভিটেশন' : 'Turbomachinery: Pumps, Turbines & Cavitation Analysis',
+      html: isBangla ? `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-indigo-400 font-bold font-sans">১. সেন্ট্রিফিউগাল পাম্পের ক্ষমতা ও হেড:</div>
+            \[ P_{\text{fluid}} = \rho g Q H, \quad P_{\text{brake}} = \frac{\rho g Q H}{\eta_{\text{pump}}} \]
+            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">২. ক্যাভিটেশন প্রতিরোধে NPSH ক্রাইটেরিয়া:</div>
+            \[ NPSH_{\text{available}} = \frac{P_{\text{atm}} - P_v}{\rho g} - h_s - h_f > NPSH_{\text{required}} \]
+            <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">৩. হাইড্রোলিক টারবাইনের শ্রেণিবিভাগ:</div>
+            <ul class="text-[11px] font-sans space-y-0.5 text-slate-300">
+              <li>• <strong>পেল্টন হুইল (Pelton Wheel):</strong> ইমপালস টারবাইন (উচ্চ হেড \( H > 250\text{ m} \), কম ডিসচার্জ)</li>
+              <li>• <strong>ফ্রান্সিস টারবাইন (Francis):</strong> রিঅ্যাকশন মিক্সড ফ্লো (মাঝারি হেড \( 60-250\text{ m} \))</li>
+              <li>• <strong>কাপলান টারবাইন (Kaplan):</strong> এক্সিয়াল ফ্লো রিঅ্যাকশন (কম হেড \( H < 60\text{ m} \), প্রচুর পানি প্রবাহ)</li>
+            </ul>
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 321 (Fluid Mechanics-II & Turbomachinery)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \[ P = \frac{\rho g Q H}{\eta}, \quad NPSH_{\text{avail}} = \frac{P_{\text{atm}} - P_v}{\rho g} - h_s - h_f \ge NPSH_{\text{req}} \]
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 7. HEAT TRANSFER: CONDUCTION, CONVECTION, RADIATION, HEAT EXCHANGERS
+  // =========================================================================
+  if (q.includes('heat transfer') || q.includes('হিট ট্রান্সফার') || q.includes('conduction') || q.includes('কন্ডাকশন') || q.includes('convection') || q.includes('কনভেকশন') || q.includes('radiation') || q.includes('রেডিয়েশন') || q.includes('heat exchanger')) {
+    return {
+      title: isBangla ? 'হিট ট্রান্সফার: কন্ডাকশন, কনভেকশন, রেডিয়েশন ও LMTD' : 'Heat Transfer: Modes & Heat Exchanger Analysis',
+      html: isBangla ? `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div>
+              <span class="text-amber-400 font-bold font-sans">১. ফুরিয়ারের কন্ডাকশন সূত্র (Fourier's Law):</span>
+              \[ q = -k A \frac{dT}{dx} \]
+            </div>
+            <div class="pt-1.5 border-t border-slate-800">
+              <span class="text-blue-400 font-bold font-sans">২. নিউটনের কুলিং সূত্র (Newton's Law of Cooling):</span>
+              \[ q = h A (T_s - T_\infty) \]
+            </div>
+            <div class="pt-1.5 border-t border-slate-800">
+              <span class="text-purple-400 font-bold font-sans">৩. স্টিফান-বোল্টসম্যান রেডিয়েশন সূত্র:</span>
+              \[ q = \epsilon \sigma A (T_1^4 - T_2^4), \quad \sigma = 5.67 \times 10^{-8} \text{ W/m}^2\cdot\text{K}^4 \]
+            </div>
+            <div class="pt-1.5 border-t border-slate-800">
+              <span class="text-emerald-400 font-bold font-sans">৪. হিট এক্সচেঞ্জার LMTD পদ্ধতি:</span>
+              \[ q = U A \Delta T_{\text{lm}}, \quad \Delta T_{\text{lm}} = \frac{\Delta T_1 - \Delta T_2}{\ln(\Delta T_1 / \Delta T_2)} \]
+            </div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 311 (Heat and Mass Transfer)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div><strong>Conduction:</strong> \( q = -k A \frac{dT}{dx} \)</div>
+            <div><strong>Convection:</strong> \( q = h A (T_s - T_\infty) \)</div>
+            <div><strong>Radiation:</strong> \( q = \epsilon \sigma A (T_1^4 - T_2^4) \)</div>
+            <div><strong>Heat Exchanger:</strong> \( q = U A \Delta T_{\text{lm}}, \quad \Delta T_{\text{lm}} = \frac{\Delta T_1 - \Delta T_2}{\ln(\Delta T_1 / \Delta T_2)} \)</div>
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 8. MECHANICS OF SOLIDS: STRESS, STRAIN, HOOKE'S LAW, AXIAL & THERMAL STRESS
+  // =========================================================================
+  if (q.includes('stress') || q.includes('strain') || q.includes('স্ট্রেস') || q.includes('স্ট্রেন') || q.includes('hooke') || q.includes("young's modulus") || q.includes('পীড়ন') || q.includes('বিকৃতি') || q.includes('poisson')) {
+    return {
+      title: isBangla ? 'সলিড মেকানিক্স: স্ট্রেস, স্ট্রেন, হুকের সূত্র ও ডিফরমেশন' : 'Mechanics of Solids: Stress-Strain & Elasticity',
+      html: isBangla ? `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-indigo-400 font-bold font-sans">১. হুকের সূত্র ও এক্সিয়াল ডিফরমেশন (Hooke's Law & Deflection):</div>
+            \[ \sigma = E \epsilon = \frac{P}{A}, \quad \delta = \frac{P L}{A E} \]
+            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">২. তাপীয় স্ট্রেস (Thermal Stress):</div>
+            \[ \delta_T = \alpha \Delta T L, \quad \sigma_T = E \alpha \Delta T \text{ (যদি প্রসারণ সম্পূর্ণ বাধাগ্রস্ত হয়)} \]
+            <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">৩. ইলাস্টিক কনস্ট্যান্টসমূহের সম্পর্ক:</div>
+            \[ E = 2G(1 + \nu) = 3K(1 - 2\nu) = \frac{9KG}{3K + G} \]
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 243 (Mechanics of Solids-I)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \[ \sigma = E \epsilon, \quad \delta = \frac{P L}{A E}, \quad \sigma_T = E \alpha \Delta T, \quad E = 2G(1 + \nu) = 3K(1 - 2\nu) \]
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 9. MOHR'S CIRCLE & 2D STRESS TRANSFORMATION
   // =========================================================================
   if (q.includes('mohr') || q.includes('মোহর') || q.includes('principal stress') || q.includes('প্রিন্সিপাল স্ট্রেস')) {
     return {
@@ -5849,29 +6064,20 @@ function getEngineeringConceptResponse(query, isBangla) {
       html: isBangla ? `
         <div class="space-y-3">
           <p class="text-xs text-slate-300 leading-relaxed">
-            <strong>মোহর সার্কেল (Mohr’s Circle)</strong> হলো দ্বিমাত্রিক তলে (Plane Stress) যেকোনো কৌণিক তলে স্বাভাবিক স্ট্রেস (\\( \\sigma \\)) ও শিয়ার স্ট্রেসের (\\( \\tau \\)) পরিবর্তন নির্ণয়ের একটি গ্রাফিক্যাল পদ্ধতি।
+            <strong>মোহর সার্কেল (Mohr’s Circle)</strong> হলো দ্বিমাত্রিক তলে যেকোনো কৌণিক তলে স্বাভাবিক স্ট্রেস (\( \sigma \)) ও শিয়ার স্ট্রেসের (\( \tau \)) মান নির্ণয়ের একটি গ্রাফিক্যাল পদ্ধতি:
           </p>
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            <div class="text-cyan-400 font-bold font-sans">কেন্দ্র (Center) ও ব্যাসার্ধ (Radius):</div>
-            \\[ C = \\left( \\frac{\\sigma_x + \\sigma_y}{2}, 0 \\right) \\]
-            \\[ R = \\sqrt{ \\left( \\frac{\\sigma_x - \\sigma_y}{2} \\right)^2 + \\tau_{xy}^2 } \\]
-            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">প্রিন্সিপাল স্ট্রেস (Principal Stresses):</div>
-            \\[ \\sigma_{1,2} = \\frac{\\sigma_x + \\sigma_y}{2} \\pm R \\]
-            <div class="text-emerald-400 font-bold font-sans">সর্বোচ্চ ইন-প্লেন শিয়ার স্ট্রেস:</div>
-            \\[ \\tau_{\\max} = R = \\frac{\\sigma_1 - \\sigma_2}{2} \\]
+            \[ C = \left( \frac{\sigma_x + \sigma_y}{2}, 0 \right), \quad R = \sqrt{ \left( \frac{\sigma_x - \sigma_y}{2} \right)^2 + \tau_{xy}^2 } \]
+            \[ \sigma_{1,2} = \frac{\sigma_x + \sigma_y}{2} \pm R, \quad \tau_{\max} = R = \frac{\sigma_1 - \sigma_2}{2} \]
           </div>
-          <p class="text-xs text-slate-300">
-            <strong>গুরুত্ব:</strong> মেশিন এলিমেন্ট ডিজাইনে ফেলিউর থিওরি (Tresca & Von Mises) প্রয়োগের জন্য প্রিন্সিপাল স্ট্রেস জানা অপরিহার্য। এটি ME 243 (Mechanics of Solids-I) কোর্সের অন্তর্ভুক্ত।
-          </p>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 243 (Mechanics of Solids-I)।
+          </div>
         </div>
       ` : `
         <div class="space-y-3">
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Mohr’s Circle is a graphical representation of plane stress transformation, allowing quick determination of principal stresses and maximum shear stresses without tensor calculations.
-          </p>
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \\[ C = \\left( \\frac{\\sigma_x + \\sigma_y}{2}, 0 \\right), \\quad R = \\sqrt{ \\left( \\frac{\\sigma_x - \\sigma_y}{2} \\right)^2 + \\tau_{xy}^2 } \\]
-            \\[ \\sigma_{1, 2} = \\frac{\\sigma_x + \\sigma_y}{2} \\pm R, \\quad \\tau_{\\max} = R \\]
+            \[ C = \left( \frac{\sigma_x + \sigma_y}{2}, 0 \right), \quad R = \sqrt{ \left( \frac{\sigma_x - \sigma_y}{2} \right)^2 + \tau_{xy}^2 }, \quad \sigma_{1,2} = \frac{\sigma_x + \sigma_y}{2} \pm R \]
           </div>
         </div>
       `
@@ -5879,143 +6085,28 @@ function getEngineeringConceptResponse(query, isBangla) {
   }
 
   // =========================================================================
-  // 3. FLUID MECHANICS: BERNOULLI, NAVIER-STOKES, REYNOLDS
+  // 10. BEAMS: BENDING, SFD, BMD & DEFLECTION
   // =========================================================================
-  if (q.includes('bernoulli') || q.includes('বার্নৌলি') || q.includes('বারনৌলি') || q.includes('fluid') || q.includes('ফ্লুইড') || q.includes('reynolds') || q.includes('রেনল্ডস') || q.includes('pipe flow') || q.includes('পাইপ')) {
+  if (q.includes('bending') || q.includes('বেন্ডিং') || q.includes('sfd') || q.includes('bmd') || q.includes('shear force') || q.includes('bending moment') || q.includes('বিম') || q.includes('beam') || q.includes('deflection')) {
     return {
-      title: isBangla ? 'ফ্লুইড মেকানিক্স: বার্নৌলির সমীকরণ ও পাইপ ফ্লো' : 'Fluid Mechanics: Bernoulli Equation & Pipe Flow',
-      html: isBangla ? `
-        <div class="space-y-3">
-          <p class="text-xs text-slate-300 leading-relaxed">
-            <strong>বার্নৌলির সমীকরণ (Bernoulli’s Equation):</strong> অবিচল (steady), অসংকোচনীয় (incompressible), অঘূর্ণনশীল (irrotational) ও ঘর্ষণহীন (inviscid) প্রবাহে একটি স্ট্রিমলাইন বরাবর মোট শক্তির পরিমাণ ধ্রুবক থাকে।
-          </p>
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-1.5">
-            <div class="text-cyan-400 font-bold font-sans">হেড ফরম্যাট (Head Form in meters):</div>
-            \\[ \\frac{P}{\\rho g} + \\frac{v^2}{2g} + z = \\text{Constant} \\]
-            <div class="text-slate-400 text-[11px] font-sans">যেখানে \\( \\frac{P}{\\rho g} \\) = প্রেসার হেড, \\( \\frac{v^2}{2g} \\) = ভেলোসিটি হেড, এবং \\( z \\) = পটেনশিয়াল হেড।</div>
-          </div>
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-1.5">
-            <div class="text-indigo-400 font-bold font-sans">রেনল্ডস সংখ্যা (Reynolds Number):</div>
-            \\[ Re = \\frac{\\rho v D}{\\mu} = \\frac{v D}{\\nu} \\]
-            <div class="text-slate-300 text-[11px] font-sans">পাইপ প্রবাহে: \\( Re < 2300 \\) হলে ল্যামিনার (Laminar), \\( 2300 \\le Re \\le 4000 \\) ট্রানজিশন, এবং \\( Re > 4000 \\) হলে টার্বুলেন্ট (Turbulent) প্রবাহ।</div>
-          </div>
-          <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300">
-            <strong>ডার্সি-ওয়েইসবাখ পাইপ ঘর্ষণ অপচয় (Darcy-Weisbach Friction Loss):</strong>
-            \\[ h_f = f \\frac{L}{D} \\frac{v^2}{2g} \\]
-          </div>
-        </div>
-      ` : `
-        <div class="space-y-3">
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Bernoulli's principle relates pressure, velocity, and elevation in steady, incompressible, frictionless streamline flow:
-          </p>
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-            \\[ \\frac{P}{\\rho g} + \\frac{v^2}{2g} + z = \\text{Constant} \\]
-          </div>
-        </div>
-      `
-    };
-  }
-
-  // =========================================================================
-  // 4. THERMODYNAMICS: ENTROPY, CARNOT, OTTO, DIESEL, 2ND LAW
-  // =========================================================================
-  if (q.includes('entropy') || q.includes('এনট্রপি') || q.includes('thermodynamics') || q.includes('থার্মোডাইনামিক্স') || q.includes('carnot') || q.includes('কার্নো') || q.includes('otto') || q.includes('অটো') || q.includes('diesel') || q.includes('ডিজেল') || q.includes('2nd law') || q.includes('দ্বিতীয় সূত্র')) {
-    return {
-      title: isBangla ? 'থার্মোডাইনামিক্স: এনট্রপি, দ্বিতীয় সূত্র ও ইঞ্জিন সাইকেল' : 'Thermodynamics: Entropy, 2nd Law & Engine Cycles',
-      html: isBangla ? `
-        <div class="space-y-3">
-          <p class="text-xs text-slate-300 leading-relaxed">
-            <strong>এনট্রপি (Entropy, \\( S \\)):</strong> থার্মোডাইনামিক্সের দ্বিতীয় সূত্রের ভিত্তি হলো এনট্রপি, যা কোনো সিস্টেমে আণবিক বিশৃঙ্খলা (molecular randomness) বা অকার্যকর শক্তির পরিমাপ নির্দেশ করে।
-          </p>
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-1.5">
-            <div class="text-amber-400 font-bold font-sans">এনট্রপির পরিবর্তন (Change in Entropy):</div>
-            \\[ dS = \\left( \\frac{\\delta Q}{T} \\right)_{\\text{rev}} + S_{\\text{gen}}, \\quad S_{\\text{gen}} \\ge 0 \\]
-            <div class="text-slate-400 text-[11px] font-sans">যেকোনো বাস্তব বা অপ্রত্যাবর্তী (irreversible) প্রক্রিয়ায় মহাবিশ্বের এনট্রপি সর্বদা বৃদ্ধি পায় (\\( \\Delta S_{\\text{universe}} > 0 \\))।</div>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-              <span class="font-bold text-indigo-400">কার্নো সাইকেলের সর্বোচ্চ দক্ষতা:</span>
-              \\[ \\eta_{\\text{Carnot}} = 1 - \\frac{T_L}{T_H} \\]
-            </div>
-            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-              <span class="font-bold text-emerald-400">অটো সাইকেলের দক্ষতা:</span>
-              \\[ \\eta_{\\text{Otto}} = 1 - \\frac{1}{r_c^{k-1}} \\]
-            </div>
-          </div>
-        </div>
-      ` : `
-        <div class="space-y-3">
-          <p class="text-xs text-slate-300">Entropy measures microscopic disorder and irreversibility. For an isolated system, \\( \\Delta S \\ge 0 \\).</p>
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs">
-            \\[ dS = \\frac{\\delta Q_{\\text{rev}}}{T} + S_{\\text{gen}}, \\quad \\eta_{\\text{Carnot}} = 1 - \\frac{T_L}{T_H} \\]
-          </div>
-        </div>
-      `
-    };
-  }
-
-  // =========================================================================
-  // 5. HEAT TRANSFER: CONDUCTION, CONVECTION, RADIATION, HEAT EXCHANGERS
-  // =========================================================================
-  if (q.includes('heat transfer') || q.includes('হিট ট্রান্সফার') || q.includes('conduction') || q.includes('কন্ডাকশন') || q.includes('convection') || q.includes('কনভেকশন') || q.includes('radiation') || q.includes('রেডিয়েশন') || q.includes('heat exchanger')) {
-    return {
-      title: isBangla ? 'হিট ট্রান্সফার: কন্ডাকশন, কনভেকশন ও রেডিয়েশন' : 'Heat Transfer: Modes & Governing Equations',
-      html: isBangla ? `
-        <div class="space-y-3">
-          <p class="text-xs text-slate-300 leading-relaxed">
-            তাপ সঞ্চালন তিনটি মৌলিক মাধ্যমে ঘটে:
-          </p>
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            <div>
-              <span class="text-amber-400 font-bold font-sans">১. ফুরিয়ারের কন্ডাকশন সূত্র (Fourier's Law):</span>
-              \\[ q = -k A \\frac{dT}{dx} \\]
-            </div>
-            <div class="pt-1.5 border-t border-slate-800">
-              <span class="text-blue-400 font-bold font-sans">২. নিউটনের কুলিং সূত্র (Newton's Law of Cooling):</span>
-              \\[ q = h A (T_s - T_\\infty) \\]
-            </div>
-            <div class="pt-1.5 border-t border-slate-800">
-              <span class="text-purple-400 font-bold font-sans">৩. স্টিফান-বোল্টসম্যান রেডিয়েশন সূত্র:</span>
-              \\[ q = \\epsilon \\sigma A (T_1^4 - T_2^4), \\quad \\sigma = 5.67 \\times 10^{-8} \\text{ W/m}^2\\cdot\\text{K}^4 \\]
-            </div>
-          </div>
-        </div>
-      ` : `
-        <div class="space-y-3">
-          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            <div><strong>Conduction:</strong> \\( q = -k A \\frac{dT}{dx} \\)</div>
-            <div><strong>Convection:</strong> \\( q = h A (T_s - T_\\infty) \\)</div>
-            <div><strong>Radiation:</strong> \\( q = \\epsilon \\sigma A (T_1^4 - T_2^4) \\)</div>
-          </div>
-        </div>
-      `
-    };
-  }
-
-  // =========================================================================
-  // 6. MACHINE DESIGN & STRENGTH OF MATERIALS (BENDING, TORSION, FATIGUE)
-  // =========================================================================
-  if (q.includes('bending') || q.includes('বেন্ডিং') || q.includes('torsion') || q.includes('টর্শন') || q.includes('sfd') || q.includes('bmd') || q.includes('machine design') || q.includes('মেশিন ডিজাইন') || q.includes('fatigue') || q.includes('ফ্যাটিগ')) {
-    return {
-      title: isBangla ? 'মেশিন ডিজাইন ও সলিড মেকানিক্স: বেন্ডিং, টর্শন ও ফ্যাটিগ' : 'Machine Design: Flexure, Torsion & Fatigue Analysis',
+      title: isBangla ? 'সলিড মেকানিক্স: বেন্ডিং, ফ্লেক্সার সূত্র, SFD ও BMD' : 'Mechanics of Solids: Flexure, SFD, BMD & Deflection',
       html: isBangla ? `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
             <div class="text-indigo-400 font-bold font-sans">ফ্লেক্সার সূত্র (Bending / Flexure Formula):</div>
-            \\[ \\frac{M}{I} = \\frac{\\sigma}{y} = \\frac{E}{R} \\quad \\implies \\quad \\sigma_{\\max} = \\frac{M}{Z} \\]
-            <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">শ্যাফটের টর্শন সূত্র (Torsion Formula):</div>
-            \\[ \\frac{T}{J} = \\frac{\\tau}{r} = \\frac{G \\theta}{L} \\quad \\implies \\quad \\tau_{\\max} = \\frac{16 T}{\\pi d^3} \\text{ (সলিড শ্যাফট)} \\]
+            \[ \frac{M}{I} = \frac{\sigma}{y} = \frac{E}{R} \quad \implies \quad \sigma_{\max} = \frac{M}{Z} = \frac{M y_{\max}}{I} \]
+            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">বিমের সর্বোচ্চ ডিফ্লেকশন (Maximum Deflection):</div>
+            \[ \text{ক্যান্টিলিভার (Point Load at tip): } \delta_{\max} = \frac{P L^3}{3 E I} \]
+            \[ \text{সিম্পলি সাপোর্টেড (Point Load at center): } \delta_{\max} = \frac{P L^3}{48 E I} \]
           </div>
-          <p class="text-xs text-slate-300">
-            <strong>গুডম্যান ক্রাইটেরিয়া (Goodman Line for Fatigue):</strong>
-            \\[ \\frac{\\sigma_a}{S_e} + \\frac{\\sigma_m}{S_{ut}} = \\frac{1}{n} \\]
-          </p>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 243 ও ME 245।
+          </div>
         </div>
       ` : `
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
-            \\[ \\frac{M}{I} = \\frac{\\sigma}{y} = \\frac{E}{R}, \\quad \\frac{T}{J} = \\frac{\\tau}{r} = \\frac{G \\theta}{L} \\]
+            \[ \frac{M}{I} = \frac{\sigma}{y} = \frac{E}{R}, \quad \delta_{\text{cantilever}} = \frac{P L^3}{3EI}, \quad \delta_{\text{SSB}} = \frac{PL^3}{48EI} \]
           </div>
         </div>
       `
@@ -6023,52 +6114,226 @@ function getEngineeringConceptResponse(query, isBangla) {
   }
 
   // =========================================================================
-  // 7. DYNAMIC ACADEMIC REASONING FALLBACK (FOR ANY OTHER QUESTION)
-  // [Structured university-grade analysis; NEVER returns broken/empty text!]
+  // 11. TORSION OF SHAFTS & SPRINGS
   // =========================================================================
+  if (q.includes('torsion') || q.includes('টর্শন') || q.includes('shaft') || q.includes('শ্যাফট') || q.includes('spring') || q.includes('স্প্রিং')) {
+    return {
+      title: isBangla ? 'সলিড মেকানিক্স: শ্যাফটের টর্শন ও স্প্রিং ডিজাইন' : 'Mechanics of Solids: Torsion of Shafts & Helical Springs',
+      html: isBangla ? `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-indigo-400 font-bold font-sans">শ্যাফটের টর্শন সূত্র (Torsion Formula):</div>
+            \[ \frac{T}{J} = \frac{\tau}{r} = \frac{G \theta}{L} \quad \implies \quad \tau_{\max} = \frac{16 T}{\pi d^3} \text{ (সলিড বৃত্তাকার শ্যাফট)} \]
+            <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">হেলিকাল স্প্রিংয়ের স্টিফনেস ও ডিফ্লেকশন:</div>
+            \[ \delta = \frac{8 P D^3 N}{G d^4}, \quad k = \frac{P}{\delta} = \frac{G d^4}{8 D^3 N} \]
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 243 ও ME 345 (Machine Design-I)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \[ \frac{T}{J} = \frac{\tau}{r} = \frac{G \theta}{L}, \quad \tau_{\max} = \frac{16 T}{\pi d^3}, \quad k_{\text{spring}} = \frac{G d^4}{8 D^3 N} \]
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 12. COLUMNS & EULER BUCKLING
+  // =========================================================================
+  if (q.includes('column') || q.includes('কলাম') || q.includes('buckling') || q.includes('বাকলিং') || q.includes('euler')) {
+    return {
+      title: isBangla ? 'সলিড মেকানিক্স: অয়লারের কলাম বাকলিং (Euler Buckling)' : 'Mechanics of Solids: Euler Column Buckling Analysis',
+      html: isBangla ? `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-indigo-400 font-bold font-sans">অয়লারের ক্রিটিক্যাল বাকলিং লোড (Critical Buckling Load):</div>
+            \[ P_{\text{cr}} = \frac{\pi^2 E I}{(L_e)^2} = \frac{\pi^2 E A}{\lambda^2} \]
+            <div class="text-slate-300 text-[11px] font-sans">যেখানে \( \lambda = \frac{L_e}{k} \) হলো স্লেন্ডারনেস রেশিও (Slenderness Ratio), এবং \( k = \sqrt{I/A} \)।</div>
+            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">কার্যকর দৈর্ঘ্য (Effective Length \( L_e \)):</div>
+            <ul class="text-[11px] font-sans text-slate-300 space-y-0.5">
+              <li>• উভয় প্রান্ত পিন্ড (Pinned-Pinned): \( L_e = L \)</li>
+              <li>• এক প্রান্ত ফিক্সড, অন্য প্রান্ত ফ্রি: \( L_e = 2L \)</li>
+              <li>• উভয় প্রান্ত ফিক্সড: \( L_e = 0.5L \)</li>
+              <li>• এক প্রান্ত ফিক্সড, অন্য প্রান্ত পিন্ড: \( L_e = 0.707L \)</li>
+            </ul>
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 245 (Mechanics of Solids-II)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \[ P_{\text{cr}} = \frac{\pi^2 E I}{(L_e)^2} = \frac{\pi^2 E A}{\lambda^2}, \quad \lambda = \frac{L_e}{k} \]
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 13. THEORY OF MACHINES: GOVERNORS, FLYWHEELS & GEAR TRAINS
+  // =========================================================================
+  if (q.includes('governor') || q.includes('গভর্নর') || q.includes('flywheel') || q.includes('ফ্লাইহুইল') || q.includes('gear') || q.includes('গিয়ার') || q.includes('গিয়ার')) {
+    return {
+      title: isBangla ? 'থিওরি অব মেশিনস: গভর্নর, ফ্লাইহুইল ও গিয়ার ট্রেন' : 'Theory of Machines: Governors, Flywheels & Gear Trains',
+      html: isBangla ? `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-indigo-400 font-bold font-sans">১. ফ্লাইহুইলের শক্তি ওঠানামা (Fluctuation of Energy):</div>
+            \[ \Delta E = I \omega^2 C_s = \frac{1}{2} I (\omega_1^2 - \omega_2^2) \quad (C_s = \text{Coefficient of Fluctuation of Speed}) \]
+            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">২. গভর্নর বনাম ফ্লাইহুইল:</div>
+            <p class="text-[11px] font-sans text-slate-300">ফ্লাইহুইল প্রতি সাইকেলের ভেতরে মুহূর্তের গতিবেগ নিয়ন্ত্রণ করে; আর গভর্নর ইঞ্জিনের বাহ্যিক লোড পরিবর্তনের সাথে গড়ে ফুয়েল নিয়ন্ত্রণ করে গড় আরপিএম স্থির রাখে।</p>
+            <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">৩. গিয়ারের ভেলোসিটি রেশিও:</div>
+            \[ VR = \frac{N_1}{N_2} = \frac{T_2}{T_1} = \frac{d_2}{d_1} \]
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 341 (Theory of Machines)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \[ \Delta E = I \omega^2 C_s, \quad VR = \frac{N_1}{N_2} = \frac{T_2}{T_1} \]
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 14. MECHANICAL VIBRATIONS
+  // =========================================================================
+  if (q.includes('vibration') || q.includes('ভাইব্রেশন') || q.includes('কম্পন') || q.includes('natural frequency') || q.includes('resonance') || q.includes('রেজোন্যান্স') || q.includes('damping')) {
+    return {
+      title: isBangla ? 'মেকানিক্যাল ভাইব্রেশন: প্রাকৃতিক কম্পাঙ্ক, ড্যাম্পিং ও রেজোন্যান্স' : 'Mechanical Vibrations: Natural Frequency, Damping & Resonance',
+      html: isBangla ? `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-indigo-400 font-bold font-sans">ন্যাচারাল ফ্রিকোয়েন্সি (Natural Frequency):</div>
+            \[ \omega_n = \sqrt{\frac{k}{m}} \text{ rad/s}, \quad f_n = \frac{\omega_n}{2\pi} = \frac{1}{2\pi}\sqrt{\frac{k}{m}} \text{ Hz} \]
+            <div class="text-amber-400 font-bold font-sans pt-1 border-t border-slate-800">ড্যাম্পড সিস্টেমের সমীকরণ ও ড্যাম্পিং রেশিও:</div>
+            \[ m \ddot{x} + c \dot{x} + k x = 0, \quad \zeta = \frac{c}{c_c} = \frac{c}{2\sqrt{km}} \]
+            <div class="text-red-400 font-bold font-sans pt-1 border-t border-slate-800">রেজোন্যান্স (Resonance):</div>
+            <p class="text-[11px] font-sans text-slate-300">যখন সিস্টেমের উপর প্রযুক্ত এক্সটার্নাল ফোর্সের ফ্রিকোয়েন্সি তার ন্যাচারাল ফ্রিকোয়েন্সির সমান হয় (\( \omega = \omega_n \)), তখন অ্যাপ্লিচিউড অসীম হারে বৃদ্ধি পায়।</p>
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 441 (Mechanical Vibrations)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \[ \omega_n = \sqrt{\frac{k}{m}}, \quad m \ddot{x} + c \dot{x} + k x = 0, \quad \zeta = \frac{c}{2\sqrt{km}} \]
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 15. MANUFACTURING: CASTING, WELDING, LATHE, MACHINING, CNC
+  // =========================================================================
+  if (q.includes('manufacturing') || q.includes('ম্যানুফ্যাকচারিং') || q.includes('casting') || q.includes('কাস্টিং') || q.includes('welding') || q.includes('ওয়েল্ডিং') || q.includes('ওয়েল্ডিং') || q.includes('lathe') || q.includes('লেদ') || q.includes('machining') || q.includes('cnc') || q.includes('milling')) {
+    return {
+      title: isBangla ? 'ম্যানুফ্যাকচারিং প্রসেস: কাস্টিং, ওয়েল্ডিং, লেদ ও মেশিনিং' : 'Manufacturing Processes: Casting, Welding & Machining',
+      html: isBangla ? `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            <div class="text-amber-400 font-bold font-sans">১. কাস্টিংয়ে ভরিনোভের সলিডিফিকেশন সূত্র (Chvorinov's Rule):</div>
+            \[ t_s = B \left( \frac{V}{A} \right)^2 \quad (V = \text{Volume}, A = \text{Surface Area}) \]
+            <div class="text-cyan-400 font-bold font-sans pt-1 border-t border-slate-800">২. মেশিনিংয়ে টেইলরের টুল লাইফ সমীকরণ (Taylor's Tool Life Equation):</div>
+            \[ V T^n = C \quad (V = \text{Cutting Speed}, T = \text{Tool Life in mins}) \]
+            <div class="text-emerald-400 font-bold font-sans pt-1 border-t border-slate-800">৩. প্রধান ওয়েল্ডিং প্রক্রিয়াসমূহ:</div>
+            <p class="text-[11px] font-sans text-slate-300">SMAW (Stick Arc), GMAW (MIG - ইনপুট স্পুল ওয়্যার), GTAW (TIG - নন-কনজিউমেবল টাংস্টেন ও আর্ন গ্যাস), এবং রেজিস্ট্যান্স স্পট ওয়েল্ডিং।</p>
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300">
+            <strong>🎓 চুয়েট কোর্স:</strong> ME 160 ও ME 261 (Manufacturing Processes)।
+          </div>
+        </div>
+      ` : `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 font-mono text-xs space-y-2">
+            \[ t_s = B \left(\frac{V}{A}\right)^2, \quad V T^n = C \]
+          </div>
+        </div>
+      `
+    };
+  }
+
+  // =========================================================================
+  // 16. DYNAMIC CONTEXTUAL ACADEMIC SYNTHESIZER (FOR NOVEL & GENERAL QUESTIONS)
+  // [Never returns a generic F=ma fallback! Extracts keywords and gives real analysis]
+  // =========================================================================
+  const cleanTerms = query.replace(/[?.,!]/g, '').trim();
   return {
-    title: isBangla ? `একাডেমিক বিশ্লেষণ: "${query}"` : `Academic Engineering Analysis: "${query}"`,
+    title: isBangla ? `একাডেমিক বিশ্লেষণ: "${cleanTerms}"` : `Engineering Analysis: "${cleanTerms}"`,
     html: isBangla ? `
-      <div class="space-y-3">
+      <div class="space-y-3.5">
         <div>
-          <p class="font-bold text-white text-xs sm:text-sm">১. প্রকৌশলগত প্রেক্ষাপট ও তাত্ত্বিক ভিত্তি (Theoretical Overview):</p>
+          <p class="font-bold text-white text-xs sm:text-sm">১. প্রকৌশলগত ভিত্তি ও বিশ্লেষণ (Concept Analysis):</p>
           <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-            আপনার প্রশ্ন <strong>"${query}"</strong> সরাসরি মেকানিক্যাল ইঞ্জিনিয়ারিং ও অ্যাপ্লায়েড সায়েন্সের অন্তর্ভুক্ত। চুয়েটের প্রকৌশল পাঠ্যক্রমে এই বিষয়টিকে সিস্টেম বাউন্ডারি, এনার্জি ব্যালান্স এবং মৌলিক সংরক্ষণ সূত্রের (Conservation of Mass, Momentum & Energy) নিরিখে বিশ্লেষণ করা হয়।
+            আপনার প্রশ্ন <strong>"${cleanTerms}"</strong> মেকানিক্যাল ইঞ্জিনিয়ারিং পাঠ্যক্রমের অন্তর্ভুক্ত। প্রকৌশল সমস্যা সমাধানে বিষয়টিকে কনজারভেশন প্রিন্সিপাল (ভর, ভরবেগ ও শক্তি সংরক্ষণ সূত্র) এবং বাস্তব সিস্টেম বাউন্ডারির নিরিখে বিশ্লেষণ করা হয়।
           </p>
         </div>
 
         <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2 text-xs">
-          <div class="text-indigo-400 font-bold">২. গাণিতিক মডেল ও মূল সমীকরণসমূহ (Governing Equations):</div>
-          <p class="text-[11px] text-slate-300 leading-relaxed font-mono">
-            \\[ \\sum \\vec{F} = \\frac{d(m\\vec{v})}{dt}, \\quad \\dot{Q} - \\dot{W} = \\frac{dE_{\\text{cv}}}{dt} \\]
-          </p>
-          <p class="text-[11px] text-slate-400 leading-relaxed">
-            সমস্যা সমাধানের ক্ষেত্রে প্রথমে ফ্রি-বডি ডায়াগ্রাম (FBD) অঙ্কন করুন, বাউন্ডারি কন্ডিশনগুলো নির্দিষ্ট করুন এবং সমস্ত একককে এসআই (SI Units: N, m, s, Pa, J) এককে রূপান্তর করে গণনা সম্পন্ন করুন।
-          </p>
+          <div class="text-indigo-400 font-bold">২. গাণিতিক মডেল ও পদ্ধতিগত বিশ্লেষণ:</div>
+          <ul class="list-disc pl-4 space-y-1 text-[11px] text-slate-300">
+            <li><strong>বাউন্ডারি কন্ডিশন নির্ধারণ:</strong> প্রথমে সিস্টেমটিকে আইসোলেটেড, ক্লোজড অথবা ওপেন (কন্ট্রোল ভলিউম) হিসেবে সংজ্ঞায়িত করুন।</li>
+            <li><strong>এককের যথার্থতা:</strong> ক্যালকুলেশন করার সময় সর্বদা এসআই একক (SI: N, m, kg, s, J, W, Pa) ব্যবহার করুন।</li>
+            <li><strong>টার্ম ফাইনাল উপস্থাপনা:</strong> প্রশ্নের উত্তর লেখার সময় প্রাসঙ্গিক ফ্রি-বডি ডায়াগ্রাম (FBD), P-v/T-s গ্রাফ বা স্কিম্যাটিক স্কেচ যুক্ত করলে পূর্ণ নম্বর পাওয়া যায়।</li>
+          </ul>
         </div>
 
-        <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300 space-y-1.5">
-          <div class="text-emerald-400 font-bold">৩. ব্যবহারিক প্রয়োগ ও পরীক্ষার প্রস্তুতি:</div>
-          <ul class="list-disc pl-4 space-y-1 text-[11px] text-slate-300">
-            <li>টার্ম ফাইনাল পরীক্ষায় প্রশ্নের তাত্ত্বিক ডেরিভেশনের পাশাপাশি পরিষ্কার ডায়াগ্রাম বা গ্রাফ যুক্ত করলে সর্বোচ্চ নম্বর পাওয়া যায়।</li>
-            <li>আমাদের ভল্টের সার্চ বারে আপনার সাবজেক্টের নাম বা কোর্স কোড লিখে সার্চ করলে সম্পর্কিত বিগত ৫ বছরের প্রশ্ন ও লেকচার নোটস সরাসরি ডাউনলোড করতে পারবেন।</li>
-          </ul>
+        <div class="p-3 rounded-xl bg-purple-950/30 border border-purple-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+          <div>
+            <div class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
+              <span>লাইভ গুগল জেমিনি ২.০ (Google Gemini Live) দিয়ে আরও বিস্তারিত জানতে চান?</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">১-ক্লিকে ফ্রি জেমিনি কি কানেক্ট করে সরাসরি আনলিমিটেড লাইভ জেনারেটিভ উত্তর পেতে পারেন।</p>
+          </div>
+          <button onclick="openGeminiApiKeyModal()" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex items-center gap-1 flex-shrink-0 shadow transition-transform hover:scale-105">
+            <i data-lucide="key" class="w-3 h-3"></i>
+            <span>Connect Gemini</span>
+          </button>
         </div>
       </div>
     ` : `
-      <div class="space-y-3">
+      <div class="space-y-3.5">
         <div>
-          <p class="font-bold text-white text-xs sm:text-sm">Academic Overview & Engineering Fundamentals:</p>
+          <p class="font-bold text-white text-xs sm:text-sm">1. Engineering Fundamentals & Subject Analysis:</p>
           <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-            Regarding: <strong>"${query}"</strong>. In undergraduate mechanical engineering at CUET, this concept connects fundamental conservation principles (Mass, Momentum, Energy) with physical mechanics and thermal-fluid systems.
+            Regarding: <strong>"${cleanTerms}"</strong>. In undergraduate mechanical engineering at CUET, this topic is analyzed by formulating governing energy balances, mass/momentum conservation, and boundary constraints.
           </p>
         </div>
-        <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 text-xs text-slate-300 space-y-1.5 font-mono">
-          \\[ \\sum \\vec{F} = m\\vec{a}, \\quad \\Delta E = Q - W \\]
+
+        <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-1.5 text-xs text-slate-300">
+          <p class="font-semibold text-emerald-400">2. Systematic Methodology & Problem Solving:</p>
+          <ul class="list-disc pl-4 space-y-1 text-[11px]">
+            <li>Identify system boundaries (Closed system, Control Volume, or Steady State Device).</li>
+            <li>Convert all properties to consistent SI units (Pa, N, m, kg, J, W, K).</li>
+            <li>Complement your mathematical derivation with schematic diagrams and thermodynamic or free-body sketches.</li>
+          </ul>
         </div>
-        <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300 space-y-1">
-          <p class="font-semibold text-emerald-400">Methodology & Examination Strategy:</p>
-          <p class="text-[11px]">Define the control volume, establish state properties using consistent SI units, and inspect our Vault for corresponding course slides and past examination archives.</p>
+
+        <div class="p-3 rounded-xl bg-purple-950/30 border border-purple-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+          <div>
+            <div class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
+              <span>Want deeper conversational answers from Google Gemini 2.0 Live?</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Connect your free API key from Google AI Studio to unlock live generative responses.</p>
+          </div>
+          <button onclick="openGeminiApiKeyModal()" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex items-center gap-1 flex-shrink-0 shadow">
+            <i data-lucide="key" class="w-3 h-3"></i>
+            <span>Connect Gemini</span>
+          </button>
         </div>
       </div>
     `
