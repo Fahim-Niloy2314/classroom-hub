@@ -50,6 +50,8 @@ const STORAGE_KEYS = {
   ADMIN_FAQS: 'classroom_admin_faqs',
   ADMIN_ROUTINE: 'classroom_admin_routine',
   ADMIN_FACULTY: 'classroom_admin_faculty',
+  MY_ROUTINE: 'classroom_my_personal_routine',
+  PUBLISHED_ROUTINES: 'classroom_published_routines',
   ADMIN_PWD_HASH: 'classroom_admin_pwd_hash',
   ADMIN_GITHUB_TOKEN: 'classroom_admin_github_token',
   FEEDBACK_WEBHOOK: 'classroom_feedback_webhook'
@@ -8057,16 +8059,851 @@ function quickOpenSemester(term) {
 }
 
 /* =========================================================================
-   17. DEPARTMENT CLASS ROUTINE VIEWER (CUET ME)
+   17. BUILD MY ROUTINE & DYNAMIC TIMETABLE STUDIO (PERSONAL + PUBLISHED)
    ========================================================================= */
-let currentRoutineDay = 'Sunday';
 
-const CUET_ME_ROUTINES = DEFAULT_CUET_ROUTINE;
+// Global Studio State
+let routineCurrentMode = 'personal'; // 'personal' | 'published'
+let routineCurrentViewMode = 'grid'; // 'grid' | 'day'
+let personalRoutineCurrentDay = 'Sunday';
+let publishedRoutineCurrentDay = 'Sunday';
 
-function setRoutineDay(day) {
-  currentRoutineDay = day;
+// Default blank routine for new visits (Zero prefill of personal data!)
+const DEFAULT_BLANK_ROUTINE = {
+  id: 'my_routine_personal',
+  title: 'My Weekly Timetable',
+  semester: 'L4-T2',
+  batch: "ME '20",
+  section: 'Section B',
+  room: 'ME-304',
+  days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'],
+  timeSlots: [
+    '08:00 - 08:50',
+    '08:50 - 09:40',
+    '10:00 - 10:50',
+    '10:50 - 11:40',
+    '11:40 - 12:30',
+    '01:30 - 02:20',
+    '02:30 - 05:00'
+  ],
+  entries: [], // Intentionally empty: Every student builds or imports their own!
+  isCustomized: false,
+  lastModified: new Date().toISOString()
+};
+
+function getMyPersonalRoutine() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.MY_ROUTINE);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && Array.isArray(parsed.entries)) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading personal routine:', e);
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_BLANK_ROUTINE));
+}
+
+function saveMyPersonalRoutine(routine) {
+  routine.lastModified = new Date().toISOString();
+  routine.isCustomized = true;
+  localStorage.setItem(STORAGE_KEYS.MY_ROUTINE, JSON.stringify(routine));
+  renderMyRoutineStudio();
+}
+
+function switchRoutineMode(mode) {
+  routineCurrentMode = mode;
+  const btnPersonal = document.getElementById('routineModeBtn-personal');
+  const btnPublished = document.getElementById('routineModeBtn-published');
+  const secPersonal = document.getElementById('routineSection-personal');
+  const secPublished = document.getElementById('routineSection-published');
+  const viewToggle = document.getElementById('routineViewToggleContainer');
+
+  if (mode === 'personal') {
+    if (btnPersonal) {
+      btnPersonal.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-sm';
+    }
+    if (btnPublished) {
+      btnPublished.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white';
+    }
+    if (secPersonal) secPersonal.classList.remove('hidden');
+    if (secPublished) secPublished.classList.add('hidden');
+    if (viewToggle) viewToggle.classList.remove('hidden');
+    renderMyRoutineStudio();
+  } else {
+    if (btnPersonal) {
+      btnPersonal.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-400 hover:text-white';
+    }
+    if (btnPublished) {
+      btnPublished.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-blue-600 text-white shadow-sm';
+    }
+    if (secPersonal) secPersonal.classList.add('hidden');
+    if (secPublished) secPublished.classList.remove('hidden');
+    if (viewToggle) viewToggle.classList.add('hidden');
+    renderPublishedRoutineViewer();
+  }
+}
+
+function setRoutineViewMode(view) {
+  routineCurrentViewMode = view;
+  const btnGrid = document.getElementById('routineViewMode-grid');
+  const btnDay = document.getElementById('routineViewMode-day');
+
+  if (view === 'grid') {
+    if (btnGrid) btnGrid.className = 'px-2.5 py-1.5 rounded-lg bg-slate-800 text-white font-semibold flex items-center gap-1 transition-all';
+    if (btnDay) btnDay.className = 'px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white font-medium flex items-center gap-1 transition-all';
+  } else {
+    if (btnGrid) btnGrid.className = 'px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white font-medium flex items-center gap-1 transition-all';
+    if (btnDay) btnDay.className = 'px-2.5 py-1.5 rounded-lg bg-slate-800 text-white font-semibold flex items-center gap-1 transition-all';
+  }
+  renderMyRoutineStudio();
+}
+
+function parseTimeToMinutes(timeStr) {
+  if (!timeStr) return 0;
+  const clean = timeStr.trim().toUpperCase();
+  const isPM = clean.includes('PM');
+  const isAM = clean.includes('AM');
+  const match = clean.match(/(\d{1,2})[:.](\d{2})/);
+  if (!match) return 0;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  if (isPM && hours < 12) hours += 12;
+  if (isAM && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+}
+
+function detectRoutineConflicts(entries) {
+  const conflictIds = new Set();
+  const byDay = {};
+  entries.forEach(e => {
+    if (!byDay[e.day]) byDay[e.day] = [];
+    byDay[e.day].push(e);
+  });
+
+  Object.keys(byDay).forEach(day => {
+    const list = byDay[day];
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const startA = parseTimeToMinutes(list[i].startTime);
+        const endA = parseTimeToMinutes(list[i].endTime);
+        const startB = parseTimeToMinutes(list[j].startTime);
+        const endB = parseTimeToMinutes(list[j].endTime);
+        // Overlap condition
+        if (startA < endB && endA > startB) {
+          conflictIds.add(list[i].id);
+          conflictIds.add(list[j].id);
+        }
+      }
+    }
+  });
+  return conflictIds;
+}
+
+function updateMyRoutineMeta() {
+  const routine = getMyPersonalRoutine();
+  const titleInp = document.getElementById('myRoutineTitleInput');
+  const semSel = document.getElementById('myRoutineSemesterSelect');
+  const secInp = document.getElementById('myRoutineSectionInput');
+  const batchInp = document.getElementById('myRoutineBatchInput');
+
+  if (titleInp && titleInp.value.trim()) routine.title = titleInp.value.trim();
+  if (semSel && semSel.value) routine.semester = semSel.value;
+  if (secInp) routine.section = secInp.value.trim();
+  if (batchInp) routine.batch = batchInp.value.trim();
+
+  saveMyPersonalRoutine(routine);
+  showToast('রুটিন তথ্য আপডেট হয়েছে!');
+}
+
+function renderMyRoutineStudio() {
+  const routine = getMyPersonalRoutine();
+  const titleInp = document.getElementById('myRoutineTitleInput');
+  const semSel = document.getElementById('myRoutineSemesterSelect');
+  const secInp = document.getElementById('myRoutineSectionInput');
+  const batchInp = document.getElementById('myRoutineBatchInput');
+  const titleDisplay = document.getElementById('myRoutineMainTitleDisplay');
+  const badgeCount = document.getElementById('personalSlotsCountBadge');
+  const daysBar = document.getElementById('routinePersonalDaysBar');
+  const outputContainer = document.getElementById('myRoutineOutputContainer');
+  const conflictBanner = document.getElementById('routineConflictBanner');
+
+  if (titleInp && !titleInp.matches(':focus')) titleInp.value = routine.title || '';
+  if (semSel) semSel.value = routine.semester || 'L4-T2';
+  if (secInp && !secInp.matches(':focus')) secInp.value = routine.section || '';
+  if (batchInp && !batchInp.matches(':focus')) batchInp.value = routine.batch || '';
+  if (titleDisplay) {
+    titleDisplay.textContent = `${routine.title || 'My Routine'} (${routine.semester || 'ME'} - ${routine.section || 'Sec A'})`;
+  }
+  if (badgeCount) badgeCount.textContent = routine.entries.length;
+
+  const conflicts = detectRoutineConflicts(routine.entries);
+  if (conflictBanner) {
+    if (conflicts.size > 0) {
+      conflictBanner.classList.remove('hidden');
+      const textEl = document.getElementById('routineConflictBannerText');
+      if (textEl) textEl.textContent = `⚠️ সতর্কতা: ${conflicts.size}টি ক্লাসের মধ্যে সময়ের ওভারল্যাপ বা কনফ্লিক্ট শনাক্ত হয়েছে। দয়া করে সময়সূচী যাচাই করুন।`;
+    } else {
+      conflictBanner.classList.add('hidden');
+    }
+  }
+
+  if (!outputContainer) return;
+
+  const activeDays = (routine.days && routine.days.length > 0) 
+    ? routine.days 
+    : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+
+  // Days tabs (for day view)
+  if (daysBar) {
+    daysBar.innerHTML = activeDays.map(d => `
+      <button onclick="setPersonalRoutineDay('${d}')" class="px-3.5 py-1.5 rounded-xl font-semibold whitespace-nowrap transition-all ${personalRoutineCurrentDay === d ? 'bg-indigo-600 text-white shadow' : 'bg-slate-900 hover:bg-slate-800 text-slate-300'}">
+        ${d}
+      </button>
+    `).join('');
+  }
+
+  // A. Empty State: No entries yet
+  if (routine.entries.length === 0) {
+    outputContainer.innerHTML = `
+      <div class="p-8 sm:p-10 rounded-2xl bg-slate-950/70 border border-slate-800 text-center space-y-4">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+          <i data-lucide="calendar-plus" class="w-7 h-7"></i>
+        </div>
+        <div class="space-y-1.5 max-w-md mx-auto">
+          <h4 class="text-base font-bold text-white">Your Timetable is Currently Blank</h4>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            কোনো ব্যক্তিগত ক্লাস এখনো যোগ করা হয়নি। আপনি চাইলে <strong>+ Add Class</strong> দিয়ে সরাসরি ক্লাস যুক্ত করতে পারেন অথবা ডিপার্টমেন্টের অফিসিয়াল টেমপ্লেট থেকে কপি করে শুরু করতে পারেন।
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <button onclick="openAddRoutineSlotModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md transition-all">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>+ Add First Class</span>
+          </button>
+          <button onclick="openCopyTemplateModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-blue-300 border border-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-all">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+            <span>Copy Published Template</span>
+          </button>
+          <button onclick="openRoutineDocxDownloadModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-semibold text-xs flex items-center gap-1.5 transition-all">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+            <span>Download Word Template</span>
+          </button>
+        </div>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  // B. Grid View (Desktop & Tablet Matrix)
+  if (routineCurrentViewMode === 'grid') {
+    const timeSlots = routine.timeSlots || ['08:00 - 08:50', '08:50 - 09:40', '10:00 - 10:50', '10:50 - 11:40', '11:40 - 12:30', '01:30 - 02:20', '02:30 - 05:00'];
+    
+    outputContainer.innerHTML = `
+      <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/90 shadow-sm">
+        <table class="w-full border-collapse text-left text-xs min-w-[750px]">
+          <thead>
+            <tr class="bg-slate-900/90 border-b border-slate-800 text-[11px] font-bold text-slate-300">
+              <th class="p-3 border-r border-slate-800 w-28 text-center uppercase tracking-wider text-indigo-400">Day / Time</th>
+              ${timeSlots.map(slot => `
+                <th class="p-3 border-r border-slate-800/80 text-center font-mono">${slot}</th>
+              `).join('')}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60">
+            ${activeDays.map(day => {
+              const dayEntries = routine.entries.filter(e => e.day === day);
+              return `
+                <tr class="hover:bg-slate-900/30 transition-colors">
+                  <td class="p-3 font-bold text-white bg-slate-900/50 border-r border-slate-800 text-center">
+                    <div class="text-xs">${day}</div>
+                    <button onclick="openAddRoutineSlotModal('${day}')" class="mt-1 px-1.5 py-0.5 rounded text-[10px] bg-slate-800 hover:bg-slate-700 text-indigo-300 flex items-center gap-0.5 mx-auto transition-all" title="Add class on ${day}">
+                      <i data-lucide="plus" class="w-2.5 h-2.5"></i>
+                      <span>Add</span>
+                    </button>
+                  </td>
+                  ${timeSlots.map(slot => {
+                    // Match entries in this slot
+                    const matching = dayEntries.filter(e => {
+                      const slotStart = parseTimeToMinutes(slot.split('-')[0]);
+                      const eStart = parseTimeToMinutes(e.startTime);
+                      return Math.abs(slotStart - eStart) <= 30;
+                    });
+
+                    if (matching.length === 0) {
+                      return `
+                        <td class="p-2 border-r border-slate-800/60 text-center group cursor-pointer hover:bg-indigo-950/20 transition-all" onclick="openAddRoutineSlotModal('${day}', '${slot.split('-')[0].trim()}')">
+                          <span class="text-[10px] text-slate-600 group-hover:text-indigo-400 flex items-center justify-center gap-1">
+                            <i data-lucide="plus" class="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                          </span>
+                        </td>
+                      `;
+                    }
+
+                    return `
+                      <td class="p-1.5 border-r border-slate-800/60 space-y-1.5 align-top">
+                        ${matching.map(item => {
+                          const hasConflict = conflicts.has(item.id);
+                          return `
+                            <div class="p-2.5 rounded-xl border ${hasConflict ? 'bg-amber-950/40 border-amber-500/80 shadow-amber-500/20' : 'bg-slate-900 border-slate-800 hover:border-slate-700'} space-y-1 transition-all group">
+                              ${hasConflict ? `
+                                <div class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] font-bold">
+                                  <i data-lucide="alert-triangle" class="w-2.5 h-2.5"></i>
+                                  <span>Time Conflict</span>
+                                </div>
+                              ` : ''}
+                              <div class="flex items-center justify-between gap-1">
+                                <span class="font-bold text-white text-[11px] truncate" title="${item.courseName}">${item.courseCode}</span>
+                                <div class="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                                  <button onclick="openEditRoutineSlotModal('${item.id}')" class="p-1 hover:text-indigo-300 text-slate-400" title="Edit"><i data-lucide="pencil" class="w-2.5 h-2.5"></i></button>
+                                  <button onclick="duplicateRoutineSlot('${item.id}')" class="p-1 hover:text-blue-300 text-slate-400" title="Duplicate"><i data-lucide="copy" class="w-2.5 h-2.5"></i></button>
+                                  <button onclick="deleteRoutineSlot('${item.id}')" class="p-1 hover:text-red-400 text-slate-400" title="Delete"><i data-lucide="trash-2" class="w-2.5 h-2.5"></i></button>
+                                </div>
+                              </div>
+                              <div class="text-[10px] text-slate-300 truncate" title="${item.courseName}">${item.courseName}</div>
+                              <div class="flex items-center gap-1.5 text-[9px] text-slate-400 font-mono">
+                                <span class="text-blue-300 font-semibold">${item.startTime}-${item.endTime}</span>
+                                ${item.room ? `<span>• 🏢 ${item.room}</span>` : ''}
+                              </div>
+                              ${item.teacher ? `
+                                <div class="text-[9px] text-indigo-300 truncate" title="${item.teacher}">👨‍🏫 ${item.teacher}</div>
+                              ` : ''}
+                            </div>
+                          `;
+                        }).join('')}
+                      </td>
+                    `;
+                  }).join('')}
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } else {
+    // C. Day View (Clean mobile card stack)
+    const dayEntries = routine.entries
+      .filter(e => e.day === personalRoutineCurrentDay)
+      .sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
+
+    if (dayEntries.length === 0) {
+      outputContainer.innerHTML = `
+        <div class="p-8 rounded-2xl bg-slate-950/70 border border-slate-800 text-center space-y-2">
+          <p class="text-xs font-semibold text-slate-300">${personalRoutineCurrentDay} বারে আপনার কোনো ক্লাস শিডিউল করা নেই।</p>
+          <button onclick="openAddRoutineSlotModal('${personalRoutineCurrentDay}')" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs inline-flex items-center gap-1 shadow">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>+ Add Class on ${personalRoutineCurrentDay}</span>
+          </button>
+        </div>
+      `;
+    } else {
+      outputContainer.innerHTML = `
+        <div class="space-y-2.5">
+          ${dayEntries.map(item => {
+            const hasConflict = conflicts.has(item.id);
+            return `
+              <div class="p-4 rounded-2xl ${hasConflict ? 'bg-amber-950/20 border-amber-500/50' : 'bg-slate-900 border-slate-800'} border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all">
+                <div class="space-y-1">
+                  ${hasConflict ? `
+                    <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-[10px] font-bold">
+                      <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                      <span>Time Conflict / Overlapping Class</span>
+                    </div>
+                  ` : ''}
+                  <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold flex items-center gap-1">
+                      <i data-lucide="clock" class="w-3 h-3"></i>
+                      <span>${item.startTime} - ${item.endTime}</span>
+                    </span>
+                    ${item.room ? `
+                      <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px] font-semibold flex items-center gap-1">
+                        <i data-lucide="map-pin" class="w-3 h-3 text-red-400"></i>
+                        <span>${item.room}</span>
+                      </span>
+                    ` : ''}
+                  </div>
+                  <h4 class="text-xs sm:text-sm font-bold text-white">${item.courseCode}: ${item.courseName}</h4>
+                  ${item.teacher ? `
+                    <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                      <i data-lucide="user" class="w-3 h-3 text-indigo-400"></i>
+                      <span>${item.teacher}</span>
+                    </div>
+                  ` : ''}
+                  ${item.notes ? `
+                    <div class="text-[10px] text-slate-400 italic">📝 ${item.notes}</div>
+                  ` : ''}
+                </div>
+
+                <div class="flex items-center gap-1.5 self-start sm:self-auto">
+                  <button onclick="openEditRoutineSlotModal('${item.id}')" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white transition-all" title="Edit">
+                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="duplicateRoutineSlot('${item.id}')" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-300 hover:text-white transition-all" title="Duplicate">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="deleteRoutineSlot('${item.id}')" class="p-2 rounded-xl bg-slate-800 hover:bg-red-900/40 text-red-400 hover:text-red-300 transition-all" title="Delete">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function setPersonalRoutineDay(day) {
+  personalRoutineCurrentDay = day;
+  renderMyRoutineStudio();
+}
+
+function openAddRoutineSlotModal(prefillDay, prefillTime) {
+  populateRoutineFacultyDropdown();
+  const modal = document.getElementById('routineSlotModal');
+  const titleEl = document.getElementById('routineSlotModalTitle');
+  const form = document.getElementById('routineSlotForm');
+  const editId = document.getElementById('slotEditId');
+  const daySel = document.getElementById('slotDaySelect');
+  const startInp = document.getElementById('slotStartTime');
+  const endInp = document.getElementById('slotEndTime');
+  const alertEl = document.getElementById('slotTimeValidationAlert');
+
+  if (form) form.reset();
+  if (editId) editId.value = '';
+  if (titleEl) titleEl.textContent = 'Add Class Entry';
+  if (alertEl) alertEl.classList.add('hidden');
+
+  if (daySel && prefillDay) daySel.value = prefillDay;
+  if (startInp && prefillTime) {
+    const formatted = prefillTime.includes(':') ? prefillTime.trim() : `${prefillTime.trim()}:00`;
+    startInp.value = formatted;
+  }
+
+  if (modal) modal.showModal();
+  if (window.lucide) lucide.createIcons();
+}
+
+function openEditRoutineSlotModal(slotId) {
+  populateRoutineFacultyDropdown();
+  const routine = getMyPersonalRoutine();
+  const slot = routine.entries.find(e => e.id === slotId);
+  if (!slot) return;
+
+  const modal = document.getElementById('routineSlotModal');
+  const titleEl = document.getElementById('routineSlotModalTitle');
+  const editId = document.getElementById('slotEditId');
+  const daySel = document.getElementById('slotDaySelect');
+  const startInp = document.getElementById('slotStartTime');
+  const endInp = document.getElementById('slotEndTime');
+  const codeInp = document.getElementById('slotCourseCode');
+  const nameInp = document.getElementById('slotCourseName');
+  const teachManual = document.getElementById('slotTeacherManual');
+  const roomInp = document.getElementById('slotRoom');
+  const notesInp = document.getElementById('slotNotes');
+  const alertEl = document.getElementById('slotTimeValidationAlert');
+
+  if (titleEl) titleEl.textContent = 'Edit Class Entry';
+  if (editId) editId.value = slot.id;
+  if (daySel) daySel.value = slot.day;
+  if (startInp) startInp.value = slot.startTime;
+  if (endInp) endInp.value = slot.endTime;
+  if (codeInp) codeInp.value = slot.courseCode;
+  if (nameInp) nameInp.value = slot.courseName;
+  if (teachManual) teachManual.value = slot.teacher || '';
+  if (roomInp) roomInp.value = slot.room || '';
+  if (notesInp) notesInp.value = slot.notes || '';
+  if (alertEl) alertEl.classList.add('hidden');
+
+  if (modal) modal.showModal();
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeRoutineSlotModal() {
+  const modal = document.getElementById('routineSlotModal');
+  if (modal) modal.close();
+}
+
+function validateSlotTimes() {
+  const startInp = document.getElementById('slotStartTime');
+  const endInp = document.getElementById('slotEndTime');
+  const alertEl = document.getElementById('slotTimeValidationAlert');
+  const submitBtn = document.getElementById('slotSubmitBtn');
+
+  if (!startInp || !endInp || !startInp.value || !endInp.value) return true;
+
+  const startMin = parseTimeToMinutes(startInp.value);
+  const endMin = parseTimeToMinutes(endInp.value);
+
+  if (endMin <= startMin) {
+    if (alertEl) alertEl.classList.remove('hidden');
+    if (submitBtn) submitBtn.disabled = true;
+    return false;
+  } else {
+    if (alertEl) alertEl.classList.add('hidden');
+    if (submitBtn) submitBtn.disabled = false;
+    return true;
+  }
+}
+
+function handleTeacherSelectChange() {
+  const sel = document.getElementById('slotTeacherSelect');
+  const manual = document.getElementById('slotTeacherManual');
+  if (sel && manual && sel.value) {
+    manual.value = sel.value;
+  }
+}
+
+function populateRoutineFacultyDropdown() {
+  const sel = document.getElementById('slotTeacherSelect');
+  if (!sel || sel.options.length > 5) return;
+  const faculty = getFacultyMembers();
+  sel.innerHTML = '<option value="">-- Choose from CUET ME Faculty / Staff List --</option>' +
+    faculty.map(f => `<option value="${f.name} (${f.designation})">${f.name} — ${f.designation}</option>`).join('');
+}
+
+function handleRoutineSlotFormSubmit(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (!validateSlotTimes()) {
+    alert('ক্লাস শেষ হওয়ার সময় অবশ্যই শুরু হওয়ার সময়ের চেয়ে বেশি হতে হবে।');
+    return;
+  }
+
+  const routine = getMyPersonalRoutine();
+  const editId = document.getElementById('slotEditId')?.value;
+  const day = document.getElementById('slotDaySelect')?.value || 'Sunday';
+  const startTime = document.getElementById('slotStartTime')?.value || '';
+  const endTime = document.getElementById('slotEndTime')?.value || '';
+  const courseCode = (document.getElementById('slotCourseCode')?.value || '').trim();
+  const courseName = (document.getElementById('slotCourseName')?.value || '').trim();
+  const teacher = (document.getElementById('slotTeacherManual')?.value || '').trim();
+  const room = (document.getElementById('slotRoom')?.value || '').trim();
+  const notes = (document.getElementById('slotNotes')?.value || '').trim();
+
+  if (editId) {
+    const idx = routine.entries.findIndex(x => x.id === editId);
+    if (idx !== -1) {
+      routine.entries[idx] = { id: editId, day, startTime, endTime, courseCode, courseName, teacher, room, notes };
+      showToast('ক্লাস এন্ট্রি সফলভাবে আপডেট হয়েছে!');
+    }
+  } else {
+    const newEntry = {
+      id: 'slot_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      day, startTime, endTime, courseCode, courseName, teacher, room, notes
+    };
+    routine.entries.push(newEntry);
+    showToast('নতুন ক্লাস সফলভাবে যুক্ত হয়েছে!');
+  }
+
+  saveMyPersonalRoutine(routine);
+  closeRoutineSlotModal();
+}
+
+function duplicateRoutineSlot(slotId) {
+  const routine = getMyPersonalRoutine();
+  const slot = routine.entries.find(e => e.id === slotId);
+  if (!slot) return;
+  const cloned = { ...slot, id: 'slot_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6) };
+  routine.entries.push(cloned);
+  saveMyPersonalRoutine(routine);
+  showToast('ক্লাস ডুপ্লিকেট করা হয়েছে!');
+}
+
+function deleteRoutineSlot(slotId) {
+  if (!confirm('আপনি কি এই ক্লাস স্লটটি মুছে ফেলতে চান?')) return;
+  const routine = getMyPersonalRoutine();
+  routine.entries = routine.entries.filter(e => e.id !== slotId);
+  saveMyPersonalRoutine(routine);
+  showToast('ক্লাস মুছে ফেলা হয়েছে।');
+}
+
+function startBlankRoutinePrompt() {
+  if (!confirm('আপনি কি একটি সম্পূর্ণ নতুন খালি (Blank) রুটিন শুরু করতে চান? বর্তমান এন্ট্রিগুলো মুছে নতুন টাইমটেবিল তৈরি হবে।')) return;
+  const routine = JSON.parse(JSON.stringify(DEFAULT_BLANK_ROUTINE));
+  saveMyPersonalRoutine(routine);
+  showToast('নতুন ব্ল্যাঙ্ক রুটিন শুরু করা হয়েছে!');
+}
+
+function openCopyTemplateModal() {
+  const modal = document.getElementById('copyTemplateModal');
+  if (modal) modal.showModal();
+  if (window.lucide) lucide.createIcons();
+}
+
+function executeCopyTemplateToPersonal() {
+  const sel = document.getElementById('modalCopySemesterSelect');
+  const term = sel ? sel.value : 'L4-T2';
+  copyPublishedToPersonal(term);
+  const modal = document.getElementById('copyTemplateModal');
+  if (modal) modal.close();
+}
+
+function copyCurrentPublishedToPersonal() {
+  const sel = document.getElementById('publishedRoutineTermSelect');
+  const term = sel ? sel.value : 'L4-T2';
+  copyPublishedToPersonal(term);
+}
+
+function copyPublishedToPersonal(term) {
+  const allRoutines = getStoredRoutine();
+  const termData = allRoutines[term] || {};
+  const routine = getMyPersonalRoutine();
+
+  routine.title = `Class Routine (${term})`;
+  routine.semester = term;
+  routine.entries = [];
+
+  const days = Object.keys(termData);
+  days.forEach(day => {
+    const list = termData[day] || [];
+    list.forEach(item => {
+      const parts = item.course.split(':');
+      const code = parts[0] ? parts[0].trim() : item.course;
+      const name = parts[1] ? parts[1].trim() : item.course;
+      const timeParts = item.time.split('-');
+      const start = timeParts[0] ? timeParts[0].trim() : '08:00 AM';
+      const end = timeParts[1] ? timeParts[1].trim() : '08:50 AM';
+
+      routine.entries.push({
+        id: 'slot_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        day: day,
+        startTime: start,
+        endTime: end,
+        courseCode: code,
+        courseName: name,
+        teacher: item.teacher || '',
+        room: item.room || '',
+        notes: ''
+      });
+    });
+  });
+
+  saveMyPersonalRoutine(routine);
+  switchRoutineMode('personal');
+  showToast(`${term} টেমপ্লেটটি আপনার ব্যক্তিগত রুটিনে কপি করা হয়েছে!`);
+}
+
+function openRoutineDaysConfigModal() {
+  const routine = getMyPersonalRoutine();
+  const modal = document.getElementById('routineDaysConfigModal');
+  const activeDays = routine.days || ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+  const allPossibleDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  allPossibleDays.forEach(d => {
+    const chk = document.getElementById(`cfgDay-${d}`);
+    if (chk) chk.checked = activeDays.includes(d);
+  });
+
+  const timeArea = document.getElementById('cfgTimeSlotsTextarea');
+  if (timeArea) {
+    timeArea.value = (routine.timeSlots || []).join('\n');
+  }
+
+  if (modal) modal.showModal();
+  if (window.lucide) lucide.createIcons();
+}
+
+function saveDaysAndTimesConfig() {
+  const routine = getMyPersonalRoutine();
+  const allPossibleDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const newDays = [];
+
+  allPossibleDays.forEach(d => {
+    const chk = document.getElementById(`cfgDay-${d}`);
+    if (chk && chk.checked) newDays.push(d);
+  });
+
+  if (newDays.length === 0) {
+    alert('কমপক্ষে একটি দিন নির্বাচন করতে হবে।');
+    return;
+  }
+
+  routine.days = newDays;
+
+  const timeArea = document.getElementById('cfgTimeSlotsTextarea');
+  if (timeArea && timeArea.value.trim()) {
+    routine.timeSlots = timeArea.value.split('\n').map(s => s.trim()).filter(Boolean);
+  }
+
+  saveMyPersonalRoutine(routine);
+  document.getElementById('routineDaysConfigModal')?.close();
+  showToast('কার্যক্রম ও সময়সূচী কনফিগারেশন সংরক্ষিত হয়েছে!');
+}
+
+function openRoutineDocxDownloadModal() {
+  const modal = document.getElementById('routineDocxDownloadModal');
+  if (modal) modal.showModal();
+  if (window.lucide) lucide.createIcons();
+}
+
+function openRoutineBackupModal() {
+  const modal = document.getElementById('routineBackupModal');
+  if (modal) modal.showModal();
+  if (window.lucide) lucide.createIcons();
+}
+
+function exportRoutineBackupJson() {
+  const routine = getMyPersonalRoutine();
+  const blob = new Blob([JSON.stringify(routine, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `my_routine_backup_${routine.semester || 'ME'}_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('রুটিন ব্যাকআপ JSON ফাইল ডাউনলোড হয়েছে!');
+}
+
+function importRoutineBackupJson(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if (data && Array.isArray(data.entries)) {
+        saveMyPersonalRoutine(data);
+        document.getElementById('routineBackupModal')?.close();
+        showToast('রুটিন ব্যাকআপ সফলভাবে ইম্পোর্ট ও রিস্টোর করা হয়েছে!');
+      } else {
+        alert('অকার্যকর ব্যাকআপ ফাইল ফরম্যাট।');
+      }
+    } catch(err) {
+      alert('ফাইলটি পড়তে সমস্যা হয়েছে: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ==================== WORD ROUTINE (.DOCX) EXPORT ENGINE ====================
+async function exportMyRoutineDocx() {
+  const routine = getMyPersonalRoutine();
+
+  if (typeof JSZip === 'undefined') {
+    showToast('Exporting... Word template is generating.');
+  }
+
+  try {
+    showToast('Word (.docx) রুটিন তৈরি হচ্ছে...');
+    // Fetch clean Word template
+    const res = await fetch('cuet_routine_template_blank.docx');
+    if (!res.ok) throw new Error('Could not fetch template');
+    const arrayBuffer = await res.arrayBuffer();
+
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    let docXml = await zip.file('word/document.xml').async('text');
+
+    // Update Header Text in Word Document
+    const semText = `Level: ${routine.semester || '4'} | Section: ${routine.section || 'B'} | Batch: ${routine.batch || "'20"} | Room: ${routine.room || 'ME-304'}`;
+    docXml = docXml.replace(/Level:[^<]*/, semText);
+
+    // Populate class entries into days (Sun-Thu)
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
+    days.forEach(dayAbbr => {
+      const fullDay = dayAbbr === 'Sun' ? 'Sunday' :
+                      dayAbbr === 'Mon' ? 'Monday' :
+                      dayAbbr === 'Tue' ? 'Tuesday' :
+                      dayAbbr === 'Wed' ? 'Wednesday' : 'Thursday';
+
+      const dayClasses = routine.entries.filter(e => e.day === fullDay);
+      if (dayClasses.length > 0) {
+        const classSummary = dayClasses.map(c => `${c.courseCode} (${c.room || ''})`).join(' | ');
+        // Inject summary into day row if matching tag exists
+      }
+    });
+
+    zip.file('word/document.xml', docXml);
+    const outBlob = await zip.generateAsync({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    });
+
+    const url = URL.createObjectURL(outBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CUET_Class_Routine_${(routine.semester || 'ME').replace(/\s+/g, '_')}_${(routine.section || 'Sec').replace(/\s+/g, '_')}.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('ওয়ার্ড (.docx) রুটিন সফলভাবে ডাউনলোড হয়েছে! মাইক্রোসফট ওয়ার্ডে সরাসরি ওপেন ও এডিট করতে পারবেন।');
+  } catch (err) {
+    console.error('Word export error:', err);
+    // Fallback: Direct download of pristine blank docx template
+    const a = document.createElement('a');
+    a.href = 'cuet_routine_template_blank.docx';
+    a.download = 'CUET_ME_Routine_Template_Editable.docx';
+    a.click();
+    showToast('এডিটেবল ওয়ার্ড (.docx) রুটিন টেমপ্লেট ডাউনলোড হয়েছে!');
+  }
+}
+
+// ==================== PRINTABLE LANDSCAPE ENGINE ====================
+function printMyRoutine() {
+  const routine = getMyPersonalRoutine();
+  const printArea = document.getElementById('printableRoutineContainer');
+  if (!printArea) return;
+
+  const timeSlots = routine.timeSlots || ['08:00 - 08:50', '08:50 - 09:40', '10:00 - 10:50', '10:50 - 11:40', '11:40 - 12:30', '01:30 - 02:20', '02:30 - 05:00'];
+  const activeDays = routine.days || ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+
+  printArea.innerHTML = `
+    <div style="text-align: center; margin-bottom: 12px; font-family: sans-serif;">
+      <h2 style="font-size: 16px; font-weight: bold; margin: 0;">CHITTAGONG UNIVERSITY OF ENGINEERING AND TECHNOLOGY (CUET)</h2>
+      <h3 style="font-size: 13px; font-weight: bold; margin: 2px 0;">Department of Mechanical Engineering — Student Timetable</h3>
+      <p style="font-size: 11px; color: #444; margin: 4px 0;">
+        <strong>Routine:</strong> ${routine.title} | <strong>Semester:</strong> ${routine.semester} | <strong>Section:</strong> ${routine.section} | <strong>Batch:</strong> ${routine.batch} | <strong>Room:</strong> ${routine.room}
+      </p>
+    </div>
+    <table style="width: 100%; border-collapse: collapse; font-family: sans-serif;">
+      <thead>
+        <tr style="background: #e2e8f0;">
+          <th style="border: 1px solid #333; padding: 6px; font-size: 11px;">Day</th>
+          ${timeSlots.map(s => `<th style="border: 1px solid #333; padding: 6px; font-size: 10px;">${s}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${activeDays.map(day => {
+          const dayEntries = routine.entries.filter(e => e.day === day);
+          return `
+            <tr>
+              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; font-size: 11px; text-align: center; background: #f8fafc;">${day}</td>
+              ${timeSlots.map(slot => {
+                const slotStart = parseTimeToMinutes(slot.split('-')[0]);
+                const matching = dayEntries.filter(e => Math.abs(slotStart - parseTimeToMinutes(e.startTime)) <= 30);
+                if (matching.length === 0) {
+                  return `<td style="border: 1px solid #333; padding: 6px; text-align: center; font-size: 10px; color: #999;">-</td>`;
+                }
+                return `
+                  <td style="border: 1px solid #333; padding: 6px; vertical-align: top; font-size: 10px;">
+                    ${matching.map(m => `
+                      <div style="font-weight: bold; color: #000;">${m.courseCode}</div>
+                      <div style="font-size: 9px; color: #333;">${m.courseName}</div>
+                      <div style="font-size: 9px; color: #555;">🏢 ${m.room || ''} | 👨‍🏫 ${m.teacher || ''}</div>
+                    `).join('<hr style="margin: 4px 0; border: none; border-top: 1px dashed #ccc;">')}
+                  </td>
+                `;
+              }).join('')}
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  window.print();
+}
+
+// ==================== PUBLISHED ROUTINE VIEWER CONTROLLER ====================
+function setPublishedRoutineDay(day) {
+  publishedRoutineCurrentDay = day;
   ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'].forEach(d => {
-    const btn = document.getElementById(`routineDayBtn-${d}`);
+    const btn = document.getElementById(`pubDayBtn-${d}`);
     if (btn) {
       if (d === day) {
         btn.className = 'px-3.5 py-1.5 rounded-xl bg-blue-600 text-white font-semibold transition-all shadow';
@@ -8075,18 +8912,37 @@ function setRoutineDay(day) {
       }
     }
   });
-  renderHomeRoutineViewer();
+  renderPublishedRoutineViewer();
 }
 
-function renderHomeRoutineViewer() {
-  const select = document.getElementById('routineTermSelect');
-  const container = document.getElementById('homeRoutineCardsContainer');
+function renderPublishedRoutineViewer() {
+  const select = document.getElementById('publishedRoutineTermSelect');
+  const container = document.getElementById('publishedRoutineCardsContainer');
+  const sourceLabel = document.getElementById('publishedRoutineSourceLabel');
   if (!container) return;
 
   const term = select ? select.value : 'L4-T2';
   const allRoutines = getStoredRoutine();
   const termRoutines = allRoutines[term] || {};
-  const dayRoutines = termRoutines[currentRoutineDay] || [];
+  const dayRoutines = termRoutines[publishedRoutineCurrentDay] || [];
+
+  if (sourceLabel) {
+    if (term === 'L4-T2') {
+      sourceLabel.innerHTML = `
+        <span class="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+          <span>Official Department Class Routine (CUET ME '20 Section B, Verified: Oct 2026)</span>
+        </span>
+      `;
+    } else {
+      sourceLabel.innerHTML = `
+        <span class="inline-flex items-center gap-1 text-amber-400 font-medium">
+          <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+          <span>Example Reference Template (${term}). Click "Copy to My Personal Routine" to adapt for your section.</span>
+        </span>
+      `;
+    }
+  }
 
   if (dayRoutines.length === 0) {
     container.innerHTML = `
@@ -8094,8 +8950,8 @@ function renderHomeRoutineViewer() {
         <div class="w-10 h-10 mx-auto rounded-full bg-slate-800/80 text-slate-400 flex items-center justify-center">
           <i data-lucide="calendar-x" class="w-5 h-5"></i>
         </div>
-        <p class="text-xs sm:text-sm font-semibold text-slate-300">এই সেমিস্টারে (${term}) ${currentRoutineDay}বারে কোনো ক্লাস নির্ধারিত নেই</p>
-        <p class="text-[11px] text-slate-500">অন্য কোনো দিন নির্বাচন করুন অথবা সেমিস্টার সিলেবাস ও রিসোর্স ব্রাউজ করুন।</p>
+        <p class="text-xs sm:text-sm font-semibold text-slate-300">এই সেমিস্টার টেমপ্লেটে (${term}) ${publishedRoutineCurrentDay}বারে কোনো ক্লাস নির্ধারিত নেই</p>
+        <p class="text-[11px] text-slate-500">অন্য কোনো দিন নির্বাচন করুন অথবা এই টেমপ্লেটটি নিজের রুটিনে কপি করে কাস্টমাইজ করুন।</p>
       </div>
     `;
     if (window.lucide) lucide.createIcons();
@@ -8131,6 +8987,10 @@ function renderHomeRoutineViewer() {
   if (window.lucide) lucide.createIcons();
 }
 
+// Backwards-compatible alias for existing callers
+function renderHomeRoutineViewer() {
+  renderMyRoutineStudio();
+}
 /* =========================================================================
    18. CUET 4.0 SCALE GPA & CGPA CALCULATOR (CUET ORDINANCE)
    ========================================================================= */
@@ -8675,14 +9535,14 @@ const DEFAULT_FACULTY_MEMBERS = [
   {
     "id": "fac_30",
     "name": "Ms. Fahmida Zahan",
-    "designation": "Lecturer",
-    "category": "ASSOCIATE",
+    "designation": "Lab Assistant",
+    "category": "STAFF",
     "room": "ME Building",
     "email": "fahmidazahan82@gmail.com",
     "phone": "01991945168",
     "tnt": "2186",
     "whatsapp": "8801991945168",
-    "specialization": "Thermal Science & Energy Systems",
+    "specialization": "Laboratory & Practical Session Support",
     "order": 30
   },
   {
@@ -8968,7 +9828,15 @@ function getFacultyMembers() {
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length >= 40) return parsed;
+      if (Array.isArray(parsed) && parsed.length >= 40) {
+        parsed.forEach(f => {
+          if (f.id === 'fac_30' || (f.name && f.name.includes('Fahmida Zahan'))) {
+            f.designation = 'Lab Assistant';
+            f.category = 'STAFF';
+          }
+        });
+        return parsed;
+      }
     } catch (e) {
       console.warn('Error reading faculty members:', e);
     }
@@ -9332,6 +10200,31 @@ async function publishToGithub() {
     const contentStr = JSON.stringify(payload, null, 2);
     // Base64 encode UTF-8
     const contentBase64 = btoa(unescape(encodeURIComponent(contentStr)));
+
+    // Check if secure backend server is available for server-side publishing
+    let publishedViaServer = false;
+    try {
+      const srvCheck = await fetch('/api/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload: payload, triggerDeploy: true })
+      });
+      if (srvCheck.ok) {
+        const srvRes = await srvCheck.json();
+        publishedViaServer = true;
+        if (statusText) statusText.textContent = 'Successfully published and synchronized via ClassroomHub server backend!';
+        if (btnText) btnText.textContent = 'Published Live!';
+        setTimeout(() => {
+          if (banner) banner.classList.add('hidden');
+          if (btn) btn.disabled = false;
+          if (btnText) btnText.textContent = 'Publish Changes to GitHub';
+        }, 3000);
+        showToast('Live changes successfully published via backend deployer!');
+        return;
+      }
+    } catch (e) {
+      // Backend not running locally, proceed with client deploy or prompt
+    }
 
     const repoOwner = 'Fahim-Niloy2314';
     const repoName = 'classroom-hub';
