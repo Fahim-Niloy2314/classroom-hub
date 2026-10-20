@@ -7886,14 +7886,15 @@ function renderMyRoutineStudio() {
   const conflictBanner = document.getElementById('routineConflictBanner');
 
   if (titleInp && !titleInp.matches(':focus')) titleInp.value = routine.title || '';
-  if (semSel) semSel.value = routine.semester || 'L4-T2';
+  if (semSel) semSel.value = routine.semester || '';
   if (secInp && !secInp.matches(':focus')) secInp.value = routine.section || '';
   if (batchInp && !batchInp.matches(':focus')) batchInp.value = routine.batch || '';
   if (titleDisplay) {
-    titleDisplay.textContent = `${routine.title || 'My Routine'} (${HubCore.html(routine.semester || 'ME')} - ${routine.section || 'Sec A'})`;
+    titleDisplay.textContent = [routine.title || 'My Routine', routine.semester, routine.section].filter(Boolean).join(' · ');
   }
   if (badgeCount) badgeCount.textContent = routine.entries.length;
 
+  Hub.showRoutineWarnings(routine);
   const conflicts = detectRoutineConflicts(routine.entries);
   if (conflictBanner) {
     if (conflicts.size > 0) {
@@ -7930,7 +7931,7 @@ function renderMyRoutineStudio() {
         <div class="space-y-1.5 max-w-md mx-auto">
           <h4 class="text-base font-bold text-white">Your Timetable is Currently Blank</h4>
           <p class="text-xs text-slate-400 leading-relaxed">
-            কোনো ব্যক্তিগত ক্লাস এখনো যোগ করা হয়নি। আপনি চাইলে <strong>+ Add Class</strong> দিয়ে সরাসরি ক্লাস যুক্ত করতে পারেন অথবা ডিপার্টমেন্টের অফিসিয়াল টেমপ্লেট থেকে কপি করে শুরু করতে পারেন।
+            ${currentLang === 'en' ? 'No personal classes have been added. Use <strong>+ Add Class</strong> or copy a published template and customize it for your own semester and section.' : 'কোনো ব্যক্তিগত ক্লাস এখনো যোগ করা হয়নি। + Add Class দিয়ে ক্লাস যুক্ত করুন অথবা প্রকাশিত টেমপ্লেট কপি করে নিজের মতো পরিবর্তন করুন।'}
           </p>
         </div>
         <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
@@ -8116,7 +8117,6 @@ function renderMyRoutineStudio() {
   }
 
   if (window.lucide) lucide.createIcons();
-  Hub.showRoutineWarnings(routine);
 
 }
 

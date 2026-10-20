@@ -17,6 +17,7 @@ async function setup(){
 }
 test('application starts, all four destinations and secondary tools route without errors',async()=>{const {dom,w,errors,run}=await setup();try{
  assert.equal(w.document.querySelectorAll('#homeSemestersGrid button').length,8);
+ run("navigateTo('tools','routine')");assert.equal(w.document.querySelector('#myRoutineSemesterSelect').value, '');assert.ok(!w.document.querySelector('#routineStudioTitleDisplay')?.textContent.includes('Sec A'));
  for(const [tab,tool] of [['home'],['tools','routine'],['tools','cv'],['tools','cgpa'],['tools','ai'],['faculty'],['progress'],['notices'],['feedback'],['help']]){run(`navigateTo(${JSON.stringify(tab)},${JSON.stringify(tool)})`);await tick();assert.equal(run('currentTab'),tab);}
  assert.deepEqual(errors,[]);
  const ids=[...w.document.querySelectorAll('[id]')].map(x=>x.id);assert.equal(ids.length,new Set(ids).size,'all DOM ids must be unique');

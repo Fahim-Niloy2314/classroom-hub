@@ -1,4 +1,4 @@
-# Classroom Hub 4.1.0 — verification record
+# Classroom Hub 4.1.1 — verification record
 
 Date: 20 October 2026. Baseline: `5f1a9a6`. This report records finite checks, not a guarantee that every possible issue is absent.
 
@@ -18,7 +18,7 @@ Date: 20 October 2026. Baseline: `5f1a9a6`. This report records finite checks, n
 | Routine Word | Actual saved class content; no forced minimum width overflowing a wide grid; unmapped-grid warning | Generated DOCX opened as ZIP and inspected for data, landscape and a 16-slot table fitting page width |
 | CV | Save As preservation, restored/persisted template, visible delete and JSON import, overwrite confirmation, safer fields/URLs/photos and distinct section order | Synthetic form/save/reload/injection tests and portrait DOCX content checks |
 | Faculty | Preserved 51-member data and individual Gmail recipients; Fahmida remains Lab Assistant / STAFF | DOM test inspects generated Gmail URLs and staff designation |
-| Cache | Coherent 4.1.0 shell; same-origin public allowlist; no API/authenticated caching; correct offline fallback | JavaScript syntax checked; online/offline lifecycle still needs a device-level smoke test |
+| Cache | Coherent 4.1.1 shell; same-origin public allowlist; no API/authenticated caching; correct offline fallback | JavaScript syntax checked; online/offline lifecycle still needs a device-level smoke test |
 | Claims | Removed invented visitor fallback, hardcoded audit passes and local-save “published live” messages | Source review; unavailable visitor service displays unavailable |
 | AI | Replaced retired Gemini 2.0 endpoint with current documented Flash model; API keys moved to headers; explicit built-in-reference/Drive limitations | Syntax and source checks only; no provider key/quota supplied for a real answer test |
 
@@ -42,3 +42,9 @@ Local backend integration tests run on loopback with temporary synthetic records
 The owner guide includes local setup, online hosting configuration, Docker deployment files, backup/recovery and exact limitations. Remaining external checks: authenticate against the eventual online backend, submit a harmless cross-device test message, verify a real content publish, review mobile device layouts and print pagination, and verify Drive sharing and curriculum with the department. Live Pages smoke-test observations will be summarized separately after deployment is served.
 
 Sources for lifecycle/hosting decisions: [GitHub Pages capabilities](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site), [Google Gemini lifecycle](https://ai.google.dev/gemini-api/docs/deprecations/).
+
+## Live Pages smoke test
+
+The first fixed release was served live as commit `c2a5302`. GitHub reported both Regression checks and Pages build/deployment successful. A real browser verified the four-tab order, loaded all eight semester cards, opened the sign-in dialog, confirmed the disconnected-backend notice with sign-in disabled, and found the CV delete/import controls. Faculty rendering contained 142 Gmail compose links with no combined recipients and retained the Lab Assistant designation. No application JavaScript error was observed; an unrelated browser-extension metadata error was excluded.
+
+The 4.1.1 patch removes the remaining preselected personal semester/section display and adds a regression assertion. Online admin/inbox remain unconfigured; no live credential was entered.

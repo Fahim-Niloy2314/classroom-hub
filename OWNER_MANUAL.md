@@ -1,4 +1,4 @@
-# Classroom Hub owner guide — 4.1.0
+# Classroom Hub owner guide — 4.1.1
 
 ## What works on the GitHub Pages address
 

@@ -60,7 +60,7 @@
   <script src="jszip.min.js"></script>
 
   <!-- Custom Academic UI Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=4.1.0">
+  <link rel="stylesheet" href="styles.css?v=4.1.1">
 </head>
 <body class="min-h-screen flex flex-col font-sans antialiased text-main bg-canvas">
 
@@ -488,7 +488,7 @@
                 <span id="myRoutineMainTitleDisplay">My Routine (আমার ক্লাস রুটিন)</span>
               </h3>
               <p class="text-xs text-slate-400">
-                প্রত্যেক শিক্ষার্থীর নিজস্ব সেমিস্টার, সেকশন ও রুটিন কাস্টমাইজ করুন। ওয়ার্ড (.docx) ফরম্যাটে ডাউনলোড বা প্রিন্ট করুন।
+                Customize your own semester, section, courses and times. Download an editable Word routine or print it.
               </p>
             </div>
 
@@ -570,7 +570,8 @@
                 <div>
                   <label class="text-[10px] font-semibold text-slate-400 block mb-1">Semester / Term</label>
                   <select id="myRoutineSemesterSelect" onchange="updateMyRoutineMeta()" class="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-indigo-300 font-semibold text-xs outline-none">
-                    <option value="L4-T2">Level 4 Term 2 (L4-T2)</option>
+                    <option value="">Choose your semester</option>
+                  <option value="L4-T2">Level 4 Term 2 (L4-T2)</option>
                     <option value="L4-T1">Level 4 Term 1 (L4-T1)</option>
                     <option value="L3-T2">Level 3 Term 2 (L3-T2)</option>
                     <option value="L3-T1">Level 3 Term 1 (L3-T1)</option>
@@ -3112,9 +3113,9 @@
     </form>
   </dialog>
   <!-- Application Logic Scripts -->
-  <script src="data.js?v=4.1.0"></script>
-  <script src="hub-core.js?v=4.1.0"></script>
-  <script src="app.js?v=4.1.0"></script>
-  <script src="hub-fixes.js?v=4.1.0"></script>
+  <script src="data.js?v=4.1.1"></script>
+  <script src="hub-core.js?v=4.1.1"></script>
+  <script src="app.js?v=4.1.1"></script>
+  <script src="hub-fixes.js?v=4.1.1"></script>
 </body>
 </html>

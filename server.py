@@ -230,7 +230,7 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
             return self.reply(403, {'error': 'Origin is not allowed.'})
         parsed = urlparse(self.path)
         if parsed.path == '/api/status':
-            return self.reply(200, {'status': 'online', 'version': '4.1.0', 'authenticated': self.authenticated(), 'configured': (PRIVATE_DIR / 'owner.json').exists(), 'publishingConfigured': bool(os.environ.get('GITHUB_TOKEN')), 'timestamp': utcnow()})
+            return self.reply(200, {'status': 'online', 'version': '4.1.1', 'authenticated': self.authenticated(), 'configured': (PRIVATE_DIR / 'owner.json').exists(), 'publishingConfigured': bool(os.environ.get('GITHUB_TOKEN')), 'timestamp': utcnow()})
         if parsed.path == '/api/submissions':
             if not self.require_admin(): return
             with connect() as db:
