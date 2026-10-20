@@ -43,10 +43,15 @@ const Hub = (() => {
     updateConnectionText();
   }
   function updateConnectionText() {
-    const text = ready ? 'Backend connected: ' + apiBase : 'Online admin and inbox are not connected yet. Public tools work normally. Only the site owner can connect the private owner service.';
-    for (const id of ['authBackendStatus','backendPublishStatus']) { const el = document.getElementById(id); if (el) el.textContent = text; }
+    const publicPages = location.hostname.endsWith('github.io');
+    const bangla = typeof currentLang !== 'undefined' && currentLang === 'bn';
+    const text = ready ? 'Backend connected: ' + apiBase : 'Online admin and inbox are not connected yet. Public tools work normally.';
+    const publishStatus = document.getElementById('backendPublishStatus'); if (publishStatus) publishStatus.textContent = text;
+    const authStatus = document.getElementById('authBackendStatus');
+    if (authStatus) authStatus.textContent = ready ? (bangla ? 'Owner service সংযুক্ত আছে। Classroom Hub-এর owner email ও password দিয়ে প্রবেশ করুন।' : 'Owner service connected. Sign in with your Classroom Hub owner email and password.') : publicPages ? (bangla ? 'এটি পাবলিক GitHub Pages সাইট। এখানে owner sign-in সংযুক্ত নেই। নিচের বাটন দিয়ে owner portal খুলুন। সেখানে নিজের অনুমোদিত Gmail-এর ChatGPT account দিয়ে প্রবেশ করে Classroom Hub-এর owner sign-in করুন।' : 'You are on the public GitHub Pages site. Owner sign-in is not connected here. Continue to the owner portal below. Use your approved personal ChatGPT account to open it, then sign in with your Classroom Hub owner credentials.') : (bangla ? 'Owner service-এর সাথে সংযোগ করা যাচ্ছে না। পেজটি আবার লোড করুন।' : 'The owner service is unavailable. Reload this page to try again.');
+    const fields = document.getElementById('ownerLoginFields'); if (fields) { fields.hidden = !ready; fields.disabled = !ready; }
     const button = document.getElementById('ownerLoginSubmit'); if (button) button.disabled = !ready;
-    const portalLink=document.getElementById('privateOwnerPortalLink');if(portalLink)portalLink.hidden=ready;
+    const portalLink=document.getElementById('privateOwnerPortalLink');if(portalLink){portalLink.hidden=ready||!publicPages;portalLink.textContent=bangla?'Owner portal খুলুন':'Continue to owner portal';}
   }
   function portalPayload() {
     const baseline = read('classroom_public_baseline',{});
@@ -279,12 +284,12 @@ function updateAuthUI() {
 function openAuthModal() {const dialog=document.getElementById('authDialog');document.getElementById('authError').textContent='';Hub.updateConnectionText();if(!dialog.open)dialog.showModal();}
 function closeAuthModal(){document.getElementById('authPasswordInput').value='';document.getElementById('authDialog')?.close();}
 async function handleStandardAuthSubmit(event) {
-  event?.preventDefault();const button=document.getElementById('ownerLoginSubmit');button.disabled=true;
+  event?.preventDefault();if(!Hub.connected){Hub.updateConnectionText();return;}const button=document.getElementById('ownerLoginSubmit');button.disabled=true;
   try{
     const result=await Hub.request('login',{method:'POST',body:JSON.stringify({email:document.getElementById('authEmailInput').value.trim(),password:document.getElementById('authPasswordInput').value})});
     if(!result.success||!result.token||!result.expiresAt||result.user?.role!=='admin')throw new Error('The backend did not grant an owner session.');
     Hub.setSession(result);currentUser=result.user;closeAuthModal();updateAuthUI();await loadPortalSyncData();applyPortalSettings();navigateTo('admin');renderAdminWorkspace();showToast('Owner session verified by the backend.');
-  }catch(e){document.getElementById('authError').textContent=e.message;}finally{button.disabled=false;}
+  }catch(e){document.getElementById('authError').textContent=e.message;}finally{Hub.updateConnectionText();}
 }
 async function handleLogout(){try{await Hub.request('logout',{method:'POST',body:'{}'});}catch{}finally{Hub.invalidateSession();if(currentTab==='admin')navigateTo('home');showToast('Signed out.');}}
 function handleGoogleSignInPrompt(){openAuthModal();}

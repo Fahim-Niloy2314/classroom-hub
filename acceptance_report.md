@@ -1,5 +1,7 @@
 # Classroom Hub 4.2.1 — verification record
 
+Owner-entry correction (`4.2.1-auth2` cache revision): the disconnected GitHub Pages sign-in now hides and disables credential fields and provides one same-tab link to the private owner portal. It explains the separate personal ChatGPT gate and Classroom Hub owner login in English/Bangla. Connected owner services retain the actual credential form; failed programmatic submission while disconnected cannot re-enable the button. Existing authentication and verified-owner integration checks cover both states. This UI correction does not activate the public backend or transfer hosting ownership.
+
 Date: 21 October 2026 (Asia/Dhaka). Previous public release: 9b450d8. This is a record of finite checks, not a guarantee that every possible issue is absent.
 
 ## Public release

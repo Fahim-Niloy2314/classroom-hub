@@ -26,7 +26,11 @@ test('application starts, all four destinations and secondary tools route withou
 test('Sign In opens a real dialog; forged local identity never grants admin',async()=>{const {dom,w,run,errors}=await setup();try{
  w.localStorage.setItem('classroom_user',JSON.stringify({email:'fahimcuet63@gmail.com',role:'admin'}));assert.equal(run('isAdmin({role:"admin"})'),false);
  w.document.querySelector('#authHeaderContainer button').click();assert.equal(w.document.getElementById('authDialog').open,true);assert.equal(w.document.getElementById('ownerLoginSubmit').disabled,true);
- assert.match(w.document.getElementById('authBackendStatus').textContent,/not connected/);assert.deepEqual(errors,[]);
+ assert.match(w.document.getElementById('authBackendStatus').textContent,/not connected/);
+ assert.equal(w.document.getElementById('ownerLoginFields').hidden,true);assert.equal(w.document.getElementById('ownerLoginFields').disabled,true);
+ const portal=w.document.getElementById('privateOwnerPortalLink');assert.equal(portal.hidden,false);assert.equal(portal.href,'https://classroom-hub-owner-service.f6050.chatgpt.site/');assert.equal(portal.target,'');
+ await run('handleStandardAuthSubmit({preventDefault(){}})');assert.equal(w.document.getElementById('ownerLoginSubmit').disabled,true);assert.equal(w.document.getElementById('authError').textContent,'');
+ assert.deepEqual(errors,[]);
 }finally{await tick();dom.window.close();}});
 test('CV Save As preserves content; draft reload restores template; HTML data cannot create elements',async()=>{const {dom,w,run}=await setup();try{
  run("navigateTo('tools','cv')");w.document.getElementById('cvInput-fullName').value='Synthetic Student';run("switchCvTemplate('template_academic')");w.prompt=()=>'<Imported "Draft">';run('saveCvDraftPrompt()');
@@ -66,6 +70,7 @@ test('CV templates present different meaningful section orders',async()=>{const 
  run("switchCvTemplate('template_eng')");assert.equal(headings()[0],'Education');assert.equal(headings()[1],'Engineering & Design Projects');
 }finally{await tick();dom.window.close();}});
 test('owner dashboard panels and real faculty editor work with a server-verified session',async()=>{const {dom,w,run,errors}=await setup({owner:true});try{
+ run('openAuthModal()');assert.equal(w.document.getElementById('ownerLoginFields').hidden,false);assert.equal(w.document.getElementById('ownerLoginFields').disabled,false);assert.equal(w.document.getElementById('privateOwnerPortalLink').hidden,true);run('closeAuthModal()');
  assert.equal(run('isAdmin(currentUser)'),true);run("navigateTo('admin')");
  for(const tab of run('ADMIN_SUBTABS')){run(`switchAdminSubTab(${JSON.stringify(tab)})`);await tick();}
  assert.ok(w.document.getElementById('ownerDataStudio').textContent.includes('Owner Control Center'));
