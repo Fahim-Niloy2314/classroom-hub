@@ -1,0 +1,66 @@
+name: Activate personal owner backend
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_free_plan:
+        description: I checked that my personal Cloudflare account uses Workers Free
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: personal-owner-backend
+  cancel-in-progress: false
+
+jobs:
+  activate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check personal account secrets
+        env:
+          CLASSROOM_CONFIRM_FREE_PLAN: ${{ inputs.confirm_free_plan }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLASSROOM_OWNER_PASSWORD: ${{ secrets.CLASSROOM_OWNER_PASSWORD }}
+        run: python backend-worker/tools/deploy_personal.py --preflight
+      - name: Install pinned backend tools and run API checks
+        working-directory: backend-worker
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm test
+      - name: Deploy and verify the personal backend
+        env:
+          CLASSROOM_CONFIRM_FREE_PLAN: ${{ inputs.confirm_free_plan }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLASSROOM_OWNER_PASSWORD: ${{ secrets.CLASSROOM_OWNER_PASSWORD }}
+          WRANGLER_SEND_METRICS: 'false'
+        run: python backend-worker/tools/deploy_personal.py
+      - name: Connect public site and request its Pages build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend-config.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Connect verified personal owner backend'
+            git push origin HEAD:main
+          fi
+          gh api --method POST repos/Fahim-Niloy2314/classroom-hub/pages/builds >/dev/null
+      - name: Verify the public connection
+        run: python backend-worker/tools/deploy_personal.py --verify-public

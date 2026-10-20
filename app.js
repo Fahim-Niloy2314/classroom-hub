@@ -919,6 +919,7 @@ function applyTheme(theme) {
   }
   localStorage.setItem('classroom_theme', theme);
   updateThemeIcon(theme);
+  if (typeof HubFeatures !== 'undefined') HubFeatures.applyAppearance();
 }
 
 function toggleTheme() {
@@ -965,7 +966,7 @@ function applyLanguage(lang) {
   // Update all [data-i18n] elements
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
-    if (dict[key]) {
+    if (typeof dict[key] === 'string') {
       el.textContent = dict[key];
     }
   });
@@ -1696,10 +1697,21 @@ function getAllFlatFiles() {
     });
   });
 
-  // Append approved community resources
-  communityResources.forEach(cr => list.push(cr));
+  // An owner edit replaces the matching vault record instead of creating a duplicate.
+  const merged = new Map(list.map(file => [file.id, file]));
+  communityResources.forEach(file => merged.set(file.id, {...merged.get(file.id), ...file}));
+  return [...merged.values()];
+}
 
-  return list;
+function getVisibleVaultFiles() {
+  const hidden = new Set(adminHiddenItems);
+  return getAllFlatFiles().filter(file => !hidden.has(file.id));
+}
+
+function getVisibleCourseFolders(term) {
+  const files = getVisibleVaultFiles().filter(file => file.term_code === term.code);
+  const names = new Set([...term.courses.map(course => course.name), ...files.map(file => file.course).filter(Boolean)]);
+  return [...names].map(name => ({...(term.courses.find(course => course.name === name)||{}),name,files:files.filter(file => file.course===name)})).map(course=>({...course,file_count:course.files.length,subfolders:[...new Set(course.files.map(file=>file.subfolder).filter(Boolean))]}));
 }
 
 function renderExplorer() {
@@ -1716,7 +1728,7 @@ function renderExplorer() {
   // CASE 1: SEARCH ACTIVE -> Global search across all 3,896 files
   if (searchQuery) {
     if (titleEl) titleEl.textContent = currentLang === 'en' ? `Search Results for "${searchQuery}"` : `"${searchQuery}" এর সার্চ ফলাফল`;
-    const allFiles = getAllFlatFiles();
+    const allFiles = getVisibleVaultFiles();
     const filtered = allFiles.filter(f => {
       if (explorerState.selectedCategory !== 'ALL' && f.category !== explorerState.selectedCategory) return false;
       const target = `${HubCore.html(f.name)} ${f.course} ${f.term_code} ${f.category}`.toLowerCase();
@@ -1733,7 +1745,7 @@ function renderExplorer() {
     const catObj = EXPLORER_CATEGORIES.find(c => c.id === explorerState.selectedCategory);
     const catTitle = catObj ? (currentLang === 'en' ? catObj.en : catObj.bn) : explorerState.selectedCategory;
     
-    let scopeFiles = getAllFlatFiles();
+    let scopeFiles = getVisibleVaultFiles();
     let scopeLabel = currentLang === 'en' ? 'Entire Academic Vault' : 'সম্পূর্ণ একাডেমি আর্কাইভ';
 
     if (explorerState.selectedTerm) {
@@ -1809,9 +1821,10 @@ function renderExplorer() {
     if (titleEl) titleEl.textContent = `${dict.courses_in} ${explorerState.selectedTerm}`;
     if (!termObj) { grid.innerHTML = `<p class="col-span-full text-center text-slate-500">Term not found</p>`; return; }
 
-    if (countBadge) countBadge.textContent = termObj.courses.length;
+    const courseFolders = getVisibleCourseFolders(termObj);
+    if (countBadge) countBadge.textContent = courseFolders.length;
 
-    grid.innerHTML = termObj.courses.map(course => `
+    grid.innerHTML = courseFolders.map(course => `
       <div onclick="openCourseFolder('${encodeURIComponent(course.name)}')" class="p-5 rounded-2xl glass-card cursor-pointer group flex items-start gap-4 hover:border-indigo-500/50 transition-all">
         <div class="p-3 rounded-2xl bg-indigo-950/60 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
           <i data-lucide="folder" class="w-7 h-7"></i>
@@ -1843,7 +1856,7 @@ function renderExplorer() {
   if (explorerState.level === 'files') {
     const termObj = appData.terms.find(t => t.code === explorerState.selectedTerm);
     const decodedCourseName = decodeURIComponent(explorerState.selectedCourse);
-    const courseObj = termObj?.courses.find(c => c.name === decodedCourseName);
+    const courseObj = termObj && getVisibleCourseFolders(termObj).find(c => c.name === decodedCourseName);
     
     if (!courseObj) {
       grid.innerHTML = `<p class="col-span-full text-center text-slate-500 py-10">Course not found</p>`;
@@ -1852,10 +1865,6 @@ function renderExplorer() {
 
     const currentSubfolder = explorerState.selectedSubfolder;
     const allCourseFiles = [...courseObj.files];
-
-    // Include approved community files
-    const extraFiles = communityResources.filter(cr => cr.term_code === explorerState.selectedTerm && cr.course === decodedCourseName);
-    allCourseFiles.push(...extraFiles);
 
     // Title representation
     if (currentSubfolder) {
@@ -1965,6 +1974,7 @@ function renderExplorer() {
 }
 
 function renderFileList(files, container) {
+  files = files.filter(file => !adminHiddenItems.includes(file.id));
   const dict = I18N[currentLang];
   if (files.length === 0) {
     container.innerHTML = `
@@ -2511,8 +2521,7 @@ function renderAdminResources() {
   const termFilter = document.getElementById('adminResourceTermFilter')?.value || 'ALL';
 
   // Combine flat vault files with community resources
-  const allVault = getAllFlatFiles();
-  let pool = [...communityResources, ...allVault];
+  let pool = getAllFlatFiles();
 
   // Exclude trashed items
   const trashedIds = new Set(adminTrash.map(t => t.id));
@@ -2674,6 +2683,7 @@ function saveEditedResource(e) {
 }
 
 function toggleResourceFeatured(resId) {
+  if (!isAdmin(currentUser)) return openAuthModal();
   if (adminFeaturedItems.includes(resId)) {
     adminFeaturedItems = adminFeaturedItems.filter(id => id !== resId);
     showToast('Removed from Featured');
@@ -2686,6 +2696,7 @@ function toggleResourceFeatured(resId) {
 }
 
 function toggleResourceVisibility(resId) {
+  if (!isAdmin(currentUser)) return openAuthModal();
   if (adminHiddenItems.includes(resId)) {
     adminHiddenItems = adminHiddenItems.filter(id => id !== resId);
     showToast('File is now visible to students');
@@ -2699,6 +2710,7 @@ function toggleResourceVisibility(resId) {
 }
 
 function duplicateResource(resId) {
+  if (!isAdmin(currentUser)) return openAuthModal();
   const original = findResourceById(resId);
   if (!original) return;
   createRevisionSnapshot(`Duplicate: ${original.name}`);
@@ -2717,11 +2729,14 @@ function duplicateResource(resId) {
 }
 
 function deleteResourceToTrash(resId) {
+  if (!isAdmin(currentUser)) return openAuthModal();
   const res = findResourceById(resId);
   if (!res) return;
   if (!confirm(`Move "${res.name}" to Recycle Bin?`)) return;
 
   createRevisionSnapshot(`Move to Trash: ${res.name}`);
+  if (!adminHiddenItems.includes(resId)) adminHiddenItems.push(resId);
+  localStorage.setItem(STORAGE_KEYS.ADMIN_HIDDEN, JSON.stringify(adminHiddenItems));
   adminTrash.unshift({
     id: res.id,
     type: 'resource',
@@ -3220,13 +3235,17 @@ function renderAdminTrash() {
 }
 
 function restoreFromTrash(id) {
+  if (!isAdmin(currentUser)) return openAuthModal();
   const itemIdx = adminTrash.findIndex(t => t.id === id);
   if (itemIdx === -1) return;
   const trashed = adminTrash.splice(itemIdx, 1)[0];
 
   if (trashed.type === 'resource' && trashed.item) {
+    communityResources = communityResources.filter(resource=>resource.id!==id);
     communityResources.unshift(trashed.item);
     localStorage.setItem(STORAGE_KEYS.COMMUNITY_RESOURCES, JSON.stringify(communityResources));
+    adminHiddenItems = adminHiddenItems.filter(resourceId=>resourceId!==id);
+    localStorage.setItem(STORAGE_KEYS.ADMIN_HIDDEN, JSON.stringify(adminHiddenItems));
   }
   localStorage.setItem(STORAGE_KEYS.ADMIN_TRASH, JSON.stringify(adminTrash));
 
@@ -3238,6 +3257,7 @@ function restoreFromTrash(id) {
 }
 
 function permanentDeleteTrash(id) {
+  if (!isAdmin(currentUser)) return openAuthModal();
   if (!confirm('Permanently delete this item? This action cannot be undone.')) return;
   adminTrash = adminTrash.filter(t => t.id !== id);
   localStorage.setItem(STORAGE_KEYS.ADMIN_TRASH, JSON.stringify(adminTrash));
@@ -4341,41 +4361,41 @@ function applyPortalSettings() {
 
   // 3. Hero & Banner Custom Texts
   const homeHeroStatic = document.getElementById('homeHeroStatic');
-  if (homeHeroStatic && portalSettings.heroTitle) {
+  if (homeHeroStatic && portalSettings.heroTitle !== undefined) {
     homeHeroStatic.textContent = portalSettings.heroTitle;
   }
   const homeHeroHighlight = document.getElementById('homeHeroHighlight');
-  if (homeHeroHighlight && portalSettings.heroSubtitle) {
+  if (homeHeroHighlight && portalSettings.heroSubtitle !== undefined) {
     homeHeroHighlight.textContent = portalSettings.heroSubtitle;
   }
   const homeDeptPill = document.getElementById('homeDeptPill');
-  if (homeDeptPill && portalSettings.deptDesc) {
+  if (homeDeptPill && portalSettings.deptDesc !== undefined) {
     homeDeptPill.textContent = portalSettings.deptDesc;
   }
   const homeHeroDesc = document.getElementById('homeHeroDesc');
-  if (homeHeroDesc && portalSettings.heroDesc) {
+  if (homeHeroDesc && portalSettings.heroDesc !== undefined) {
     homeHeroDesc.textContent = portalSettings.heroDesc;
   }
 
   // Creator Credentials
   const homeCreatorName = document.getElementById('homeCreatorName');
-  if (homeCreatorName && portalSettings.creatorName) {
+  if (homeCreatorName && portalSettings.creatorName !== undefined) {
     homeCreatorName.textContent = portalSettings.creatorName;
   }
   const homeCreatorBadge = document.getElementById('homeCreatorBadge');
-  if (homeCreatorBadge && portalSettings.creatorBadge) {
+  if (homeCreatorBadge && portalSettings.creatorBadge !== undefined) {
     homeCreatorBadge.textContent = portalSettings.creatorBadge;
   }
   const homeCreatorDept = document.getElementById('homeCreatorDept');
-  if (homeCreatorDept && portalSettings.creatorDept) {
+  if (homeCreatorDept && portalSettings.creatorDept !== undefined) {
     homeCreatorDept.textContent = portalSettings.creatorDept;
   }
   const homeCreatorBatch = document.getElementById('homeCreatorBatch');
-  if (homeCreatorBatch && portalSettings.creatorBatch) {
+  if (homeCreatorBatch && portalSettings.creatorBatch !== undefined) {
     homeCreatorBatch.textContent = portalSettings.creatorBatch;
   }
   const homeCreatorId = document.getElementById('homeCreatorId');
-  if (homeCreatorId && portalSettings.creatorId) {
+  if (homeCreatorId && portalSettings.creatorId !== undefined) {
     homeCreatorId.textContent = portalSettings.creatorId;
   }
 
@@ -4401,24 +4421,24 @@ function applyPortalSettings() {
 
   // 4 Core Action Cards
   const homeCard1Title = document.getElementById('homeCard1Title');
-  if (homeCard1Title && portalSettings.card1Title) homeCard1Title.textContent = portalSettings.card1Title;
+  if (homeCard1Title && portalSettings.card1Title !== undefined) homeCard1Title.textContent = portalSettings.card1Title;
   const homeCard1Desc = document.getElementById('homeCard1Desc');
-  if (homeCard1Desc && portalSettings.card1Desc) homeCard1Desc.textContent = portalSettings.card1Desc;
+  if (homeCard1Desc && portalSettings.card1Desc !== undefined) homeCard1Desc.textContent = portalSettings.card1Desc;
 
   const homeCard2Title = document.getElementById('homeCard2Title');
-  if (homeCard2Title && portalSettings.card2Title) homeCard2Title.textContent = portalSettings.card2Title;
+  if (homeCard2Title && portalSettings.card2Title !== undefined) homeCard2Title.textContent = portalSettings.card2Title;
   const homeCard2Desc = document.getElementById('homeCard2Desc');
-  if (homeCard2Desc && portalSettings.card2Desc) homeCard2Desc.textContent = portalSettings.card2Desc;
+  if (homeCard2Desc && portalSettings.card2Desc !== undefined) homeCard2Desc.textContent = portalSettings.card2Desc;
 
   const homeCard3Title = document.getElementById('homeCard3Title');
-  if (homeCard3Title && portalSettings.card3Title) homeCard3Title.textContent = portalSettings.card3Title;
+  if (homeCard3Title && portalSettings.card3Title !== undefined) homeCard3Title.textContent = portalSettings.card3Title;
   const homeCard3Desc = document.getElementById('homeCard3Desc');
-  if (homeCard3Desc && portalSettings.card3Desc) homeCard3Desc.textContent = portalSettings.card3Desc;
+  if (homeCard3Desc && portalSettings.card3Desc !== undefined) homeCard3Desc.textContent = portalSettings.card3Desc;
 
   const homeCard4Title = document.getElementById('homeCard4Title');
-  if (homeCard4Title && portalSettings.card4Title) homeCard4Title.textContent = portalSettings.card4Title;
+  if (homeCard4Title && portalSettings.card4Title !== undefined) homeCard4Title.textContent = portalSettings.card4Title;
   const homeCard4Desc = document.getElementById('homeCard4Desc');
-  if (homeCard4Desc && portalSettings.card4Desc) homeCard4Desc.textContent = portalSettings.card4Desc;
+  if (homeCard4Desc && portalSettings.card4Desc !== undefined) homeCard4Desc.textContent = portalSettings.card4Desc;
 
   if (portalSettings.primaryEmail) {
     const footerEmail = document.querySelector('footer a[href^="mailto:"]');
@@ -4483,6 +4503,7 @@ function applyPortalSettings() {
     aiHeaderSubtitle.textContent = portalSettings.aiBotSubtitle;
   }
 
+  if (typeof HubFeatures !== 'undefined') HubFeatures.applyAppearance();
   lucide.createIcons();
 }
 
@@ -4495,30 +4516,30 @@ function renderAdminLayoutSettings() {
     if (el) el.value = val !== undefined ? val : '';
   };
 
-  setVal('cfgHeroTitle', portalSettings.heroTitle || DEFAULT_PORTAL_SETTINGS.heroTitle);
-  setVal('cfgHeroSubtitle', portalSettings.heroSubtitle || DEFAULT_PORTAL_SETTINGS.heroSubtitle);
-  setVal('cfgDeptDesc', portalSettings.deptDesc || DEFAULT_PORTAL_SETTINGS.deptDesc);
-  setVal('cfgHeroDesc', portalSettings.heroDesc || DEFAULT_PORTAL_SETTINGS.heroDesc);
+  setVal('cfgHeroTitle', portalSettings.heroTitle ?? DEFAULT_PORTAL_SETTINGS.heroTitle);
+  setVal('cfgHeroSubtitle', portalSettings.heroSubtitle ?? DEFAULT_PORTAL_SETTINGS.heroSubtitle);
+  setVal('cfgDeptDesc', portalSettings.deptDesc ?? DEFAULT_PORTAL_SETTINGS.deptDesc);
+  setVal('cfgHeroDesc', portalSettings.heroDesc ?? DEFAULT_PORTAL_SETTINGS.heroDesc);
 
-  setVal('cfgCreatorName', portalSettings.creatorName || DEFAULT_PORTAL_SETTINGS.creatorName);
-  setVal('cfgCreatorBadge', portalSettings.creatorBadge || DEFAULT_PORTAL_SETTINGS.creatorBadge);
-  setVal('cfgCreatorDept', portalSettings.creatorDept || DEFAULT_PORTAL_SETTINGS.creatorDept);
-  setVal('cfgCreatorBatch', portalSettings.creatorBatch || DEFAULT_PORTAL_SETTINGS.creatorBatch);
-  setVal('cfgCreatorId', portalSettings.creatorId || DEFAULT_PORTAL_SETTINGS.creatorId);
+  setVal('cfgCreatorName', portalSettings.creatorName ?? DEFAULT_PORTAL_SETTINGS.creatorName);
+  setVal('cfgCreatorBadge', portalSettings.creatorBadge ?? DEFAULT_PORTAL_SETTINGS.creatorBadge);
+  setVal('cfgCreatorDept', portalSettings.creatorDept ?? DEFAULT_PORTAL_SETTINGS.creatorDept);
+  setVal('cfgCreatorBatch', portalSettings.creatorBatch ?? DEFAULT_PORTAL_SETTINGS.creatorBatch);
+  setVal('cfgCreatorId', portalSettings.creatorId ?? DEFAULT_PORTAL_SETTINGS.creatorId);
 
-  setVal('cfgPrimaryEmail', portalSettings.primaryEmail || DEFAULT_PORTAL_SETTINGS.primaryEmail);
-  setVal('cfgPhone', portalSettings.phone || DEFAULT_PORTAL_SETTINGS.phone);
-  setVal('cfgPortfolioUrl', portalSettings.portfolioUrl || DEFAULT_PORTAL_SETTINGS.portfolioUrl);
-  setVal('cfgGithubUrl', portalSettings.githubUrl || DEFAULT_PORTAL_SETTINGS.githubUrl);
+  setVal('cfgPrimaryEmail', portalSettings.primaryEmail ?? DEFAULT_PORTAL_SETTINGS.primaryEmail);
+  setVal('cfgPhone', portalSettings.phone ?? DEFAULT_PORTAL_SETTINGS.phone);
+  setVal('cfgPortfolioUrl', portalSettings.portfolioUrl ?? DEFAULT_PORTAL_SETTINGS.portfolioUrl);
+  setVal('cfgGithubUrl', portalSettings.githubUrl ?? DEFAULT_PORTAL_SETTINGS.githubUrl);
 
-  setVal('cfgCard1Title', portalSettings.card1Title || DEFAULT_PORTAL_SETTINGS.card1Title);
-  setVal('cfgCard1Desc', portalSettings.card1Desc || DEFAULT_PORTAL_SETTINGS.card1Desc);
-  setVal('cfgCard2Title', portalSettings.card2Title || DEFAULT_PORTAL_SETTINGS.card2Title);
-  setVal('cfgCard2Desc', portalSettings.card2Desc || DEFAULT_PORTAL_SETTINGS.card2Desc);
-  setVal('cfgCard3Title', portalSettings.card3Title || DEFAULT_PORTAL_SETTINGS.card3Title);
-  setVal('cfgCard3Desc', portalSettings.card3Desc || DEFAULT_PORTAL_SETTINGS.card3Desc);
-  setVal('cfgCard4Title', portalSettings.card4Title || DEFAULT_PORTAL_SETTINGS.card4Title);
-  setVal('cfgCard4Desc', portalSettings.card4Desc || DEFAULT_PORTAL_SETTINGS.card4Desc);
+  setVal('cfgCard1Title', portalSettings.card1Title ?? DEFAULT_PORTAL_SETTINGS.card1Title);
+  setVal('cfgCard1Desc', portalSettings.card1Desc ?? DEFAULT_PORTAL_SETTINGS.card1Desc);
+  setVal('cfgCard2Title', portalSettings.card2Title ?? DEFAULT_PORTAL_SETTINGS.card2Title);
+  setVal('cfgCard2Desc', portalSettings.card2Desc ?? DEFAULT_PORTAL_SETTINGS.card2Desc);
+  setVal('cfgCard3Title', portalSettings.card3Title ?? DEFAULT_PORTAL_SETTINGS.card3Title);
+  setVal('cfgCard3Desc', portalSettings.card3Desc ?? DEFAULT_PORTAL_SETTINGS.card3Desc);
+  setVal('cfgCard4Title', portalSettings.card4Title ?? DEFAULT_PORTAL_SETTINGS.card4Title);
+  setVal('cfgCard4Desc', portalSettings.card4Desc ?? DEFAULT_PORTAL_SETTINGS.card4Desc);
 
   container.innerHTML = portalSettings.tabs.map((tab, idx) => {
     const isFirst = idx === 0;
@@ -4604,6 +4625,7 @@ function moveNavTab(tabId, direction) {
 }
 
 function savePortalSettingsFromForm() {
+  if (!isAdmin(currentUser)) return openAuthModal();
   portalSettings.tabs.forEach(tab => {
     const input = document.getElementById(`cfgTabLabel-${tab.id}`);
     if (input && input.value.trim()) {
@@ -4613,7 +4635,7 @@ function savePortalSettingsFromForm() {
 
   const getVal = (id, fallback) => {
     const el = document.getElementById(id);
-    return el && el.value.trim() ? el.value.trim() : fallback;
+    return el ? el.value.trim() : fallback;
   };
 
   portalSettings.heroTitle = getVal('cfgHeroTitle', portalSettings.heroTitle);

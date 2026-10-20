@@ -1,4 +1,13 @@
-# Classroom Hub 4.2.1 — verification record
+# Classroom Hub 4.3.0 — verification record
+
+## Owner control corrections in this release
+
+- Existing vault-resource edits replace the matching record rather than duplicating it. Search and course folders use the same merged catalog. Newly added course folders appear in the explorer.
+- Hide and trash now actually remove resource entries from student browsing; restoration returns one edited record. These are discovery controls, not a privacy boundary for files already shared publicly on Google Drive.
+- Owner branding controls cover site name, header badge, logo URL, creator photo URL, footer text, font and separate light/dark accent colors. Blank optional text remains blank. The existing undo control restores both the saved data and the visible appearance.
+- The searchable English/Bangla wording editor exposes every string in the interface dictionaries, rather than only nine selected strings. Existing page, resource, faculty, notice, routine, curriculum, CV, contact, backup, inbox and security controls remain.
+- An explicitly invoked personal-account deployment workflow is prepared in GitHub. It requires confirmation of Workers Free and private account credentials, applies database migrations, verifies both owner identities, revokes test sessions, and changes the public backend URL only after verification. It explicitly requests a Pages build and checks the actual public configuration rather than assuming an Actions bot commit triggers deployment.
+- The portable backend independently checks the public frontend's actual API URL before confirming live publication. No personal Cloudflare account has been authenticated or deployed by this release. The prepared workflow and Wrangler dry-run are not evidence of a production personal deployment.
 
 Owner-entry correction (`4.2.1-auth2` cache revision): the disconnected GitHub Pages sign-in now hides and disables credential fields and provides one same-tab link to the private owner portal. It explains the separate personal ChatGPT gate and Classroom Hub owner login in English/Bangla. Connected owner services retain the actual credential form; failed programmatic submission while disconnected cannot re-enable the button. Existing authentication and verified-owner integration checks cover both states. This UI correction does not activate the public backend or transfer hosting ownership.
 
@@ -27,9 +36,9 @@ Date: 21 October 2026 (Asia/Dhaka). Previous public release: 9b450d8. This is a 
 ## Automated checks
 
 - `npm run check`: all five JavaScript entry files and service worker parse.
-- `npm test`: **26 passed** (7 core and 19 DOM integration tests).
-- `python -m unittest discover -s tests -p 'test_*.py' -q`: **24 passed** (14 HTTP integration and 10 service tests).
-- Public frontend/Python total: **50 passed**. GitHub Actions repeats these checks.
+- `npm test`: **28 passed** (7 core and 21 DOM integration tests).
+- `python -m unittest discover -s tests -p 'test_*.py' -q`: **30 passed** (14 HTTP integration, 10 service and 6 personal-deployment checks).
+- Public frontend/Python total: **58 passed**. GitHub Actions repeats these checks.
 - A separate owner-private hosted backend has **10 additional API tests** using a real in-memory SQLite adapter and mocked providers. These test fixed owner identities, sessions, throttling, private controls, durable idempotent feedback, publication, measured browser activity and secret redaction.
 - The portable `backend-worker` source has the same **10 API tests**, run locally, and a successful native Wrangler deployment dry-run. These overlap the separate backend checks; they are not 20 independent feature tests. The dry-run did not create a personal Cloudflare deployment or database.
 

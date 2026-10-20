@@ -564,3 +564,6 @@ html.dark .hub-button,body.dark .hub-button {background:#193b31;color:#edf7f0;bo
   html.light main p.text-slate-400,html.light main label.text-slate-400 {color:var(--text-muted)!important;}
   html.light main input:not([type=checkbox]):not([type=radio]),html.light main select,html.light main textarea {background-color:var(--bg-surface)!important;color:var(--text-main)!important;border-color:var(--border-line)!important;}
 }
+
+.hub-course-row[hidden],#ownerLoginFields[hidden],#privateOwnerPortalLink[hidden]{display:none!important}
+#ownerAppearanceEditor input[type=color]{height:2.5rem;padding:.25rem}

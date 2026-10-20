@@ -78,6 +78,25 @@ test('owner dashboard panels and real faculty editor work with a server-verified
  const tnt=w.document.getElementById('facultyTntInput').value;run('handleSaveFaculty({preventDefault(){}})');assert.equal(run("getFacultyMembers().find(f=>f.id==='fac_7').tnt"),tnt);
  assert.deepEqual(errors,[]);
 }finally{await tick();dom.window.close();}});
+test('owner resource edits replace vault files; hide, trash and restore affect student browsing',async()=>{const {dom,w,run}=await setup({owner:true});try{
+ const file=run('getAllFlatFiles()[0]');w.__fixtureFile=file;
+ run('openAdminEditResourceModal(__fixtureFile.id)');w.document.getElementById('editResTitle').value='Synthetic replacement title';run('saveEditedResource({preventDefault(){}})');
+ assert.equal(run('getAllFlatFiles().filter(file=>file.id===__fixtureFile.id).length'),1);assert.equal(run('findResourceById(__fixtureFile.id).name'),'Synthetic replacement title');
+ run("searchQuery='synthetic replacement title';renderExplorer()");assert.match(w.document.getElementById('explorerGrid').textContent,/Synthetic replacement title/);
+ run('toggleResourceVisibility(__fixtureFile.id);renderExplorer()');assert.doesNotMatch(w.document.getElementById('explorerGrid').textContent,/Synthetic replacement title/);
+ run('toggleResourceVisibility(__fixtureFile.id);deleteResourceToTrash(__fixtureFile.id)');assert.equal(run('getVisibleVaultFiles().some(file=>file.id===__fixtureFile.id)'),false);
+ run('restoreFromTrash(__fixtureFile.id)');assert.equal(run('getVisibleVaultFiles().filter(file=>file.id===__fixtureFile.id).length'),1);assert.equal(run('findResourceById(__fixtureFile.id).name'),'Synthetic replacement title');
+ run("communityResources.push({id:'synthetic-new-course-file',name:'Synthetic newly added course',term_code:'L1-T1',course:'Synthetic new folder',url:'https://example.org/file.pdf'});searchQuery='';navigateExplorerTo('courses','L1-T1')");assert.match(w.document.getElementById('explorerGrid').textContent,/Synthetic new folder/);
+}finally{await tick();dom.window.close();}});
+test('owner appearance and blank text edits persist in public payload and can be undone',async()=>{const {dom,w,run}=await setup({owner:true});try{
+ run("navigateTo('admin');switchAdminSubTab('layout')");
+ w.document.getElementById('ownerAppearance-siteTitle').value='Synthetic owner brand';w.document.getElementById('ownerAppearance-footerText').value='';w.document.getElementById('ownerAppearance-logoUrl').value='https://example.org/logo.png';w.document.getElementById('ownerAppearance-lightAccent').value='#123456';
+ [...w.document.getElementById('ownerAppearanceEditor').querySelectorAll('button')].find(button=>button.textContent==='Save appearance draft').click();
+ assert.equal(w.document.getElementById('siteBrandName').textContent,'Synthetic owner brand');assert.equal(w.document.getElementById('siteFooterText').textContent,'');assert.equal(w.document.querySelector('#siteBrandIcon img').src,'https://example.org/logo.png');assert.match(w.document.getElementById('ownerAppearanceStyle').textContent,/#123456/);assert.equal(run('Hub.portalPayload().portalSettings.appearance.siteTitle'),'Synthetic owner brand');
+ [...w.document.getElementById('ownerDataStudio').querySelectorAll('button')].find(button=>button.textContent==='Undo latest data edit').click();assert.equal(w.document.getElementById('siteBrandName').textContent,'ClassroomHub');assert.equal(w.document.querySelector('#siteBrandIcon img'),null);assert.notEqual(w.document.getElementById('siteFooterText').textContent,'');
+ run("HubFeatures.applyDraft({portalSettings:{...portalSettings,heroDesc:''}})");assert.equal(w.document.getElementById('homeHeroDesc').textContent,'');
+ run("portalSettings.uiTranslations={en:{tab_home:''},bn:{tab_home:'নীড়'}};applyLanguage('en')");assert.equal(w.document.querySelector('#nav-tab-home [data-i18n]').textContent,'');
+}finally{await tick();dom.window.close();}});
 test('owner curriculum changes validate and undo without replacing other semesters',async()=>{const {dom,w,run}=await setup({owner:true});try{
  run("navigateTo('admin');switchAdminSubTab('layout')");
  const before=run("window.CUET_COURSE_REGISTRY['L1-T2'].length");run("HubFeatures.commitModule('courseRegistry',{...window.CUET_COURSE_REGISTRY,'L1-T1':[{code:'TEST-101',name:'Synthetic Course',credits:3,type:'theory'}]})");
