@@ -60,13 +60,6 @@ const STORAGE_KEYS = {
   FEEDBACK_WEBHOOK: 'classroom_feedback_webhook'
 };
 
-// Cryptographic Password Hash Utility (Zero Plaintext Secrets)
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-const DEFAULT_ADMIN_PWD_HASH = '1c5ee9de39ca7ca5b25e25c7c994cf7b33d131c1ab99437ca2912a2cc4b6f21e';
-
 // Admin Email List
 const ADMIN_EMAILS = [
   'fahimcuet63@gmail.com',
@@ -75,9 +68,9 @@ const ADMIN_EMAILS = [
 ];
 
 // Persistent State
-let currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || 'null');
-let bookmarks = JSON.parse(localStorage.getItem(STORAGE_KEYS.BOOKMARKS) || '[]');
-let courseProgress = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROGRESS) || '{}');
+let currentUser = null; // Never trust an identity or role restored from localStorage.
+let bookmarks = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.BOOKMARKS), '[]');
+let courseProgress = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.PROGRESS), '{}');
 
 // Portal Layout & Navigation Settings (Managed by Fahim Niloy in Admin CMS)
 const DEFAULT_PORTAL_SETTINGS = {
@@ -124,7 +117,7 @@ const DEFAULT_PORTAL_SETTINGS = {
   aiBotGreeting: "Hello! I am Fahim Niloy AI. You can ask me any mechanical engineering theory, formula, syllabus checklist, or academic question."
 };
 
-let portalSettings = JSON.parse(localStorage.getItem(STORAGE_KEYS.PORTAL_SETTINGS) || 'null');
+let portalSettings = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.PORTAL_SETTINGS), 'null');
 const REQUIRED_PRIMARY_TABS = [
   { id: 'home', label: 'Home', icon: 'home', visible: true, locked: true },
   { id: 'tools', label: 'Student Tools', icon: 'wrench', visible: true },
@@ -141,20 +134,20 @@ if (!portalSettings || !portalSettings.tabs || !portalSettings.tabs.some(t => t.
   portalSettings = Object.assign({}, DEFAULT_PORTAL_SETTINGS, portalSettings);
 }
 
-let pendingResources = JSON.parse(localStorage.getItem(STORAGE_KEYS.PENDING_RESOURCES) || '[]');
-let communityResources = JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMUNITY_RESOURCES) || '[]');
-let feedbacks = JSON.parse(localStorage.getItem(STORAGE_KEYS.FEEDBACKS) || '[]');
+let pendingResources = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.PENDING_RESOURCES), '[]');
+let communityResources = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.COMMUNITY_RESOURCES), '[]');
+let feedbacks = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.FEEDBACKS), '[]');
 let currentAdminSubTab = 'queue';
-let adminNotices = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_NOTICES) || '[]');
-let adminVideos = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_VIDEOS) || '[]');
-let adminTimeline = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_TIMELINE) || '[]');
-let adminTrash = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_TRASH) || '[]');
-let adminRevisions = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_REVISIONS) || '[]');
-let adminHiddenItems = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_HIDDEN) || '[]');
-let adminFeaturedItems = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_FEATURED) || '[]');
-let adminLogs = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_LOGS) || '[]');
-let adminSeoSettings = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_SEO) || '{}');
-let adminFaqs = JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_FAQS) || 'null');
+let adminNotices = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_NOTICES), '[]');
+let adminVideos = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_VIDEOS), '[]');
+let adminTimeline = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_TIMELINE), '[]');
+let adminTrash = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_TRASH), '[]');
+let adminRevisions = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_REVISIONS), '[]');
+let adminHiddenItems = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_HIDDEN), '[]');
+let adminFeaturedItems = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_FEATURED), '[]');
+let adminLogs = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_LOGS), '[]');
+let adminSeoSettings = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_SEO), '{}');
+let adminFaqs = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_FAQS), 'null');
 if (!adminFaqs || adminFaqs.length === 0) {
   adminFaqs = [
     {
@@ -837,6 +830,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   setupDialogLightDismiss();
   await loadClassroomData();
+  await Hub.initialize();
   await loadPortalSyncData();
   applyLanguage(currentLang);
   loadCustomContacts();
@@ -860,7 +854,11 @@ async function loadPortalSyncData() {
   try {
     const res = await fetch('portal_sync.json?v=' + Date.now(), { cache: 'no-cache' });
     if (res.ok) {
-      const syncData = await res.json();
+      let syncData = await res.json();
+      localStorage.setItem('classroom_public_baseline', JSON.stringify(syncData));
+      const ownerDraft = sessionStorage.getItem('classroom_admin_token') && localStorage.getItem('classroom_owner_draft_v1');
+      if (ownerDraft) { try { syncData = JSON.parse(ownerDraft); } catch {} }
+      Hub.applySupplementalData(syncData);
       
       // Synchronize notices - accepts intentionally empty lists (e.g. cleared notices)
       const notices = syncData.notices !== undefined ? syncData.notices : syncData.adminNotices;
@@ -886,23 +884,27 @@ async function loadPortalSyncData() {
 
       // Synchronize custom resources & overrides
       if (syncData.customResources && Array.isArray(syncData.customResources)) {
+        communityResources = syncData.customResources;
         localStorage.setItem(STORAGE_KEYS.COMMUNITY_RESOURCES, JSON.stringify(syncData.customResources));
       }
 
       // Synchronize video collections
       if (syncData.videos && Array.isArray(syncData.videos)) {
+        adminVideos = syncData.videos;
         localStorage.setItem(STORAGE_KEYS.ADMIN_VIDEOS, JSON.stringify(syncData.videos));
         if (typeof renderAdminVideosList === 'function') renderAdminVideosList();
       }
 
       // Synchronize exam and milestone timeline
       if (syncData.timeline && Array.isArray(syncData.timeline)) {
+        adminTimeline = syncData.timeline;
         localStorage.setItem(STORAGE_KEYS.ADMIN_TIMELINE, JSON.stringify(syncData.timeline));
         if (typeof renderAdminTimelineList === 'function') renderAdminTimelineList();
       }
 
       // Synchronize FAQs
       if (syncData.faqs && Array.isArray(syncData.faqs)) {
+        adminFaqs = syncData.faqs;
         localStorage.setItem(STORAGE_KEYS.ADMIN_FAQS, JSON.stringify(syncData.faqs));
         if (typeof renderAdminFaqsList === 'function') renderAdminFaqsList();
       }
@@ -1254,229 +1256,7 @@ const ADMIN_EMAILS_LIST = [
   'fahim.cuet.me20@gmail.com'
 ];
 
-async function verifyAdminPassword(inputPass) {
-  if (!inputPass) return false;
-  const hash = await sha256(inputPass);
-  const storedHash = localStorage.getItem(STORAGE_KEYS.ADMIN_PWD_HASH) || DEFAULT_ADMIN_PWD_HASH;
-  return hash === storedHash;
-}
-
-function isAdmin(user) {
-  if (!user) return false;
-  if (user.role === 'admin') return true;
-  if (user.email && ADMIN_EMAILS_LIST.includes(user.email.toLowerCase().trim())) return true;
-  return false;
-}
-
-function updateAuthUI() {
-  const container = document.getElementById('authHeaderContainer');
-  const adminTab = document.getElementById('nav-tab-admin');
-  const mobileAdminBtn = document.getElementById('mobileNavAdminBtn');
-  const mobileNavAdmin = document.getElementById('mobileNav-admin');
-  const editContactBtn = document.getElementById('editContactBtn');
-  const dict = I18N[currentLang] || I18N.en;
-
-  if (!container) return;
-
-  const isUserAdmin = currentUser && isAdmin(currentUser);
-
-  if (editContactBtn) {
-    editContactBtn.classList.toggle('hidden', !isUserAdmin);
-  }
-
-  const adminHomeEditBanner = document.getElementById('adminHomeEditBanner');
-  if (adminHomeEditBanner) {
-    adminHomeEditBanner.classList.toggle('hidden', !isUserAdmin);
-  }
-
-  if (adminTab) adminTab.classList.toggle('hidden', !isUserAdmin);
-  if (mobileAdminBtn) mobileAdminBtn.classList.toggle('hidden', !isUserAdmin);
-  if (mobileNavAdmin) mobileNavAdmin.classList.toggle('hidden', !isUserAdmin);
-
-  if (currentUser) {
-    container.innerHTML = `
-      <div class="flex items-center gap-2 bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-1 text-xs shadow-sm">
-        <div class="w-6 h-6 rounded-full ${isUserAdmin ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-indigo-600 text-white'} flex items-center justify-center font-bold text-[10px]">
-          ${isUserAdmin ? '👑' : (currentUser.name || 'U').charAt(0).toUpperCase()}
-        </div>
-        <div class="hidden sm:block text-left leading-tight">
-          <div class="font-bold text-white max-w-[120px] truncate">${currentUser.name || 'Student'}</div>
-          <div class="text-[10px] ${isUserAdmin ? 'text-amber-400 font-semibold' : 'text-slate-400'}">
-            ${isUserAdmin ? dict.role_admin : dict.role_student}
-          </div>
-        </div>
-        <button onclick="handleLogout()" title="${dict.btn_logout}" class="ml-1 text-slate-400 hover:text-red-400 p-1 rounded transition-colors flex items-center gap-1">
-          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-          <span class="hidden md:inline">${dict.btn_logout}</span>
-        </button>
-      </div>
-    `;
-  } else {
-    container.innerHTML = `
-      <button onclick="openAuthModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 text-xs font-semibold transition-all shadow-sm">
-        <i data-lucide="user" class="w-3.5 h-3.5 text-indigo-400"></i>
-        <span>${dict.btn_signin_nav}</span>
-      </button>
-    `;
-  }
-
-  lucide.createIcons();
-}
-
-function openAuthModal() {
-  const dialog = document.getElementById('authDialog');
-  if (dialog) {
-    dialog.showModal();
-    lucide.createIcons();
-  }
-}
-
-function closeAuthModal() {
-  const dialog = document.getElementById('authDialog');
-  if (dialog) dialog.close();
-}
-
-function handleGoogleSignInPrompt() {
-  closeAuthModal();
-  const gDialog = document.getElementById('googleSignInDialog');
-  if (gDialog) {
-    const adminPassField = document.getElementById('googleAdminPassField');
-    if (adminPassField) adminPassField.classList.add('hidden');
-    const emailInput = document.getElementById('googleCustomEmailInput');
-    if (emailInput) emailInput.value = '';
-    gDialog.showModal();
-    lucide.createIcons();
-  }
-}
-
-function closeGoogleSignInModal() {
-  const gDialog = document.getElementById('googleSignInDialog');
-  if (gDialog) gDialog.close();
-}
-
-async function handleGoogleCustomAccount(e) {
-  if (e && e.preventDefault) e.preventDefault();
-  const emailInput = document.getElementById('googleCustomEmailInput');
-  const passInput = document.getElementById('googleAdminPassInput');
-  const adminPassField = document.getElementById('googleAdminPassField');
-  const email = (emailInput?.value || '').trim();
-  const pass = (passInput?.value || '').trim();
-
-  if (!email) {
-    showToast(currentLang === 'en' ? 'Please enter your Google email' : 'আপনার গুগল ইমেইলটি লিখুন');
-    return;
-  }
-
-  const isAdminEmail = ADMIN_EMAILS_LIST.includes(email.toLowerCase());
-
-  if (isAdminEmail) {
-    if (!pass) {
-      if (adminPassField) {
-        adminPassField.classList.remove('hidden');
-        if (passInput) passInput.focus();
-      }
-      showToast(currentLang === 'en' ? 'Admin email recognized. Please enter Admin Password.' : 'অ্যাডমিন ইমেইল শনাক্ত হয়েছে। পাসওয়ার্ড দিন।');
-      return;
-    }
-
-    const isValid = await verifyAdminPassword(pass);
-    if (isValid) {
-      // Attempt backend session authentication if server is reachable
-      try {
-        fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pass })
-        }).then(res => res.json()).then(data => {
-          if (data && data.token) {
-            localStorage.setItem('classroom_admin_token', data.token);
-            console.log('✓ Admin authenticated with server backend');
-          }
-        }).catch(err => console.log('Server login note:', err));
-      } catch(e) {}
-      currentUser = {
-        name: 'Fahim Niloy (Admin)',
-        email: email,
-        role: 'admin',
-        method: 'google'
-      };
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-      updateAuthUI();
-      closeGoogleSignInModal();
-      showToast(currentLang === 'en' ? 'Welcome Admin! Signed in successfully.' : 'স্বাগতম অ্যাডমিন! গুগল দিয়ে সাইন ইন সফল হয়েছে।');
-    } else {
-      showToast(currentLang === 'en' ? 'Incorrect admin password.' : 'ভুল অ্যাডমিন পাসওয়ার্ড। আবার চেষ্টা করুন।');
-    }
-  } else {
-    // Normal student signing in with their own Google email
-    const displayName = email.split('@')[0];
-    currentUser = {
-      name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
-      email: email,
-      role: 'student',
-      method: 'google'
-    };
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-    updateAuthUI();
-    closeGoogleSignInModal();
-    showToast(currentLang === 'en' ? `Signed in as ${currentUser.name}` : `${currentUser.name} হিসেবে সাইন ইন সম্পন্ন`);
-  }
-}
-
-async function handleStandardAuthSubmit(e) {
-  if (e && e.preventDefault) e.preventDefault();
-  const idInput = document.getElementById('authEmailInput');
-  const passInput = document.getElementById('authPasswordInput');
-  const id = (idInput?.value || '').trim();
-  const pass = (passInput?.value || '').trim();
-
-  if (!id) {
-    showToast(currentLang === 'en' ? 'Please enter your email or Student ID' : 'ইমেইল বা স্টুডেন্ট আইডি লিখুন');
-    return;
-  }
-
-  const isAdminUser = ADMIN_EMAILS_LIST.includes(id.toLowerCase()) || id === '2003063';
-
-  if (isAdminUser) {
-    const isValid = await verifyAdminPassword(pass);
-    if (isValid) {
-      currentUser = {
-        name: 'Fahim Niloy (Admin)',
-        email: 'fahim.cuet.me20@gmail.com',
-        role: 'admin',
-        method: 'email_password'
-      };
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-      updateAuthUI();
-      closeAuthModal();
-      showToast(currentLang === 'en' ? 'Admin credentials verified. Welcome Fahim Niloy!' : 'অ্যাডমিন ভেরিফিকেশন সফল! স্বাগতম ফাহিম নিলয়।');
-    } else {
-      showToast(currentLang === 'en' ? 'Incorrect admin password. Please try again.' : 'ভুল অ্যাডমিন পাসওয়ার্ড। অনুগ্রহ করে সঠিক পাসওয়ার্ড দিন।');
-    }
-  } else {
-    // Standard Student Sign In
-    const isRollOnly = /^\d+$/.test(id);
-    const studentName = isRollOnly ? `Student (${id})` : (id.split('@')[0]);
-    currentUser = {
-      name: studentName,
-      email: isRollOnly ? `u${id}@student.cuet.ac.bd` : id,
-      role: 'student',
-      method: 'email_password'
-    };
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
-    updateAuthUI();
-    closeAuthModal();
-    showToast(currentLang === 'en' ? `Signed in as ${currentUser.name}` : `${currentUser.name} হিসেবে সফলভাবে সাইন ইন সম্পন্ন`);
-  }
-}
-
-function handleLogout() {
-  currentUser = null;
-  localStorage.removeItem(STORAGE_KEYS.USER);
-  updateAuthUI();
-  if (currentTab === 'admin') switchTab('home');
-  showToast(currentLang === 'en' ? 'Signed out successfully' : 'সফলভাবে লগআউট করা হয়েছে');
-}
+// Authentication is provided by hub-fixes.js and requires a verified backend session.
 
 function openUpgradeModal() {
   openAuthModal();
@@ -1532,7 +1312,7 @@ function renderHome() {
 }
 
 function loadCustomContacts() {
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONTACT) || '{}');
+  const saved = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.CONTACT), '{}');
   // Auto-migrate any old netlify URL or old email in localStorage
   if (saved.netlify && saved.netlify.includes('fahim-classroom-archive')) {
     saved.netlify = 'https://mohammad-fahim-ahmed.netlify.app/';
@@ -1571,7 +1351,7 @@ function openEditContactModal() {
     openAuthModal();
     return;
   }
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONTACT) || '{}');
+  const saved = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.CONTACT), '{}');
   document.getElementById('editEmailInput').value = saved.email || 'fahimcuet63@gmail.com';
   document.getElementById('editEmailSecondaryInput').value = saved.secondary_email || 'fahimniloy2314@gmail.com';
   document.getElementById('editPhoneInput').value = saved.phone || '+880 1850-162261';
@@ -2008,7 +1788,7 @@ function renderExplorer() {
     const allFiles = getAllFlatFiles();
     const filtered = allFiles.filter(f => {
       if (explorerState.selectedCategory !== 'ALL' && f.category !== explorerState.selectedCategory) return false;
-      const target = `${f.name} ${f.course} ${f.term_code} ${f.category}`.toLowerCase();
+      const target = `${HubCore.html(f.name)} ${f.course} ${f.term_code} ${f.category}`.toLowerCase();
       return searchQuery.split(/\s+/).every(token => target.includes(token));
     });
     if (countBadge) countBadge.textContent = filtered.length;
@@ -2294,8 +2074,8 @@ function renderFileList(files, container) {
               <i data-lucide="${iconName}" class="w-5 h-5"></i>
             </div>
             <div class="overflow-hidden">
-              <h4 class="text-sm font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors line-clamp-2" title="${f.name}">
-                ${f.name}
+              <h4 class="text-sm font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors line-clamp-2" title="${HubCore.html(f.name)}">
+                ${HubCore.html(f.name)}
               </h4>
               <p class="text-[11px] text-slate-400 truncate mt-0.5">
                 ${f.course} ${f.subfolder ? `<span class="text-slate-500">📁 ${f.subfolder}</span>` : ''}
@@ -2443,22 +2223,9 @@ function closePdfViewer() {
 }
 
 async function openFileLocally(encPath) {
-  if (!isLocalHost()) {
-    showToast(currentLang === 'en' ? 'Local desktop app launch is only available on PC localhost. Use Drive preview.' : 'লোকাল পিসিতে ওপেন করার অপশনটি শুধুমাত্র লোকালহোস্টে প্রযোজ্য। অনলাইনে ড্রাইভ ভিউয়ার ব্যবহার করুন।');
-    return;
-  }
-  const path = decodeURIComponent(encPath);
-  try {
-    const res = await fetch(`/api/open-local?path=${encodeURIComponent(path)}`);
-    const data = await res.json();
-    if (data.success) {
-      showToast(currentLang === 'en' ? 'Opened in Windows default application!' : 'কম্পিউটারের অ্যাপে খোলা হয়েছে!');
-    } else {
-      showToast(`Error: ${data.error || 'Failed to open'}`);
-    }
-  } catch (err) {
-    showToast(currentLang === 'en' ? 'Local desktop server not connected. Use browser preview.' : 'লোকাল সার্ভার চালু নেই। প্রিভিউ ব্যবহার করুন।');
-  }
+  const path = decodeURIComponent(encPath || '');
+  if (!isLocalHost()) { showToast('Use the Google Drive preview for this resource.'); return; }
+  window.open('/api/file?path='+encodeURIComponent(path), '_blank', 'noopener,noreferrer');
 }
 
 function openCurrentFileLocally() {
@@ -2469,12 +2236,8 @@ function openCurrentFileLocally() {
    11. STUDENT RESOURCE SUBMISSION & ADMIN REVIEW QUEUE
    ========================================================================= */
 function openSubmitResourceModal() {
-  if (!currentUser) {
-    showToast(currentLang === 'en' ? 'Please sign in first to share a resource' : 'রিসোর্স শেয়ার করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন');
-    openAuthModal();
-    return;
-  }
-  document.getElementById('contribAuthor').value = currentUser.name || '';
+
+  document.getElementById('contribAuthor').value = currentUser?.name || '';
   document.getElementById('submitResourceDialog').showModal();
   lucide.createIcons();
 }
@@ -2482,168 +2245,19 @@ function closeSubmitResourceModal() {
   document.getElementById('submitResourceDialog').close();
 }
 
-function handleResourceSubmission(e) {
-  e.preventDefault();
-  const title = document.getElementById('contribTitle').value.trim();
-  const term = document.getElementById('contribTerm').value;
-  const category = document.getElementById('contribCategory').value;
-  const course = document.getElementById('contribCourse').value.trim();
-  const url = document.getElementById('contribUrl').value.trim();
-  const author = document.getElementById('contribAuthor').value.trim();
+async function handleResourceSubmission(e) { return Hub.submitResource(e); }
 
-  const newResource = {
-    id: `contrib_${Date.now()}`,
-    name: title,
-    term_code: term,
-    course: course,
-    category: category,
-    url: url,
-    author: author,
-    size_str: 'Cloud Resource',
-    ext: '.pdf',
-    submitted_at: new Date().toISOString()
-  };
-
-  pendingResources.push(newResource);
-  localStorage.setItem(STORAGE_KEYS.PENDING_RESOURCES, JSON.stringify(pendingResources));
-
-  closeSubmitResourceModal();
-  renderAdminQueue();
-  showToast(currentLang === 'en' 
-    ? 'Resource submitted! Fahim Niloy will review it shortly.' 
-    : 'রিসোর্স জমা হয়েছে! ফাহিম নিলয় রিভিউ করে দ্রুত অনুমোদন করবেন।'
-  );
-}
-
-/* =========================================================================
-   11. VISITOR COUNTER & FEEDBACK SYSTEM
-   ========================================================================= */
 async function initVisitorCount() {
-  let visits = parseInt(localStorage.getItem(STORAGE_KEYS.VISITS) || '1420', 10);
-  
+  let text = 'Unavailable';
   try {
-    const res = await fetch('https://api.counterapi.dev/v1/classroom-hub-cuet/visits/up');
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.count) {
-        visits = data.count;
-      }
-    } else {
-      visits += 1;
-    }
-  } catch (e) {
-    visits += 1;
-  }
-  localStorage.setItem(STORAGE_KEYS.VISITS, visits.toString());
-
-  const adminVisitsEl = document.getElementById('adminVisitsCount');
-  if (adminVisitsEl) adminVisitsEl.textContent = visits.toLocaleString();
-  const footerVisitsEl = document.getElementById('footerVisitsCount');
-  if (footerVisitsEl) footerVisitsEl.textContent = visits.toLocaleString();
+    const response = await fetch('https://api.counterapi.dev/v1/classroom-hub-cuet/visits/up', {signal:AbortSignal.timeout(8000)});
+    if (response.ok) { const data = await response.json(); if (Number.isFinite(data.count)) text = data.count.toLocaleString(); }
+  } catch {}
+  for (const id of ['adminVisitsCount','footerVisitsCount']) { const el = document.getElementById(id); if (el) el.textContent = text; }
 }
 
-async function handleFeedbackSubmit(e) {
-  if (e && e.preventDefault) e.preventDefault();
-  const name = document.getElementById('fbName')?.value.trim() || 'Anonymous Student';
-  const roll = document.getElementById('fbRoll')?.value.trim() || '';
-  const contact = document.getElementById('fbContact')?.value.trim() || '';
-  const category = document.getElementById('fbCategory')?.value || 'General Feedback';
-  const message = document.getElementById('fbMessage')?.value.trim();
-  const rating = document.querySelector('input[name="fbRating"]:checked')?.value || '5';
+async function handleFeedbackSubmit(e) { return Hub.submitFeedback(e); }
 
-  if (!message) {
-    showToast(currentLang === 'en' ? 'Please enter your message' : 'অনুগ্রহ করে বার্তা লিখুন');
-    return;
-  }
-
-  let isDeliveredToServer = false;
-  let subId = 'SUB-' + Math.floor(Date.now() / 1000) + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-
-  // Dispatch to ClassroomHub server backend /api/submissions
-  try {
-    const srvResp = await fetch('/api/submissions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: category,
-        title: `${category} from ${name}`,
-        description: message,
-        studentName: name,
-        studentEmail: contact.includes('@') ? contact : '',
-        studentPhone: !contact.includes('@') && contact ? contact : '',
-        rating: rating,
-        roll: roll || 'N/A'
-      })
-    });
-    if (srvResp.ok) {
-      const srvData = await srvResp.json();
-      if (srvData.receiptId) {
-        subId = srvData.receiptId;
-      }
-      isDeliveredToServer = true;
-    }
-  } catch (err) {
-    console.log('ClassroomHub server offline:', err);
-  }
-
-  const newFeedback = {
-    id: subId,
-    name,
-    roll,
-    category,
-    rating,
-    message,
-    timestamp: new Date().toLocaleString()
-  };
-
-  feedbacks.unshift(newFeedback);
-  localStorage.setItem(STORAGE_KEYS.FEEDBACKS, JSON.stringify(feedbacks));
-
-  // Asynchronously dispatch to real inbound webhook if configured by Admin
-  const webhookUrl = portalSettings.feedbackWebhookUrl || localStorage.getItem(STORAGE_KEYS.FEEDBACK_WEBHOOK);
-  if (webhookUrl) {
-    try {
-      fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newFeedback)
-      }).catch(err => console.warn('Inbound webhook dispatch failed:', err));
-    } catch(err) {}
-  }
-
-  // Populate and open confirmed feedback receipt modal with 1-click WhatsApp & Email forwarding
-  const receiptDialog = document.getElementById('feedbackReceiptDialog');
-  if (receiptDialog) {
-    const idEl = document.getElementById('receiptSummaryId');
-    const catEl = document.getElementById('receiptSummaryCategory');
-    const nameEl = document.getElementById('receiptSummaryName');
-    const snipEl = document.getElementById('receiptSummarySnippet');
-    const waLink = document.getElementById('receiptWhatsappLink');
-    const emailLink = document.getElementById('receiptEmailLink');
-
-    if (idEl) idEl.textContent = `Confirmed Receipt: #${subId}`;
-    if (catEl) catEl.textContent = `${category} • ⭐ ${rating}/5`;
-    if (nameEl) nameEl.textContent = `Student: ${name} (Roll: ${roll})`;
-    if (snipEl) snipEl.textContent = `"${message}"`;
-
-    const encodedMsg = encodeURIComponent(`[ClassroomHub Message #${subId}]\nCategory: ${category}\nFrom: ${name} (Roll: ${roll})\nRating: ${rating}/5\n\nMessage:\n${message}`);
-    if (waLink) waLink.href = `https://wa.me/8801850162261?text=${encodedMsg}`;
-    if (emailLink) emailLink.href = `mailto:fahimcuet63@gmail.com?subject=${encodeURIComponent(`ClassroomHub [${subId}] ${category} from ${name}`)}&body=${encodedMsg}`;
-
-    receiptDialog.showModal();
-    if (window.lucide) lucide.createIcons();
-  }
-
-  if (e && e.target && e.target.reset) e.target.reset();
-  showToast(currentLang === 'en' ? `Feedback confirmed! Receipt: #${subId}` : `বার্তাটি সফলভাবে নিশ্চিত হয়েছে! রিসিপ্ট আইডি: #${subId}`);
-  renderAdminWorkspace();
-  if (typeof initCvBuilder === 'function') initCvBuilder();
-}
-
-
-/* =========================================================================
-   11. LIVE HOMEPAGE NOTICE BOARD & ANNOUNCEMENTS BANNER
-   ========================================================================= */
 function renderHomeNotices() {
   const container = document.getElementById('homeNoticeContainer');
   const subpanelContainer = document.getElementById('homeNoticesContainer');
@@ -2687,8 +2301,8 @@ function renderHomeNotices() {
               <span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-300 font-semibold">${n.term || 'All Semesters'}</span>
               <span class="text-[11px] text-slate-400">• ${n.date || 'Notice'}</span>
             </div>
-            <h4 class="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">${n.title}</h4>
-            <p class="text-xs text-slate-300 leading-relaxed">${n.message}</p>
+            <h4 class="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">${HubCore.html(n.title)}</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">${HubCore.html(n.message)}</p>
           </div>
           ${n.link ? `
             <div class="flex-shrink-0 pl-2 sm:pl-0">
@@ -2847,6 +2461,8 @@ function renderAdminWorkspace() {
   const adminTotalFiles = document.getElementById('adminTotalFiles');
   const adminPendingCount = document.getElementById('adminPendingCount');
   const adminPendingBadge = document.getElementById('adminPendingBadge');
+  const headerBadge = document.getElementById('adminPendingHeaderBadge');
+  if (headerBadge) headerBadge.textContent = pendingResources.length;
   const adminFeedbackCount = document.getElementById('adminFeedbackCount');
   const adminFeedbackBadge = document.getElementById('adminFeedbackBadge');
 
@@ -2932,7 +2548,7 @@ function approveSubmission(idx) {
   renderAdminWorkspace();
   initCvBuilder();
   renderExplorer();
-  showToast(currentLang === 'en' ? 'Resource approved and published!' : 'রিসোর্স অনুমোদিত ও প্রকাশিত হয়েছে!');
+  showToast(currentLang === 'en' ? 'Approved in your draft. Use Publish Live to share with students.' : 'ড্রাফটে অনুমোদিত হয়েছে। শিক্ষার্থীদের জন্য Publish Live করুন।');
 }
 
 function rejectSubmission(idx) {
@@ -2971,7 +2587,7 @@ function renderAdminResources() {
   if (searchInput) {
     const tokens = searchInput.split(/\s+/);
     pool = pool.filter(f => {
-      const hay = `${f.name} ${f.course || ''} ${f.category || ''} ${f.term_code || ''}`.toLowerCase();
+      const hay = `${HubCore.html(f.name)} ${f.course || ''} ${f.category || ''} ${f.term_code || ''}`.toLowerCase();
       return tokens.every(tok => hay.includes(tok));
     });
   }
@@ -3255,10 +2871,10 @@ function renderAdminNotices() {
         <div class="flex items-center gap-2 text-xs">
           <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold">${n.badge}</span>
           <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">${n.term}</span>
-          <span class="text-slate-500">• ${n.date}</span>
+          <span class="text-slate-500">• ${HubCore.html(n.date)}</span>
         </div>
-        <h4 class="text-sm font-bold text-white">${n.title}</h4>
-        <p class="text-xs text-slate-300">${n.message}</p>
+        <h4 class="text-sm font-bold text-white">${HubCore.html(n.title)}</h4>
+        <p class="text-xs text-slate-300">${HubCore.html(n.message)}</p>
         ${n.link ? `<a href="${n.link}" target="_blank" class="text-[11px] text-teal-400 underline">${n.link}</a>` : ''}
       </div>
 
@@ -3342,15 +2958,15 @@ function saveNoticeItem(e) {
   closeNoticeModal();
   renderAdminNotices();
   renderHomeNotices();
-  showToast('Notice published live to portal!');
+  showToast('Notice saved in your draft. Use Publish Live to share it.');
 }
 
 function deleteAdminNotice(id) {
   const n = adminNotices.find(x => x.id === id);
   if (!n) return;
-  if (!confirm(`Delete notice "${n.title}"?`)) return;
+  if (!confirm(`Delete notice "${HubCore.html(n.title)}"?`)) return;
 
-  createRevisionSnapshot(`Delete Notice: ${n.title}`);
+  createRevisionSnapshot(`Delete Notice: ${HubCore.html(n.title)}`);
   adminNotices = adminNotices.filter(x => x.id !== id);
   localStorage.setItem(STORAGE_KEYS.ADMIN_NOTICES, JSON.stringify(adminNotices));
   logAdminAction('Deleted Notice', n.title);
@@ -3763,9 +3379,9 @@ function renderAdminAudit() {
         <div class="text-[10px] text-slate-500 mt-0.5">${total} total resources scanned</div>
       </div>
       <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
-        <div class="text-[11px] text-slate-400">Verified Drive Links</div>
+        <div class="text-[11px] text-slate-400">Resources with a link</div>
         <div class="text-2xl font-bold text-indigo-400 mt-1">${total - missingLinks}</div>
-        <div class="text-[10px] text-slate-500 mt-0.5">Ready for 1-click preview</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">Drive permissions require a separate live check</div>
       </div>
       <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
         <div class="text-[11px] text-slate-400">Curated Video Tutorials</div>
@@ -3786,21 +3402,9 @@ function renderAdminAudit() {
       </h4>
       <div class="text-xs text-slate-300 space-y-1">
         <div class="flex items-center justify-between py-1 border-b border-slate-800">
-          <span>All 3,896 Undergraduate Course Files Indexed</span>
-          <span class="text-emerald-400 font-bold">✓ Passed</span>
+          <span>Resources currently indexed</span><span>${allFiles.length}</span>
         </div>
-        <div class="flex items-center justify-between py-1 border-b border-slate-800">
-          <span>Official CUET Undergraduate Academic Ordinance & Grading Rules</span>
-          <span class="text-emerald-400 font-bold">✓ Verified</span>
-        </div>
-        <div class="flex items-center justify-between py-1 border-b border-slate-800">
-          <span>Bilingual Translation Localization (EN & BN)</span>
-          <span class="text-emerald-400 font-bold">✓ Active</span>
-        </div>
-        <div class="flex items-center justify-between py-1">
-          <span>Google Drive Direct View & Download Protocol</span>
-          <span class="text-emerald-400 font-bold">✓ Enabled</span>
-        </div>
+        <p>These are inventory checks. They do not certify Google Drive access, official curriculum accuracy, external services or a completed end-to-end audit.</p>
       </div>
     </div>
   `;
@@ -3809,116 +3413,9 @@ function renderAdminAudit() {
 }
 
 /* 10. 1-Click JSON Backup & Restore */
-function exportJsonBackup() {
-  const backup = {
-    app: 'ClassroomHub',
-    version: '3.0.0',
-    exportedAt: new Date().toISOString(),
-    author: 'Fahim Niloy (CUET ME \'20, Roll: 2003063)',
-    communityResources,
-    adminNotices,
-    adminVideos,
-    adminTimeline,
-    adminHiddenItems,
-    adminFeaturedItems,
-    adminFaqs,
-    adminRoutine,
-    portalSettings,
-    feedbacks,
-    contacts: JSON.parse(localStorage.getItem(STORAGE_KEYS.CONTACT) || '{}'),
-    progress: JSON.parse(localStorage.getItem(STORAGE_KEYS.PROGRESS) || '{}')
-  };
+function exportJsonBackup() { return Hub.exportBackup(); }
 
-  const jsonStr = JSON.stringify(backup, null, 2);
-  const blob = new Blob([jsonStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const dateStr = new Date().toISOString().split('T')[0];
-  a.download = `classroomhub-full-backup-${dateStr}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  logAdminAction('Exported Backup', `Backup file created: classroomhub-full-backup-${dateStr}.json`);
-  showToast('Complete Portal Backup (.json) downloaded successfully!');
-}
-
-function handleBackupFileSelected(e) {
-  const file = e.target.files?.[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    try {
-      const data = JSON.parse(evt.target.result);
-      if (!data.app && !data.communityResources && !data.adminNotices) {
-        throw new Error('Invalid ClassroomHub backup file structure.');
-      }
-
-      if (!confirm(`Restore portal from backup dated ${data.exportedAt || 'Unknown'}? An automatic snapshot of current data will be created.`)) {
-        return;
-      }
-
-      createRevisionSnapshot('Pre-import backup snapshot');
-
-      if (Array.isArray(data.communityResources)) {
-        communityResources = data.communityResources;
-        localStorage.setItem(STORAGE_KEYS.COMMUNITY_RESOURCES, JSON.stringify(communityResources));
-      }
-      if (Array.isArray(data.adminNotices)) {
-        adminNotices = data.adminNotices;
-        localStorage.setItem(STORAGE_KEYS.ADMIN_NOTICES, JSON.stringify(adminNotices));
-      }
-      if (Array.isArray(data.adminVideos)) {
-        adminVideos = data.adminVideos;
-        localStorage.setItem(STORAGE_KEYS.ADMIN_VIDEOS, JSON.stringify(adminVideos));
-      }
-      if (Array.isArray(data.adminTimeline)) {
-        adminTimeline = data.adminTimeline;
-        localStorage.setItem(STORAGE_KEYS.ADMIN_TIMELINE, JSON.stringify(adminTimeline));
-      }
-      if (Array.isArray(data.adminHiddenItems)) {
-        adminHiddenItems = data.adminHiddenItems;
-        localStorage.setItem(STORAGE_KEYS.ADMIN_HIDDEN, JSON.stringify(adminHiddenItems));
-      }
-      if (Array.isArray(data.adminFeaturedItems)) {
-        adminFeaturedItems = data.adminFeaturedItems;
-        localStorage.setItem(STORAGE_KEYS.ADMIN_FEATURED, JSON.stringify(adminFeaturedItems));
-      }
-      if (Array.isArray(data.adminFaqs)) {
-        adminFaqs = data.adminFaqs;
-        localStorage.setItem(STORAGE_KEYS.ADMIN_FAQS, JSON.stringify(adminFaqs));
-      }
-      if (data.adminRoutine && typeof data.adminRoutine === 'object') {
-        adminRoutine = data.adminRoutine;
-        localStorage.setItem(STORAGE_KEYS.ADMIN_ROUTINE, JSON.stringify(adminRoutine));
-      }
-      if (data.portalSettings && typeof data.portalSettings === 'object') {
-        portalSettings = data.portalSettings;
-        localStorage.setItem(STORAGE_KEYS.PORTAL_SETTINGS, JSON.stringify(portalSettings));
-      }
-      if (data.contacts) {
-        localStorage.setItem(STORAGE_KEYS.CONTACT, JSON.stringify(data.contacts));
-        loadCustomContacts();
-        applyPortalSettings();
-        updateAiKeyStatusBadge();
-      }
-
-      logAdminAction('Restored Backup', `Loaded file: ${file.name}`);
-      renderAdminWorkspace();
-  initCvBuilder();
-      renderExplorer();
-      renderHomeNotices();
-      applyPortalSettings();
-      showToast('Portal restored successfully from backup!');
-    } catch (err) {
-      alert('Failed to parse backup file: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-}
+function handleBackupFileSelected(e) { return Hub.importBackup(e); }
 
 function renderAdminActivityLog() {
   const container = document.getElementById('adminActivityLogList');
@@ -3941,45 +3438,7 @@ function renderAdminActivityLog() {
 }
 
 /* 11. Feedback Inbox CMS */
-function renderAdminFeedbacks() {
-  const list = document.getElementById('adminFeedbackList');
-  if (!list) return;
-
-  if (feedbacks.length === 0) {
-    list.innerHTML = `
-      <div class="p-8 rounded-2xl bg-slate-950 border border-slate-800 text-center space-y-2">
-        <i data-lucide="message-square" class="w-8 h-8 text-slate-500 mx-auto"></i>
-        <h4 class="text-sm font-semibold text-slate-300">No Feedback Yet</h4>
-        <p class="text-xs text-slate-500">Student feedback and course requests will appear here.</p>
-      </div>
-    `;
-    lucide.createIcons();
-    return;
-  }
-
-  list.innerHTML = feedbacks.map((fb, idx) => `
-    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[10px] font-semibold">${fb.category}</span>
-          <span class="text-amber-400 text-xs">${'★'.repeat(parseInt(fb.rating || 5, 10))}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-[10px] text-slate-500">${fb.timestamp}</span>
-          <button onclick="deleteFeedback(${idx})" title="Delete Feedback" class="text-slate-400 hover:text-red-400 p-1 transition-colors">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-          </button>
-        </div>
-      </div>
-      <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">${fb.message}</p>
-      <div class="text-[11px] text-slate-400 pt-1 border-t border-slate-800/80 flex items-center justify-between">
-        <span>From: <strong class="text-white">${fb.name}</strong> (Roll: ${fb.roll})</span>
-      </div>
-    </div>
-  `).join('');
-
-  lucide.createIcons();
-}
+function renderAdminFeedbacks() { return Hub.inbox(); }
 
 function deleteFeedback(idx) {
   feedbacks.splice(idx, 1);
@@ -4063,14 +3522,7 @@ function toggleCourseBranch(courseName) {
 }
 
 function toggleMilestone(courseName, milestoneKey, isDone) {
-  if (!currentUser) {
-    showToast(currentLang === 'en' 
-      ? 'Please sign in to save your progression and track your study milestones.' 
-      : 'স্টাডি মাইলস্টোন ও প্রোগ্রেস সেভ করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
-    openAuthModal();
-    renderTracker();
-    return;
-  }
+
   if (!courseProgress[courseName] || typeof courseProgress[courseName] !== 'object') {
     courseProgress[courseName] = {};
   }
@@ -4084,13 +3536,7 @@ function toggleMilestone(courseName, milestoneKey, isDone) {
 }
 
 function markCourseAllDone(courseName) {
-  if (!currentUser) {
-    showToast(currentLang === 'en' 
-      ? 'Please sign in to update course progression.' 
-      : 'কোর্সের প্রোগ্রেস পরিবর্তন করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
-    openAuthModal();
-    return;
-  }
+
   if (!courseProgress[courseName] || typeof courseProgress[courseName] !== 'object') {
     courseProgress[courseName] = {};
   }
@@ -4103,13 +3549,7 @@ function markCourseAllDone(courseName) {
 }
 
 function resetCourseProgress(courseName) {
-  if (!currentUser) {
-    showToast(currentLang === 'en' 
-      ? 'Please sign in to manage course progression.' 
-      : 'কোর্সের প্রোগ্রেস রিসেট করতে অনুগ্রহ করে প্রথমে সাইন ইন করুন।');
-    openAuthModal();
-    return;
-  }
+
   delete courseProgress[courseName];
   localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(courseProgress));
   renderTracker();
@@ -4137,7 +3577,7 @@ function renderTracker() {
           <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200">
             <div class="min-w-0 pr-2">
               <div class="text-[10px] text-slate-400 font-mono">${f.term_code} • ${f.course}</div>
-              <div class="text-xs font-semibold text-white truncate max-w-xs">${f.name}</div>
+              <div class="text-xs font-semibold text-white truncate max-w-xs">${HubCore.html(f.name)}</div>
             </div>
             <div class="flex items-center gap-1.5 flex-shrink-0">
               <a href="${f.drive_view_url || f.url || '#'}" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-semibold flex items-center gap-1">
@@ -4554,67 +3994,6 @@ const ME_KNOWLEDGE_BASE = {
 /* =========================================================================
    13. SMART AI STUDY COMPANION & VAULT SEARCH BOT
    ========================================================================= */
-function searchVaultFiles(query, limit = 4) {
-  if (!query) return [];
-  const cleanTerms = query.toLowerCase()
-    .replace(/[^\w\s\u0980-\u09FF]/gi, ' ')
-    .split(/\s+/)
-    .filter(t => t.length > 1);
-
-  if (cleanTerms.length === 0) return [];
-  const results = [];
-
-  // 1. Search in indexed dataset
-  if (appData && appData.terms) {
-    for (const term of appData.terms) {
-      if (!term.courses) continue;
-      for (const course of term.courses) {
-        if (!course.files) continue;
-        for (const file of course.files) {
-          const text = `${file.name} ${file.course || ''} ${file.term_code || ''} ${file.category || ''} ${file.subfolder || ''}`.toLowerCase();
-          let score = 0;
-          for (const t of cleanTerms) {
-            if (text.includes(t)) {
-              score += 2;
-              // Exact match bonus
-              if (file.name.toLowerCase().includes(t)) score += 3;
-              if ((file.course || '').toLowerCase().includes(t)) score += 4;
-            }
-          }
-          if (score > 0) {
-            results.push({ file, score });
-          }
-        }
-      }
-    }
-  }
-
-  // 2. Search in community & manually added resources
-  for (const file of communityResources) {
-    const text = `${file.name} ${file.course || ''} ${file.term_code || ''} ${file.category || ''}`.toLowerCase();
-    let score = 0;
-    for (const t of cleanTerms) {
-      if (text.includes(t)) score += 3;
-    }
-    if (score > 0) {
-      results.push({ file, score: score + 2 });
-    }
-  }
-
-  results.sort((a, b) => b.score - a.score);
-
-  const seen = new Set();
-  const deduped = [];
-  for (const r of results) {
-    const key = r.file.id || r.file.name;
-    if (!seen.has(key)) {
-      seen.add(key);
-      deduped.push(r.file);
-      if (deduped.length >= limit) break;
-    }
-  }
-  return deduped;
-}
 
 function askPresetPrompt(promptText) {
   const input = document.getElementById('aiInput') || document.getElementById('aiInputPrompt');
@@ -5322,7 +4701,7 @@ function savePortalSettingsFromForm() {
   portalSettings.card4Desc = getVal('cfgCard4Desc', portalSettings.card4Desc);
 
   // Sync to STORAGE_KEYS.CONTACT
-  const contactObj = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONTACT) || '{}');
+  const contactObj = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.CONTACT), '{}');
   contactObj.email = portalSettings.primaryEmail;
   contactObj.phone = portalSettings.phone;
   contactObj.netlify = portalSettings.portfolioUrl;
@@ -5381,11 +4760,11 @@ function updateAiKeyStatusBadge() {
       badge.className = 'px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-semibold flex items-center gap-1';
       badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Connected (Active)';
     }
-    if (statusText) statusText.textContent = 'Gemini 2.0 (Active)';
+    if (statusText) statusText.textContent = 'Gemini (Active)';
   } else {
     if (badge) {
       badge.className = 'px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] font-semibold flex items-center gap-1';
-      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Smart Offline Engine';
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Built-in reference search';
     }
     if (statusText) statusText.textContent = 'Gemini (Connect Key)';
   }
@@ -5458,9 +4837,9 @@ async function testGeminiKeyLive() {
 
   showToast('Gemini API সংযোগ পরীক্ষা করা হচ্ছে...');
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({
         contents: [{ parts: [{ text: 'Respond with the exact word: CONNECTED' }] }]
       })
@@ -5469,7 +4848,7 @@ async function testGeminiKeyLive() {
     if (res.ok) {
       const data = await res.json();
       const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      alert('✓ সাফল্য: Google Gemini 2.0 API সফলভাবে যুক্ত হয়েছে! রেসপন্স: ' + reply.trim());
+      alert('✓ সাফল্য: Google Gemini API সফলভাবে যুক্ত হয়েছে! রেসপন্স: ' + reply.trim());
       saveAiApiKeys();
     } else {
       const err = await res.text();
@@ -5483,7 +4862,7 @@ async function testGeminiKeyLive() {
 // --- CUSTOM CAMPUS FAQS & KNOWLEDGE INGESTION ---
 function getStoredFaqs() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_FAQS) || '[]');
+    return HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_FAQS), '[]');
   } catch {
     return [];
   }
@@ -6610,12 +5989,12 @@ if ('serviceWorker' in navigator) {
 
 /* =========================================================================
    EXPANSIVE GEMINI-QUALITY ENGINEERING & ACADEMIC KNOWLEDGE SOLVER
-   (Integrated with Direct Google Gemini 2.0 Live & OpenAI ChatGPT)
+   (Integrated with Direct Google Gemini Live & OpenAI ChatGPT)
    ========================================================================= */
 
 /* =========================================================================
    EXPANSIVE GEMINI-QUALITY ENGINEERING & ACADEMIC KNOWLEDGE SOLVER
-   (Integrated with Direct Google Gemini 2.0 Live & In-Place Studio)
+   (Integrated with Direct Google Gemini Live & In-Place Studio)
    ========================================================================= */
 
 let aiChatHistory = [];
@@ -6687,7 +6066,7 @@ function findRelevantVideos(query, limit = 1) {
     .filter(t => t.length > 2);
 
   const matches = [];
-  const allVideos = [...DEFAULT_VIDEO_LECTURES, ...(JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_VIDEOS) || '[]'))];
+  const allVideos = [...DEFAULT_VIDEO_LECTURES, ...(HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_VIDEOS), '[]'))];
 
   for (const v of allVideos) {
     const text = `${v.title} ${v.topic || ''} ${v.term || ''} ${v.course || ''} ${v.channel}`.toLowerCase();
@@ -7647,7 +7026,7 @@ int *p = &x; // p points to memory address of x</pre>
           <div>
             <div class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
               <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
-              <span>Want live generative reasoning from Google Gemini 2.0?</span>
+              <span>Want live generative reasoning from Google Gemini?</span>
             </div>
             <p class="text-[11px] text-slate-400 mt-0.5">Connect your free API key from Google AI Studio to unlock dynamic generative answers.</p>
           </div>
@@ -7834,7 +7213,7 @@ async function handleAiSubmit(e) {
   userDiv.className = 'flex items-start gap-3 justify-end';
   userDiv.innerHTML = `
     <div class="bg-indigo-600 rounded-2xl rounded-tr-none p-3.5 text-xs sm:text-sm text-white max-w-xl leading-relaxed shadow-md">
-      ${query}
+      ${HubCore.html(query)}
     </div>
     <div class="w-8 h-8 rounded-xl bg-slate-700 flex items-center justify-center flex-shrink-0 text-white shadow">
       <i data-lucide="user" class="w-4 h-4"></i>
@@ -7855,7 +7234,7 @@ async function handleAiSubmit(e) {
     <div class="ai-message-card bg-slate-800/80 rounded-2xl rounded-tl-none p-4 text-xs sm:text-sm text-slate-200 border border-slate-700/60 max-w-2xl leading-relaxed shadow-lg space-y-2">
       <div class="flex items-center gap-1.5 text-xs text-purple-400">
         <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
-        <span>${isBangla ? 'গুগল জেমিনি বিশ্লেষণ করছে...' : 'Google Gemini is reasoning...'}</span>
+        <span>${isBangla ? 'উত্তর প্রস্তুত হচ্ছে...' : 'Preparing a response…'}</span>
       </div>
     </div>
   `;
@@ -7908,7 +7287,7 @@ async function handleAiSubmit(e) {
                     <span class="text-slate-400 font-medium truncate">${f.course || ''}</span>
                     <span class="text-slate-500">• ${f.size_str || ''}</span>
                   </div>
-                  <div class="text-xs font-semibold text-white truncate max-w-xs sm:max-w-md">${f.name}</div>
+                  <div class="text-xs font-semibold text-white truncate max-w-xs sm:max-w-md">${HubCore.html(f.name)}</div>
                 </div>
                 <div class="flex items-center gap-1.5 flex-shrink-0">
                   <a href="${f.drive_view_url || f.url || '#'}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold flex items-center gap-1 shadow">
@@ -7974,7 +7353,7 @@ async function handleAiSubmit(e) {
         </button>
       </div>
       <div class="ai-prose space-y-2 leading-relaxed">
-        <p class="text-xs sm:text-sm text-slate-200 whitespace-pre-wrap">${customFaq.answer}</p>
+        <p class="text-xs sm:text-sm text-slate-200 whitespace-pre-wrap">${HubCore.html(customFaq.answer)}</p>
       </div>
       ${videoCardsHtml}
       ${vaultCardsHtml}
@@ -7986,7 +7365,7 @@ async function handleAiSubmit(e) {
     return;
   }
 
-  // --- STEP 2: LIVE GOOGLE GEMINI 2.0 API (DIRECT IN-PLACE CALL WITH TIMEOUT GUARD) ---
+  // --- STEP 2: LIVE GOOGLE GEMINI API (DIRECT IN-PLACE CALL WITH TIMEOUT GUARD) ---
   const geminiApiKey = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY) || portalSettings.geminiApiKey;
   if (geminiApiKey) {
     try {
@@ -8001,14 +7380,14 @@ async function handleAiSubmit(e) {
         subjectPromptContext = ` Current Academic Term: ${selectedCtx}. Courses in this semester: ${courses.map(c => c.code + ': ' + c.name).join(', ')}. When relevant, focus on topics from this curriculum.`;
       }
 
-      const sysInstruction = `You are Google Gemini 2.0 Flash embedded in ClassroomHub (created for CUET Mechanical Engineering by Fahim Niloy, Roll: 2003063). Answer in ${isBangla ? 'Bengali' : 'English'}. Be direct, mathematically precise, helpful, and polite. Always provide formulas in LaTeX math format ($...$ and $$...$$).${subjectPromptContext}`;
+      const sysInstruction = `You are Google Gemini Flash embedded in ClassroomHub (created for CUET Mechanical Engineering by Fahim Niloy, Roll: 2003063). Answer in ${isBangla ? 'Bengali' : 'English'}. Be direct, mathematically precise, helpful, and polite. Always provide formulas in LaTeX math format ($...$ and $$...$$).${subjectPromptContext}`;
 
       aiChatHistory.push({ role: 'user', parts: [{ text: query }] });
       const recentHistory = aiChatHistory.slice(-8);
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiApiKey },
         body: JSON.stringify({
           system_instruction: { parts: [{ text: sysInstruction }] },
           contents: recentHistory
@@ -8023,7 +7402,7 @@ async function handleAiSubmit(e) {
         if (geminiText) {
           aiChatHistory.push({ role: 'model', parts: [{ text: geminiText }] });
 
-          const formatted = geminiText
+          const formatted = HubCore.html(geminiText)
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\n\n/g, '<br><br>')
             .replace(/\n/g, '<br>');
@@ -8032,7 +7411,7 @@ async function handleAiSubmit(e) {
             <div class="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
               <span class="font-bold text-xs text-purple-300 flex items-center gap-1.5">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
-                <span>Google Gemini 2.0 Flash (Live AI)</span>
+                <span>Google Gemini Flash (Live AI)</span>
               </span>
               <button onclick="copyAiResponse(this)" class="px-2 py-0.5 rounded bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-[10px] flex items-center gap-1 transition-colors">
                 <i data-lucide="copy" class="w-3 h-3"></i> Copy
@@ -8086,7 +7465,7 @@ async function handleAiSubmit(e) {
         const data = await res.json();
         const gptText = data.choices?.[0]?.message?.content;
         if (gptText) {
-          const formatted = gptText
+          const formatted = HubCore.html(gptText)
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\n\n/g, '<br><br>')
             .replace(/\n/g, '<br>');
@@ -8190,11 +7569,10 @@ function clearAiChat() {
         <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed ai-prose shadow-lg">
           <div class="font-bold text-indigo-300 text-xs mb-1 flex items-center gap-1.5">
             <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
-            <span>Google Gemini 2.0 Studio (CUET ME Edition)</span>
+            <span>Classroom Hub Study Assistant</span>
           </div>
-          <p>
-            স্বাগতম! আমি গুগল জেমিনি ২.০ (Google Gemini 2.0) এআই স্টুডিও। চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং শিক্ষার্থীদের জন্য ক্লাসরুমহাবে সরাসরি যুক্ত। যেকোনো ইঞ্জিনিয়ারিং থিওরি, ডেরিভেশন, ফর্মুলা, পাওয়ার প্ল্যান্ট, ফ্লুইড মেকানিক্স, সলিড মেকানিক্স, বা আমাদের ভল্টের ৩,৮৯৬টি একাডেমিক ফাইলের যেকোনো নোটস ও প্রশ্নব্যাংক সম্পর্কে প্রশ্ন করুন।
-          </p>
+          <p>Study Assistant can help explain engineering concepts. Online answers require your own configured API key; otherwise it searches the built-in study reference. It can find indexed filenames, but it cannot read private Drive documents. Paste the relevant text and verify academic answers against your course materials.</p>
+
         </div>
       </div>
     `;
@@ -8217,7 +7595,7 @@ function showToast(msg) {
     toast.className = 'fixed top-20 right-6 z-50 bg-slate-900 border border-indigo-500/50 text-white text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-2xl transition-all duration-300 transform -translate-y-2 opacity-0 flex items-center gap-2';
     document.body.appendChild(toast);
   }
-  toast.innerHTML = `<i data-lucide="info" class="w-4 h-4 text-indigo-400"></i> <span>${msg}</span>`;
+  toast.innerHTML = `<i data-lucide="info" class="w-4 h-4 text-indigo-400"></i> <span>${HubCore.html(msg)}</span>`;
   lucide.createIcons();
   toast.classList.remove('-translate-y-2', 'opacity-0');
   setTimeout(() => toast.classList.add('-translate-y-2', 'opacity-0'), 3000);
@@ -8353,6 +7731,9 @@ function getMyPersonalRoutine() {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed && Array.isArray(parsed.entries)) {
+        if (parsed.timeSlots?.some(slot => /^01:30/.test(slot))) {
+          parsed.timeSlots = parsed.timeSlots.map(slot => slot.replace(/\b0([1-6]):/g, (_,h) => String(Number(h)+12)+':'));
+        }
         return parsed;
       }
     }
@@ -8417,29 +7798,7 @@ function setRoutineViewMode(view) {
   renderMyRoutineStudio();
 }
 
-function parseTimeToMinutes(timeStr) {
-  if (!timeStr) return 0;
-  const clean = timeStr.trim().toUpperCase();
-  const isPM = clean.includes('PM');
-  const isAM = clean.includes('AM');
-  const match = clean.match(/(\d{1,2})[:.](\d{2})/);
-  if (!match) return 0;
-  let hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
-  
-  if (isPM && hours < 12) {
-    hours += 12;
-  } else if (isAM && hours === 12) {
-    hours = 0;
-  } else if (!isPM && !isAM) {
-    // In daytime university schedules, hours 1 to 6 without AM/PM marker represent afternoon (13:00 to 18:00)
-    // whereas hours 7 to 12 represent morning (07:00 to 12:00) and 13 to 23 are already 24-hour afternoon/evening.
-    if (hours >= 1 && hours <= 6) {
-      hours += 12;
-    }
-  }
-  return hours * 60 + minutes;
-}
+function parseTimeToMinutes(timeStr) { const value = HubCore.minutes(timeStr); return Number.isFinite(value) ? value : 0; }
 
 function normalizeTimeTo24h(timeStr) {
   if (!timeStr) return '08:00';
@@ -8531,7 +7890,7 @@ function renderMyRoutineStudio() {
   if (secInp && !secInp.matches(':focus')) secInp.value = routine.section || '';
   if (batchInp && !batchInp.matches(':focus')) batchInp.value = routine.batch || '';
   if (titleDisplay) {
-    titleDisplay.textContent = `${routine.title || 'My Routine'} (${routine.semester || 'ME'} - ${routine.section || 'Sec A'})`;
+    titleDisplay.textContent = `${routine.title || 'My Routine'} (${HubCore.html(routine.semester || 'ME')} - ${routine.section || 'Sec A'})`;
   }
   if (badgeCount) badgeCount.textContent = routine.entries.length;
 
@@ -8596,7 +7955,7 @@ function renderMyRoutineStudio() {
 
   // B. Grid View (Desktop & Tablet Matrix)
   if (routineCurrentViewMode === 'grid') {
-    const timeSlots = routine.timeSlots || ['08:00 - 08:50', '08:50 - 09:40', '10:00 - 10:50', '10:50 - 11:40', '11:40 - 12:30', '01:30 - 02:20', '02:30 - 05:00'];
+    const timeSlots = routine.timeSlots || ['08:00 - 08:50', '08:50 - 09:40', '10:00 - 10:50', '10:50 - 11:40', '11:40 - 12:30', '13:30 - 14:20', '14:30 - 17:00'];
     
     outputContainer.innerHTML = `
       <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/90 shadow-sm">
@@ -8655,20 +8014,20 @@ function renderMyRoutineStudio() {
                                 </div>
                               ` : ''}
                               <div class="flex items-center justify-between gap-1">
-                                <span class="font-bold text-white text-[11px] truncate" title="${item.courseName}">${item.courseCode}</span>
+                                <span class="font-bold text-white text-[11px] truncate" title="${HubCore.html(item.courseName)}">${HubCore.html(item.courseCode)}</span>
                                 <div class="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 transition-opacity">
                                   <button onclick="openEditRoutineSlotModal('${item.id}')" class="p-1 hover:text-indigo-300 text-slate-400" title="Edit"><i data-lucide="pencil" class="w-2.5 h-2.5"></i></button>
                                   <button onclick="duplicateRoutineSlot('${item.id}')" class="p-1 hover:text-blue-300 text-slate-400" title="Duplicate"><i data-lucide="copy" class="w-2.5 h-2.5"></i></button>
                                   <button onclick="deletePersonalRoutineSlot('${item.id}')" class="p-1 hover:text-red-400 text-slate-400" title="Delete"><i data-lucide="trash-2" class="w-2.5 h-2.5"></i></button>
                                 </div>
                               </div>
-                              <div class="text-[10px] text-slate-300 truncate" title="${item.courseName}">${item.courseName}</div>
+                              <div class="text-[10px] text-slate-300 truncate" title="${HubCore.html(item.courseName)}">${HubCore.html(item.courseName)}</div>
                               <div class="flex items-center gap-1.5 text-[9px] text-slate-400 font-mono">
-                                <span class="text-blue-300 font-semibold">${item.startTime}-${item.endTime}</span>
-                                ${item.room ? `<span>• 🏢 ${item.room}</span>` : ''}
+                                <span class="text-blue-300 font-semibold">${HubCore.html(item.startTime)}-${HubCore.html(item.endTime)}</span>
+                                ${item.room ? `<span>• 🏢 ${HubCore.html(item.room)}</span>` : ''}
                               </div>
                               ${item.teacher ? `
-                                <div class="text-[9px] text-indigo-300 truncate" title="${item.teacher}">👨‍🏫 ${item.teacher}</div>
+                                <div class="text-[9px] text-indigo-300 truncate" title="${HubCore.html(item.teacher)}">👨‍🏫 ${HubCore.html(item.teacher)}</div>
                               ` : ''}
                             </div>
                           `;
@@ -8716,20 +8075,20 @@ function renderMyRoutineStudio() {
                   <div class="flex items-center gap-2">
                     <span class="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold flex items-center gap-1">
                       <i data-lucide="clock" class="w-3 h-3"></i>
-                      <span>${item.startTime} - ${item.endTime}</span>
+                      <span>${HubCore.html(item.startTime)} - ${HubCore.html(item.endTime)}</span>
                     </span>
                     ${item.room ? `
                       <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px] font-semibold flex items-center gap-1">
                         <i data-lucide="map-pin" class="w-3 h-3 text-red-400"></i>
-                        <span>${item.room}</span>
+                        <span>${HubCore.html(item.room)}</span>
                       </span>
                     ` : ''}
                   </div>
-                  <h4 class="text-xs sm:text-sm font-bold text-white">${item.courseCode}: ${item.courseName}</h4>
+                  <h4 class="text-xs sm:text-sm font-bold text-white">${HubCore.html(item.courseCode)}: ${HubCore.html(item.courseName)}</h4>
                   ${item.teacher ? `
                     <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
                       <i data-lucide="user" class="w-3 h-3 text-indigo-400"></i>
-                      <span>${item.teacher}</span>
+                      <span>${HubCore.html(item.teacher)}</span>
                     </div>
                   ` : ''}
                   ${item.notes ? `
@@ -8757,6 +8116,8 @@ function renderMyRoutineStudio() {
   }
 
   if (window.lucide) lucide.createIcons();
+  Hub.showRoutineWarnings(routine);
+
 }
 
 function setPersonalRoutineDay(day) {
@@ -8871,7 +8232,7 @@ function populateRoutineFacultyDropdown() {
   if (!sel || sel.options.length > 5) return;
   const faculty = getFacultyMembers();
   sel.innerHTML = '<option value="">-- Choose from CUET ME Faculty / Staff List --</option>' +
-    faculty.map(f => `<option value="${f.name} (${f.designation})">${f.name} — ${f.designation}</option>`).join('');
+    faculty.map(f => `<option value="${HubCore.html(f.name)} (${HubCore.html(f.designation)})">${HubCore.html(f.name)} — ${HubCore.html(f.designation)}</option>`).join('');
 }
 
 function handleRoutineSlotFormSubmit(e) {
@@ -9042,7 +8403,9 @@ function saveDaysAndTimesConfig() {
 
   const timeArea = document.getElementById('cfgTimeSlotsTextarea');
   if (timeArea && timeArea.value.trim()) {
-    routine.timeSlots = timeArea.value.split('\n').map(s => s.trim()).filter(Boolean);
+    const slots = timeArea.value.split('\n').map(s => s.trim()).filter(Boolean);
+    if (slots.length > 24 || slots.some(s => { const times=s.split(/\s*[-–]\s*/); return times.length!==2 || !Number.isFinite(HubCore.minutes(times[0])) || !Number.isFinite(HubCore.minutes(times[1])) || HubCore.minutes(times[1])<=HubCore.minutes(times[0]); })) { showToast('Use up to 24 valid time intervals in HH:mm - HH:mm format.'); return; }
+    routine.timeSlots = slots;
   }
 
   saveMyPersonalRoutine(routine);
@@ -9068,7 +8431,7 @@ function exportRoutineBackupJson() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `my_routine_backup_${routine.semester || 'ME'}_${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `my_routine_backup_${HubCore.html(routine.semester || 'ME')}_${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('রুটিন ব্যাকআপ JSON ফাইল ডাউনলোড হয়েছে!');
@@ -9132,7 +8495,7 @@ async function exportMyRoutineDocx() {
 
     const colDayW = 1600;
     const numSlots = timeSlots.length;
-    const slotW = Math.max(1200, Math.floor((15198 - colDayW) / numSlots));
+    const slotW = Math.floor((15198 - colDayW) / numSlots);
     const colWidths = [colDayW, ...timeSlots.map(() => slotW)];
 
     // Build Table Header
@@ -9229,7 +8592,7 @@ async function exportMyRoutineDocx() {
                 </w:p>
               `);
             }
-            const infoParts = [item.room ? `Room: ${item.room}` : '', item.teacher || ''].filter(Boolean);
+            const infoParts = [item.room ? `Room: ${HubCore.html(item.room)}` : '', item.teacher || ''].filter(Boolean);
             if (infoParts.length > 0) {
               pList.push(`
                 <w:p>
@@ -9384,103 +8747,10 @@ function escapeIcsText(str) {
     .replace(/\r?\n/g, '\\n');
 }
 
-function foldIcsLine(line) {
-  if (line.length <= 75) return line;
-  let res = '';
-  let remaining = line;
-  while (remaining.length > 75) {
-    res += remaining.slice(0, 75) + '\r\n ';
-    remaining = remaining.slice(75);
-  }
-  res += remaining;
-  return res;
-}
+function foldIcsLine(line) { return HubCore.foldIcs(line); }
 
-function exportRoutineIcs() {
-  const routine = getMyPersonalRoutine();
-  if (routine.entries.length === 0) {
-    showToast('রুটিনে কোনো ক্লাস নেই। আগে ক্লাস যোগ করুন।');
-    return;
-  }
+function exportRoutineIcs() { return Hub.exportCalendar(); }
 
-  const dayMap = {
-    'Sunday': { code: 'SU', idx: 0 },
-    'Monday': { code: 'MO', idx: 1 },
-    'Tuesday': { code: 'TU', idx: 2 },
-    'Wednesday': { code: 'WE', idx: 3 },
-    'Thursday': { code: 'TH', idx: 4 },
-    'Friday': { code: 'FR', idx: 5 },
-    'Saturday': { code: 'SA', idx: 6 }
-  };
-
-  let ics = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//ClassroomHub//CUET Student Routine Studio//EN',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    `X-WR-CALNAME:CUET Routine - ${routine.semester || 'ME'} ${routine.section || ''}`,
-    'X-WR-TIMEZONE:Asia/Dhaka'
-  ];
-
-  const now = new Date();
-  const stamp = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-
-  // Academic term reference: 16 weeks duration
-  // Start on 2026-10-18 (Sunday) and bound until 2027-02-28
-  const termStartYear = 2026;
-  const termStartMonth = 9; // October (0-indexed)
-  const termStartDay = 18;   // Sunday
-  const untilStr = '20270228T235959Z';
-
-  const pad = (n) => n < 10 ? '0' + n : n;
-
-  routine.entries.forEach(e => {
-    const dayInfo = dayMap[e.day] || { code: 'SU', idx: 0 };
-    const byDay = dayInfo.code;
-    const dayOffset = dayInfo.idx; // Days after Sunday Oct 18
-
-    const classDate = new Date(termStartYear, termStartMonth, termStartDay + dayOffset);
-    const yStr = classDate.getFullYear();
-    const mStr = pad(classDate.getMonth() + 1);
-    const dStr = pad(classDate.getDate());
-
-    const sMins = parseTimeToMinutes(e.startTime);
-    const eMins = parseTimeToMinutes(e.endTime) || (sMins + 50);
-    const sH = Math.floor(sMins / 60) % 24;
-    const sM = sMins % 60;
-    const eH = Math.floor(eMins / 60) % 24;
-    const eM = eMins % 60;
-
-    const timeStart = `${yStr}${mStr}${dStr}T${pad(sH)}${pad(sM)}00`;
-    const timeEnd = `${yStr}${mStr}${dStr}T${pad(eH)}${pad(eM)}00`;
-
-    ics.push('BEGIN:VEVENT');
-    ics.push(foldIcsLine(`UID:routine_${e.id || Date.now()}@classroomhub`));
-    ics.push(`DTSTAMP:${stamp}`);
-    ics.push(`DTSTART;TZID=Asia/Dhaka:${timeStart}`);
-    ics.push(`DTEND;TZID=Asia/Dhaka:${timeEnd}`);
-    ics.push(`RRULE:FREQ=WEEKLY;UNTIL=${untilStr};BYDAY=${byDay}`);
-    ics.push(foldIcsLine(`SUMMARY:${escapeIcsText(e.courseCode + (e.courseName ? ' - ' + e.courseName : ''))}`));
-    ics.push(foldIcsLine(`LOCATION:${escapeIcsText(e.room ? 'Room ' + e.room + ', CUET Mechanical' : 'CUET ME')}`));
-    const desc = `Instructor: ${e.teacher || 'N/A'}${e.notes ? '\nNotes: ' + e.notes : ''}`;
-    ics.push(foldIcsLine(`DESCRIPTION:${escapeIcsText(desc)}`));
-    ics.push('END:VEVENT');
-  });
-
-  ics.push('END:VCALENDAR');
-
-  const blob = new Blob([ics.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `CUET_Routine_${(routine.semester || 'ME').replace(/\s+/g, '_')}.ics`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('iCalendar (.ics) ফাইল ডাউনলোড হয়েছে! Google Calendar বা Outlook-এ ইমপোর্ট করতে পারবেন।');
-}
-
-// ==================== PRINTABLE LANDSCAPE ENGINE ====================
 function printMyRoutine() {
   const routine = getMyPersonalRoutine();
   const printArea = document.getElementById('printableRoutineContainer');
@@ -9502,7 +8772,7 @@ function printMyRoutine() {
       <h2 style="font-size: 16px; font-weight: bold; margin: 0;">CHITTAGONG UNIVERSITY OF ENGINEERING AND TECHNOLOGY (CUET)</h2>
       <h3 style="font-size: 13px; font-weight: bold; margin: 2px 0;">Department of Mechanical Engineering — Student Timetable</h3>
       <p style="font-size: 11px; color: #444; margin: 4px 0;">
-        <strong>Routine:</strong> ${routine.title || 'Personal Routine'} | <strong>Semester:</strong> ${routine.semester || 'ME'} | <strong>Section:</strong> ${routine.section || ''} | <strong>Batch:</strong> ${routine.batch || ''} | <strong>Room:</strong> ${routine.room || ''}
+        <strong>Routine:</strong> ${HubCore.html(routine.title || 'Personal Routine')} | <strong>Semester:</strong> ${HubCore.html(routine.semester || 'ME')} | <strong>Section:</strong> ${HubCore.html(routine.section || '')} | <strong>Batch:</strong> ${HubCore.html(routine.batch || '')} | <strong>Room:</strong> ${HubCore.html(routine.room || '')}
       </p>
     </div>
     <table style="width: 100%; border-collapse: collapse; font-family: sans-serif;">
@@ -9621,13 +8891,13 @@ function renderPublishedRoutineViewer() {
           </span>
           <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px] font-semibold flex items-center gap-1">
             <i data-lucide="map-pin" class="w-3 h-3 text-red-400"></i>
-            <span>${item.room}</span>
+            <span>${HubCore.html(item.room)}</span>
           </span>
         </div>
         <h4 class="text-xs sm:text-sm font-bold text-white">${item.course}</h4>
         <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
           <i data-lucide="user" class="w-3 h-3 text-indigo-400"></i>
-          <span>${item.teacher}</span>
+          <span>${HubCore.html(item.teacher)}</span>
         </div>
       </div>
       <button onclick="quickOpenSemester('${term}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-semibold border border-slate-700 flex items-center gap-1 self-start sm:self-auto transition-all">
@@ -11070,8 +10340,8 @@ function renderFacultyDirectory() {
           </div>
 
           <div>
-            <h4 class="text-sm font-bold text-white leading-snug">${f.name}</h4>
-            <p class="text-xs text-cyan-400 font-medium mt-0.5">${f.designation}</p>
+            <h4 class="text-sm font-bold text-white leading-snug">${HubCore.html(f.name)}</h4>
+            <p class="text-xs text-cyan-400 font-medium mt-0.5">${HubCore.html(f.designation)}</p>
           </div>
 
           <div class="space-y-2 text-xs text-slate-300 pt-2 border-t border-slate-800/80">
@@ -11162,7 +10432,7 @@ function renderFacultyDirectory() {
             ` : ''}
             ${f.specialization ? `
               <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-300 mt-2">
-                <strong class="text-cyan-300">গবেষণা ও স্পেশালাইজেশন:</strong> ${f.specialization}
+                <strong class="text-cyan-300">গবেষণা ও স্পেশালাইজেশন:</strong> ${HubCore.html(f.specialization)}
               </div>
             ` : ''}
           </div>
@@ -11177,7 +10447,7 @@ function renderFacultyDirectory() {
                 rel="noopener noreferrer" 
                 onclick="event.stopPropagation()" 
                 title="ইমেইল পাঠান (Gmail: ${emails[0].address})" 
-                aria-label="Send email to ${f.name} via Gmail" 
+                aria-label="Send email to ${HubCore.html(f.name)} via Gmail"
                 class="p-2 rounded-xl bg-slate-800 hover:bg-forest hover:text-white text-slate-300 transition-all"
               >
                 <i data-lucide="mail" class="w-3.5 h-3.5"></i>
@@ -11187,7 +10457,7 @@ function renderFacultyDirectory() {
                 type="button" 
                 onclick="openFacultyEmailChooser('${f.id}', event)" 
                 title="ইমেইল নির্বাচন করুন (${emails.length}টি ইমেইল রয়েছে)" 
-                aria-label="Choose email address for ${f.name} (${emails.length} addresses)" 
+                aria-label="Choose email address for ${HubCore.html(f.name)} (${emails.length} addresses)"
                 class="p-2 rounded-xl bg-forest-tint hover:bg-forest hover:text-white text-forest border border-forest/30 transition-all flex items-center gap-1"
               >
                 <i data-lucide="mail" class="w-3.5 h-3.5"></i>
@@ -11198,7 +10468,7 @@ function renderFacultyDirectory() {
                 type="button" 
                 disabled 
                 title="কোনো ইমেইল এড্রেস নেই" 
-                aria-label="No email available for ${f.name}" 
+                aria-label="No email available for ${HubCore.html(f.name)}"
                 class="p-2 rounded-xl bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed opacity-50"
               >
                 <i data-lucide="mail" class="w-3.5 h-3.5"></i>
@@ -11211,7 +10481,7 @@ function renderFacultyDirectory() {
                 rel="noopener noreferrer" 
                 onclick="event.stopPropagation()" 
                 title="WhatsApp বার্তা" 
-                aria-label="Send WhatsApp message to ${f.name}" 
+                aria-label="Send WhatsApp message to ${HubCore.html(f.name)}"
                 class="p-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all"
               >
                 <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
@@ -11222,7 +10492,7 @@ function renderFacultyDirectory() {
                 href="tel:${f.phone.replace(/\s+/g, '')}" 
                 onclick="event.stopPropagation()" 
                 title="কল করুন" 
-                aria-label="Call ${f.name} at ${f.phone}" 
+                aria-label="Call ${HubCore.html(f.name)} at ${f.phone}"
                 class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all"
               >
                 <i data-lucide="phone-call" class="w-3.5 h-3.5"></i>
@@ -11369,8 +10639,8 @@ function renderAdminFacultyManager() {
         <tbody class="divide-y divide-slate-800/60">
           ${list.map(f => `
             <tr class="hover:bg-slate-900/50 transition-colors">
-              <td class="py-2.5 px-3 font-semibold text-white">${f.name}</td>
-              <td class="py-2.5 px-3 text-slate-300">${f.designation}</td>
+              <td class="py-2.5 px-3 font-semibold text-white">${HubCore.html(f.name)}</td>
+              <td class="py-2.5 px-3 text-slate-300">${HubCore.html(f.designation)}</td>
               <td class="py-2.5 px-3 text-slate-400 font-mono">${f.room || '-'}</td>
               <td class="py-2.5 px-3 text-indigo-300 font-mono">${f.email || '-'}</td>
               <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] text-cyan-300">${f.category}</span></td>
@@ -11386,236 +10656,19 @@ function renderAdminFacultyManager() {
   `;
 }
 
-function renderAdminPublishPanel() {
-  const tokenInput = document.getElementById('adminGithubTokenInput');
-  const webhookInput = document.getElementById('adminFeedbackWebhookInput');
-  if (tokenInput) {
-    tokenInput.value = localStorage.getItem(STORAGE_KEYS.ADMIN_GITHUB_TOKEN) || '';
-  }
-  if (webhookInput) {
-    webhookInput.value = localStorage.getItem(STORAGE_KEYS.FEEDBACK_WEBHOOK) || '';
-  }
-}
+function renderAdminPublishPanel() { Hub.updateConnectionText(); }
 
-/* =========================================================================
-   20. 1-CLICK LIVE PUBLISH TO GITHUB PAGES (SHARED CMS SYNC)
-   ========================================================================= */
-function saveFeedbackWebhook() {
-  const input = document.getElementById('adminFeedbackWebhookInput');
-  const url = (input ? input.value : '').trim();
-  if (url) {
-    localStorage.setItem(STORAGE_KEYS.FEEDBACK_WEBHOOK, url);
-    showToast('Feedback Webhook URL সফলভাবে সেভ করা হয়েছে!');
-  } else {
-    localStorage.removeItem(STORAGE_KEYS.FEEDBACK_WEBHOOK);
-    showToast('Webhook URL মুছে ফেলা হয়েছে।');
-  }
-}
+async function publishToGithub() { return Hub.publish(); }
 
-async function publishToGithub() {
-  const banner = document.getElementById('publishStatusBanner');
-  const statusText = document.getElementById('publishStatusText');
-  const btn = document.getElementById('publishLiveBtn');
-  const btnText = document.getElementById('publishLiveBtnText');
-
-  if (banner) banner.classList.remove('hidden');
-  if (btn) btn.disabled = true;
-  if (btnText) btnText.textContent = 'Publishing...';
-  if (statusText) statusText.textContent = 'Preparing complete portal synchronization payload (All 13 modules)...';
-
-  // Construct strict allowlist payload without sensitive API keys
-  const cleanSettings = { ...portalSettings };
-  delete cleanSettings.geminiApiKey;
-  delete cleanSettings.openaiApiKey;
-  delete cleanSettings.githubToken;
-  delete cleanSettings.adminPassword;
-  delete cleanSettings.password;
-
-  let storedRegistry = window.CUET_COURSE_REGISTRY;
-  if (!storedRegistry) {
-    try {
-      storedRegistry = JSON.parse(localStorage.getItem('classroom_course_registry') || '{}');
-    } catch (e) {
-      storedRegistry = {};
-    }
-  }
-
-  const payload = {
-    version: '3.3.0',
-    lastUpdated: new Date().toISOString(),
-    publishedBy: currentUser?.name || 'Mohammad Fahim Ahmed (Niloy)',
-    portalSettings: cleanSettings,
-    courseRegistry: storedRegistry,
-    notices: Array.isArray(adminNotices) ? adminNotices : [],
-    faculty: getFacultyMembers(),
-    routines: getStoredRoutine(),
-    customResources: JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMUNITY_RESOURCES) || '[]'),
-    videos: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_VIDEOS) || '[]'),
-    timeline: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_TIMELINE) || '[]'),
-    faqs: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_FAQS) || '[]'),
-    cvTemplates: JSON.parse(localStorage.getItem('classroom_cv_templates') || '[]')
-  };
-
-  // 1. Try Backend Server First (Zero GitHub token needed in browser!)
-  let publishedViaServer = false;
-  try {
-    const adminToken = localStorage.getItem('classroom_admin_token') || '';
-    const srvCheck = await fetch('/api/publish', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        ...(adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {})
-      },
-      body: JSON.stringify({ payload: payload, triggerDeploy: true })
-    });
-    if (srvCheck.ok) {
-      const srvRes = await srvCheck.json();
-      publishedViaServer = true;
-      if (statusText) statusText.textContent = '✓ ' + (srvRes.message || 'Successfully synchronized and deployed live via ClassroomHub server backend!');
-      if (btnText) btnText.textContent = 'Published Live!';
-      showToast('Live changes successfully published via ClassroomHub server backend!');
-      setTimeout(() => {
-        if (banner) banner.classList.add('hidden');
-        if (btn) btn.disabled = false;
-        if (btnText) btnText.textContent = 'Publish Live to All Students';
-      }, 4000);
-      return;
-    }
-  } catch (backendErr) {
-    // Backend server is not running locally (e.g. running on static GitHub Pages or server.py closed)
-    console.log('ClassroomHub server backend not reachable:', backendErr);
-  }
-
-  // 2. If Backend Server is offline, check if browser has a saved GitHub Personal Access Token
-  const tokenInput = document.getElementById('adminGithubTokenInput');
-  let token = (tokenInput ? tokenInput.value : '').trim() || localStorage.getItem(STORAGE_KEYS.ADMIN_GITHUB_TOKEN);
-
-  if (token) {
-    try {
-      if (statusText) statusText.textContent = 'Publishing directly to GitHub Pages via stored token...';
-      const contentStr = JSON.stringify(payload, null, 2);
-      const contentBase64 = btoa(unescape(encodeURIComponent(contentStr)));
-      const repoOwner = 'Fahim-Niloy2314';
-      const repoName = 'classroom-hub';
-      const filePath = 'portal_sync.json';
-      const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
-
-      let currentSha = null;
-      try {
-        const checkRes = await fetch(apiUrl, {
-          headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
-        if (checkRes.ok) {
-          const checkData = await checkRes.json();
-          currentSha = checkData.sha;
-        }
-      } catch (e) {}
-
-      const commitBody = {
-        message: `feat(cms): portal sync update from admin [${new Date().toISOString()}]`,
-        content: contentBase64,
-        branch: 'main'
-      };
-      if (currentSha) commitBody.sha = currentSha;
-
-      const putRes = await fetch(apiUrl, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/vnd.github.v3+json'
-        },
-        body: JSON.stringify(commitBody)
-      });
-
-      if (putRes.ok) {
-        if (statusText) statusText.textContent = '✓ Live publish successful! GitHub Pages will update in ~30 seconds.';
-        showToast('অভিনন্দন! আপনার পরিবর্তনসমূহ সফলভাবে GitHub Pages এ লাইভ পুশ করা হয়েছে!');
-        setTimeout(() => {
-          if (banner) banner.classList.add('hidden');
-          if (btn) btn.disabled = false;
-          if (btnText) btnText.textContent = 'Publish Live to All Students';
-        }, 4000);
-        return;
-      } else {
-        const errData = await putRes.json();
-        throw new Error(errData.message || 'GitHub API rejected commit');
-      }
-    } catch (gitErr) {
-      console.warn('GitHub direct API publish error:', gitErr);
-    }
-  }
-
-  // 3. If neither backend server nor valid GitHub token is available, offer direct portal_sync.json download without prompt() popup
-  if (statusText) statusText.textContent = 'Local changes saved in browser. Server is offline.';
-  downloadPortalSyncJsonFile(payload);
-  showToast('ClassroomHub server অফলাইনে থাকায় portal_sync.json ফাইলটি ডাউনলোড করা হয়েছে। এটি রিপোজিটরিতে সেভ করুন বা python server.py চালু করুন।', 6000);
-
-  setTimeout(() => {
-    if (banner) banner.classList.add('hidden');
-    if (btn) btn.disabled = false;
-    if (btnText) btnText.textContent = 'Publish Live to All Students';
-  }, 4000);
-}
-
-function downloadPortalSyncJsonFile(customPayload) {
-  let payload = customPayload;
-  if (!payload) {
-    const cleanSettings = { ...portalSettings };
-    delete cleanSettings.geminiApiKey;
-    delete cleanSettings.openaiApiKey;
-    delete cleanSettings.githubToken;
-    delete cleanSettings.adminPassword;
-    delete cleanSettings.password;
-
-    let storedRegistry = window.CUET_COURSE_REGISTRY;
-    if (!storedRegistry) {
-      try { storedRegistry = JSON.parse(localStorage.getItem('classroom_course_registry') || '{}'); } catch(e) { storedRegistry = {}; }
-    }
-
-    payload = {
-      version: '3.3.0',
-      lastUpdated: new Date().toISOString(),
-      publishedBy: currentUser?.name || 'Mohammad Fahim Ahmed (Niloy)',
-      portalSettings: cleanSettings,
-      courseRegistry: storedRegistry,
-      notices: Array.isArray(adminNotices) ? adminNotices : [],
-      faculty: getFacultyMembers(),
-      routines: getStoredRoutine(),
-      customResources: JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMUNITY_RESOURCES) || '[]'),
-      videos: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_VIDEOS) || '[]'),
-      timeline: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_TIMELINE) || '[]'),
-      faqs: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_FAQS) || '[]'),
-      cvTemplates: JSON.parse(localStorage.getItem('classroom_cv_templates') || '[]')
-    };
-  }
-
-  const jsonBlob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
-  const url = URL.createObjectURL(jsonBlob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'portal_sync.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('portal_sync.json ফাইলটি ডাউনলোড সম্পন্ন হয়েছে!');
-}
-
-
-
-// =========================================================================
-// 20. CUET STUDENT CV & RESUME BUILDER ENGINE (100% PRIVATE & OFFLINE)
-// =========================================================================
+function downloadPortalSyncJsonFile() { Hub.download("portal_sync.json", Hub.portalPayload()); }
 
 let cvCurrentTemplate = 'template_job';
 let cvCurrentDraftName = 'default';
 
 const CUET_SAMPLE_CV_DATA = {
-  fullName: 'Mohammad Fahim Ahmed',
+  fullName: 'Example Student (Sample)' ,
   title: 'Mechanical Engineer | CAD & Thermal Systems Specialist',
-  email: 'fahimcuet63@gmail.com',
+  email: 'student@example.com',
   phone: '+880 1850-162261',
   location: 'Chittagong, Bangladesh',
   linkedin: 'linkedin.com/in/fahim-niloy',
@@ -11706,6 +10759,7 @@ const DEFAULT_BLANK_CV_DATA = {
   references: ''
 };
 
+
 function loadCvSampleTemplate() {
   const sampleCopy = JSON.parse(JSON.stringify(CUET_SAMPLE_CV_DATA));
   saveActiveCvData(sampleCopy);
@@ -11792,11 +10846,12 @@ function initCvBuilder() {
   const select = document.getElementById('cvDraftsSelect');
   if (select) {
     select.innerHTML = Object.keys(drafts).map(name => `
-      <option value="${name}" ${name === cvCurrentDraftName ? 'selected' : ''}>${name}</option>
+      <option value="${HubCore.html(name)}" ${name === cvCurrentDraftName ? 'selected' : ''}>${HubCore.html(name)}</option>
     `).join('');
   }
 
   const cv = getActiveCvData();
+  cvCurrentTemplate = ['template_job','template_eng','template_academic'].includes(cv.template) ? cv.template : 'template_job';
   const setVal = (id, val) => {
     const inp = document.getElementById(id);
     if (inp) inp.value = val || '';
@@ -11819,11 +10874,13 @@ function initCvBuilder() {
   if (photoChk) photoChk.checked = !!cv.showPhoto;
 
   renderCvFormArrays();
-  updateCvLivePreview();
+  switchCvTemplate(cvCurrentTemplate);
 }
 
 function switchCvTemplate(tplId) {
+  if (!['template_job','template_eng','template_academic'].includes(tplId)) return;
   cvCurrentTemplate = tplId;
+  const cv = getActiveCvData(); cv.template = tplId; saveActiveCvData(cv);
   ['job', 'eng', 'academic'].forEach(t => {
     const btn = document.getElementById(`cvTplBtn-${t}`);
     if (btn) {
@@ -11852,13 +10909,13 @@ function renderCvFormArrays() {
           </button>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <input type="text" value="${e.degree || ''}" oninput="updateCvArrayItem('education', ${idx}, 'degree', this.value)" placeholder="Degree Name" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
-          <input type="text" value="${e.institution || ''}" oninput="updateCvArrayItem('education', ${idx}, 'institution', this.value)" placeholder="Institution / University" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+          <input type="text" value="${HubCore.html(e.degree || '')}" oninput="updateCvArrayItem('education', ${idx}, 'degree', this.value)" placeholder="Degree Name" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+          <input type="text" value="${HubCore.html(e.institution || '')}" oninput="updateCvArrayItem('education', ${idx}, 'institution', this.value)" placeholder="Institution / University" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <input type="text" value="${e.period || ''}" oninput="updateCvArrayItem('education', ${idx}, 'period', this.value)" placeholder="Period (e.g. 2020 – 2025)" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
-          <input type="text" value="${e.gpa || ''}" oninput="updateCvArrayItem('education', ${idx}, 'gpa', this.value)" placeholder="GPA / CGPA" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
-          <input type="text" value="${e.honors || ''}" oninput="updateCvArrayItem('education', ${idx}, 'honors', this.value)" placeholder="Honors / Position" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+          <input type="text" value="${HubCore.html(e.period || '')}" oninput="updateCvArrayItem('education', ${idx}, 'period', this.value)" placeholder="Period (e.g. 2020 – 2025)" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+          <input type="text" value="${HubCore.html(e.gpa || '')}" oninput="updateCvArrayItem('education', ${idx}, 'gpa', this.value)" placeholder="GPA / CGPA" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+          <input type="text" value="${HubCore.html(e.honors || '')}" oninput="updateCvArrayItem('education', ${idx}, 'honors', this.value)" placeholder="Honors / Position" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
         </div>
       </div>
     `).join('');
@@ -11876,11 +10933,11 @@ function renderCvFormArrays() {
           </button>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <input type="text" value="${e.role || ''}" oninput="updateCvArrayItem('experience', ${idx}, 'role', this.value)" placeholder="Role / Position" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
-          <input type="text" value="${e.company || ''}" oninput="updateCvArrayItem('experience', ${idx}, 'company', this.value)" placeholder="Company / Organization" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
-          <input type="text" value="${e.period || ''}" oninput="updateCvArrayItem('experience', ${idx}, 'period', this.value)" placeholder="Duration (e.g. 2024)" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+          <input type="text" value="${HubCore.html(e.role || '')}" oninput="updateCvArrayItem('experience', ${idx}, 'role', this.value)" placeholder="Role / Position" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+          <input type="text" value="${HubCore.html(e.company || '')}" oninput="updateCvArrayItem('experience', ${idx}, 'company', this.value)" placeholder="Company / Organization" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+          <input type="text" value="${HubCore.html(e.period || '')}" oninput="updateCvArrayItem('experience', ${idx}, 'period', this.value)" placeholder="Duration (e.g. 2024)" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
         </div>
-        <textarea oninput="updateCvArrayItem('experience', ${idx}, 'description', this.value)" rows="2" placeholder="Responsibilities and achievements (bullet points)..." class="w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-200 text-xs outline-none leading-relaxed">${e.description || ''}</textarea>
+        <textarea oninput="updateCvArrayItem('experience', ${idx}, 'description', this.value)" rows="2" placeholder="Responsibilities and achievements (bullet points)..." class="w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-200 text-xs outline-none leading-relaxed">${HubCore.html(e.description || '')}</textarea>
       </div>
     `).join('');
   }
@@ -11897,10 +10954,10 @@ function renderCvFormArrays() {
           </button>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <input type="text" value="${p.title || ''}" oninput="updateCvArrayItem('projects', ${idx}, 'title', this.value)" placeholder="Project Title" class="sm:col-span-2 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
-          <input type="text" value="${p.tools || ''}" oninput="updateCvArrayItem('projects', ${idx}, 'tools', this.value)" placeholder="Tools (e.g. SolidWorks, FEA)" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-indigo-300 text-xs outline-none">
+          <input type="text" value="${HubCore.html(p.title || '')}" oninput="updateCvArrayItem('projects', ${idx}, 'title', this.value)" placeholder="Project Title" class="sm:col-span-2 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+          <input type="text" value="${HubCore.html(p.tools || '')}" oninput="updateCvArrayItem('projects', ${idx}, 'tools', this.value)" placeholder="Tools (e.g. SolidWorks, FEA)" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-indigo-300 text-xs outline-none">
         </div>
-        <textarea oninput="updateCvArrayItem('projects', ${idx}, 'description', this.value)" rows="2" placeholder="Project objectives, methodology, and quantifiable outcomes..." class="w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-200 text-xs outline-none leading-relaxed">${p.description || ''}</textarea>
+        <textarea oninput="updateCvArrayItem('projects', ${idx}, 'description', this.value)" rows="2" placeholder="Project objectives, methodology, and quantifiable outcomes..." class="w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-200 text-xs outline-none leading-relaxed">${HubCore.html(p.description || '')}</textarea>
       </div>
     `).join('');
   }
@@ -11916,11 +10973,11 @@ function renderCvFormArrays() {
             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
           </button>
         </div>
-        <input type="text" value="${r.title || ''}" oninput="updateCvArrayItem('research', ${idx}, 'title', this.value)" placeholder="Paper / Thesis Title" class="w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
+        <input type="text" value="${HubCore.html(r.title || '')}" oninput="updateCvArrayItem('research', ${idx}, 'title', this.value)" placeholder="Paper / Thesis Title" class="w-full px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none focus:border-indigo-500">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <input type="text" value="${r.authors || ''}" oninput="updateCvArrayItem('research', ${idx}, 'authors', this.value)" placeholder="Authors" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
-          <input type="text" value="${r.journal || ''}" oninput="updateCvArrayItem('research', ${idx}, 'journal', this.value)" placeholder="Journal / Conference" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
-          <input type="text" value="${r.year || ''}" oninput="updateCvArrayItem('research', ${idx}, 'year', this.value)" placeholder="Year / Status" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+          <input type="text" value="${HubCore.html(r.authors || '')}" oninput="updateCvArrayItem('research', ${idx}, 'authors', this.value)" placeholder="Authors" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+          <input type="text" value="${HubCore.html(r.journal || '')}" oninput="updateCvArrayItem('research', ${idx}, 'journal', this.value)" placeholder="Journal / Conference" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
+          <input type="text" value="${HubCore.html(r.year || '')}" oninput="updateCvArrayItem('research', ${idx}, 'year', this.value)" placeholder="Year / Status" class="px-2 py-1 rounded bg-slate-950 border border-slate-700 text-slate-300 text-xs outline-none">
         </div>
       </div>
     `).join('');
@@ -11931,8 +10988,8 @@ function renderCvFormArrays() {
   if (skContainer) {
     skContainer.innerHTML = (cv.skills || []).map((s, idx) => `
       <div class="flex items-center gap-2">
-        <input type="text" value="${s.category || ''}" oninput="updateCvArrayItem('skills', ${idx}, 'category', this.value)" placeholder="Category" class="w-1/3 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-indigo-300 font-semibold text-xs outline-none">
-        <input type="text" value="${s.items || ''}" oninput="updateCvArrayItem('skills', ${idx}, 'items', this.value)" placeholder="Skills / Software List" class="w-2/3 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none">
+        <input type="text" value="${HubCore.html(s.category || '')}" oninput="updateCvArrayItem('skills', ${idx}, 'category', this.value)" placeholder="Category" class="w-1/3 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-indigo-300 font-semibold text-xs outline-none">
+        <input type="text" value="${HubCore.html(s.items || '')}" oninput="updateCvArrayItem('skills', ${idx}, 'items', this.value)" placeholder="Skills / Software List" class="w-2/3 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-white text-xs outline-none">
         <button type="button" onclick="removeCvSkillItem(${idx})" class="text-slate-500 hover:text-red-400 p-1">
           <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
         </button>
@@ -12050,6 +11107,7 @@ function removeCvSkillItem(idx) {
 function handleCvPhotoUpload(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
+  if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) { showToast('Choose a PNG, JPEG or WebP photo smaller than 2 MB.'); return; }
   const reader = new FileReader();
   reader.onload = (event) => {
     const cv = getActiveCvData();
@@ -12067,6 +11125,7 @@ function updateCvLivePreview() {
   const getVal = (id) => (document.getElementById(id)?.value || '').trim();
   const cv = getActiveCvData();
 
+  cv.template = cvCurrentTemplate;
   cv.fullName = getVal('cvInput-fullName');
   cv.title = getVal('cvInput-title');
   cv.email = getVal('cvInput-email');
@@ -12095,9 +11154,9 @@ function updateCvLivePreview() {
     cv.email ? `<span class="inline-flex items-center gap-1">✉️ ${escapeHtml(cv.email)}</span>` : '',
     cv.phone ? `<span class="inline-flex items-center gap-1">📞 ${escapeHtml(cv.phone)}</span>` : '',
     cv.location ? `<span class="inline-flex items-center gap-1">📍 ${escapeHtml(cv.location)}</span>` : '',
-    cv.linkedin ? `<a href="https://${cv.linkedin.replace(/^https?:\/\//, '')}" target="_blank">🔗 LinkedIn</a>` : '',
-    cv.github ? `<a href="https://${cv.github.replace(/^https?:\/\//, '')}" target="_blank">💻 GitHub</a>` : '',
-    cv.portfolio ? `<a href="https://${cv.portfolio.replace(/^https?:\/\//, '')}" target="_blank">🌐 Portfolio</a>` : ''
+    cv.linkedin ? `<a href="${HubCore.html(HubCore.safeUrl(cv.linkedin))}" target="_blank">🔗 LinkedIn</a>` : '',
+    cv.github ? `<a href="${HubCore.html(HubCore.safeUrl(cv.github))}" target="_blank">💻 GitHub</a>` : '',
+    cv.portfolio ? `<a href="${HubCore.html(HubCore.safeUrl(cv.portfolio))}" target="_blank">🌐 Portfolio</a>` : ''
   ].filter(Boolean).join('  •  ');
 
   // Render Template Specific Layout
@@ -12113,7 +11172,7 @@ function updateCvLivePreview() {
       </div>
       ${cv.showPhoto && cv.photoUrl ? `
         <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-slate-300 flex-shrink-0 shadow-sm">
-          <img src="${cv.photoUrl}" alt="Photo" class="w-full h-full object-cover">
+          <img src="${/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(cv.photoUrl) ? cv.photoUrl : ""}" alt="Photo" class="w-full h-full object-cover">
         </div>
       ` : ''}
     </div>
@@ -12252,6 +11311,7 @@ function updateCvLivePreview() {
       </div>
     ` : ''}
   `;
+  Hub.orderCvSections(paper, cvCurrentTemplate);
 }
 
 // ==================== WORD EXPORT FOR CV (.DOCX ENGINE) ====================
@@ -12546,7 +11606,7 @@ async function exportMyCvDocx() {
     const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:body>
-    ${bodyParagraphs.join('')}
+    ${Hub.orderCvWord(bodyParagraphs, cvCurrentTemplate)}
     <w:sectPr>
       <w:pgSz w:w="11906" w:h="16838"/>
       <w:pgMar w:top="1080" w:right="1080" w:bottom="1080" w:left="1080" w:header="720" w:footer="720" w:gutter="0"/>
@@ -12591,9 +11651,7 @@ function printMyCv() {
   document.body.classList.remove('printing-routine');
   document.body.classList.add('printing-cv');
   window.print();
-  setTimeout(() => {
-    document.body.classList.remove('printing-cv');
-  }, 1000);
+
 }
 
 window.addEventListener('afterprint', () => {
@@ -12609,6 +11667,7 @@ function saveCvDraftPrompt() {
   const name = prompt('সিভি ড্রাফট সংরক্ষণের জন্য একটি নাম দিন (e.g. Mechanical Engineer, Intern CV):', cvCurrentDraftName);
   if (!name || !name.trim()) return;
   const cleanName = name.trim();
+  if (['__proto__','constructor','prototype'].includes(cleanName)) return;
 
   // Step 3 & 4: Check if already exists and confirm overwrite
   const allDrafts = getStoredCvDrafts();
@@ -12659,6 +11718,9 @@ function createNewBlankCvPrompt() {
   const name = prompt('নতুন খালি সিভির জন্য একটি নাম দিন (e.g. Graduate CV 2026):');
   if (!name || !name.trim()) return;
   const cleanName = name.trim();
+  const existing = getStoredCvDrafts();
+  if (Object.hasOwn(existing, cleanName) && !confirm('Replace the existing draft with a blank CV? Export a backup first if needed.')) return;
+  if (['__proto__','constructor','prototype'].includes(cleanName)) return;
   cvCurrentDraftName = cleanName;
 
   const blank = JSON.parse(JSON.stringify(DEFAULT_BLANK_CV_DATA));
@@ -12690,7 +11752,7 @@ function openCvBackupModal() {
 function trackRecentFile(file) {
   if (!file) return;
   try {
-    let recents = JSON.parse(localStorage.getItem('classroom_recent_files') || '[]');
+    let recents = HubCore.readJSON(localStorage.getItem('classroom_recent_files'), '[]');
     recents = recents.filter(item => {
       if (file.id && item.id === file.id) return false;
       if (file.name && item.name === file.name) return false;
@@ -12740,7 +11802,7 @@ function renderProgressRecentList() {
   const countBadge = document.getElementById('progressStatRecent');
   if (!container) return;
 
-  const recents = JSON.parse(localStorage.getItem('classroom_recent_files') || '[]');
+  const recents = HubCore.readJSON(localStorage.getItem('classroom_recent_files'), '[]');
   if (countBadge) if (countBadge) countBadge.textContent = recents.length;
 
   if (recents.length === 0) {
@@ -12767,7 +11829,7 @@ function renderProgressRecentList() {
             <i data-lucide="${iconName}" class="w-4 h-4"></i>
           </div>
           <div class="min-w-0">
-            <h4 class="font-semibold text-main truncate" title="${f.name}">${f.name}</h4>
+            <h4 class="font-semibold text-main truncate" title="${HubCore.html(f.name)}">${HubCore.html(f.name)}</h4>
             <div class="flex items-center gap-2 text-[10px] text-muted mt-0.5">
               <span class="font-mono text-forest font-bold">${f.term_code}</span>
               ${f.course ? `<span>• ${f.course}</span>` : ''}
@@ -12808,7 +11870,7 @@ function renderProgressBookmarksList() {
   const badgeLabel = document.getElementById('progressBookmarkBadge');
   if (!container) return;
 
-  const currentBookmarks = JSON.parse(localStorage.getItem(STORAGE_KEYS.BOOKMARKS) || '[]');
+  const currentBookmarks = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.BOOKMARKS), '[]');
   if (countBadge) if (countBadge) countBadge.textContent = currentBookmarks.length;
   if (badgeLabel) badgeLabel.textContent = `${currentBookmarks.length} ${currentLang === 'en' ? 'files' : 'ফাইল'}`;
 
@@ -12838,7 +11900,7 @@ function renderProgressBookmarksList() {
             <i data-lucide="${iconName}" class="w-4 h-4"></i>
           </div>
           <div class="min-w-0">
-            <h4 class="font-semibold text-main truncate" title="${f.name}">${f.name}</h4>
+            <h4 class="font-semibold text-main truncate" title="${HubCore.html(f.name)}">${HubCore.html(f.name)}</h4>
             <div class="flex items-center gap-2 text-[10px] text-muted mt-0.5">
               <span class="font-mono text-forest font-bold">${f.term_code}</span>
               ${f.course ? `<span>• ${f.course}</span>` : ''}
@@ -12864,7 +11926,7 @@ function renderProgressBookmarksList() {
 
 function toggleTopicCompletion(termCode, courseCode, topicName) {
   const key = `${termCode}::${courseCode}::${topicName}`;
-  const completed = JSON.parse(localStorage.getItem('classroom_completed_items') || '{}');
+  const completed = HubCore.readJSON(localStorage.getItem('classroom_completed_items'), '{}');
   if (completed[key]) {
     delete completed[key];
   } else {
@@ -12882,7 +11944,7 @@ function renderProgressCompletionList() {
   if (!container) return;
 
   const selectedSem = semSelect ? semSelect.value : 'L4-T2';
-  const completed = JSON.parse(localStorage.getItem('classroom_completed_items') || '{}');
+  const completed = HubCore.readJSON(localStorage.getItem('classroom_completed_items'), '{}');
 
   const totalCompletedAcrossAll = Object.keys(completed).length;
   if (countBadge) if (countBadge) countBadge.textContent = totalCompletedAcrossAll;

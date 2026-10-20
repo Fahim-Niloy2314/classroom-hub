@@ -60,7 +60,7 @@
   <script src="jszip.min.js"></script>
 
   <!-- Custom Academic UI Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=4.0.0">
+  <link rel="stylesheet" href="styles.css?v=4.1.0">
 </head>
 <body class="min-h-screen flex flex-col font-sans antialiased text-main bg-canvas">
 
@@ -133,7 +133,7 @@
         <button id="nav-tab-admin" onclick="navigateTo('admin')" class="hidden nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 text-forest border border-forest/30">
           <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
           <span data-i18n="tab_admin">Admin</span>
-          <span id="adminPendingBadge" class="btn-forest text-white px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
+          <span id="adminPendingHeaderBadge" class="btn-forest text-white px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
         </button>
       </nav>
 
@@ -492,6 +492,11 @@
               </p>
             </div>
 
+            <div class="hub-date-controls">
+              <label>Term start <input id="routineTermStart" type="date" onchange="Hub.saveTermDates()"></label>
+              <label>Term end <input id="routineTermEnd" type="date" onchange="Hub.saveTermDates()"></label>
+              <small>Calendar export repeats classes only within these dates (Asia/Dhaka).</small>
+            </div>
             <!-- Global Routine Actions: Download Word / Export / Print / Backup -->
             <div class="flex flex-wrap items-center gap-2">
               <!-- Download Word Routine Template (.docx) -->
@@ -742,13 +747,15 @@
               </button>
             </div>
 
-            <div class="flex items-center gap-2 self-end sm:self-center">
+            <div class="flex flex-wrap items-center gap-2 self-end sm:self-center">
+              <button type="button" onclick="deleteCurrentCvDraft()" class="hub-button">Delete draft</button>
+              <label class="hub-button">Import CV JSON<input type="file" accept="application/json,.json" onchange="Hub.importCv(event)" hidden></label>
               <select id="cvDraftsSelect" onchange="loadSelectedCvDraft()" class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200 outline-none">
                 <option value="default">Default Draft (ডিফল্ট)</option>
               </select>
               <button onclick="loadCvSampleTemplate()" class="px-2.5 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-700/60 text-xs font-semibold flex items-center gap-1 transition-all" title="Load complete CUET Mechanical Engineering sample resume">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                <span>Load CUET Sample</span>
+                <span>Load Example CV</span>
               </button>
               <button onclick="resetCvToBlank()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all" title="Clear all fields to a fresh blank CV">
                 Clear / Blank
@@ -1958,7 +1965,7 @@
           <div class="pb-2 border-b border-slate-800">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
               <i data-lucide="hard-drive-download" class="w-4 h-4 text-purple-400"></i>
-              <span>Complete Data Backup & Restoration (JSON)</span>
+              <span>Owner Content Backup & Restoration (JSON)</span>
             </h3>
             <p class="text-xs text-slate-400">Export your custom resources, notices, videos, and settings to a JSON file or restore from a backup.</p>
           </div>
@@ -2632,15 +2639,12 @@
                 </div>
                 <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 font-mono text-[10px] border border-indigo-500/20">GitHub Pages</span>
               </div>
-              <h4 class="text-sm font-bold text-white">1-Click Live Publish (GitHub API)</h4>
+              <h4 class="text-sm font-bold text-white">Publish public content</h4>
               <p class="text-xs text-slate-400 leading-relaxed">
                 আপনার ব্রাউজার থেকে সরাসরি <code class="text-indigo-300">Fahim-Niloy2314/classroom-hub</code> মেইন ব্রাঞ্চে আপডেট পুশ করে দিন। গিটহাব বিল্ড সিস্টেম ৩০ সেকেন্ডের মধ্যে লাইভ সাইট আপডেট করে দেবে।
               </p>
-              <div>
-                <label class="block text-[11px] font-semibold text-slate-300 mb-1">GitHub Personal Access Token (PAT):</label>
-                <input id="adminGithubTokenInput" type="password" placeholder="ghp_... or gho_..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500 font-mono">
-                <span class="text-[10px] text-slate-500">টোকেনটি শুধুমাত্র আপনার অ্যাডমিন ব্রাউজারে সুরক্ষিত থাকবে।</span>
-              </div>
+              <p class="text-xs text-muted">Publishing requires an authenticated backend with a server-side GitHub credential. No repository token is stored in this browser. A commit is shown as pending until the public revision is verified.</p>
+              <p id="backendPublishStatus" class="text-xs text-muted" role="status"></p>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button onclick="publishToGithub()" id="publishLiveBtn" class="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/30 transition-all">
                   <i data-lucide="upload-cloud" class="w-4 h-4"></i>
@@ -2653,26 +2657,11 @@
               </div>
             </div>
 
-            <!-- Real-Time Webhook & Cloud Sync -->
-            <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-              <div class="flex items-center justify-between">
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <i data-lucide="webhook" class="w-5 h-5"></i>
-                </div>
-                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 font-mono text-[10px] border border-emerald-500/20">Real-Time Inbound</span>
-              </div>
-              <h4 class="text-sm font-bold text-white">Student Feedback & Request Webhook</h4>
-              <p class="text-xs text-slate-400 leading-relaxed">
-                শিক্ষার্থীদের ফর্ম সাবমিশন এবং কোর্স রিকোয়েস্ট আপনার গুগল শিট বা ফর্মস্প্রি বা টেলিগ্রাম বটে রিয়েল-টাইমে পাঠানোর জন্য একটি Webhook URL সেট করুন।
-              </p>
-              <div>
-                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Inbound Webhook / Apps Script URL:</label>
-                <input id="adminFeedbackWebhookInput" type="url" placeholder="https://script.google.com/macros/s/... or Formspree" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500 font-mono">
-              </div>
-              <button onclick="saveFeedbackWebhook()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md transition-all">
-                <i data-lucide="check" class="w-4 h-4"></i>
-                <span>Save Webhook Delivery URL</span>
-              </button>
+            <div class="p-5 rounded-2xl bg-surface border border-line space-y-3">
+              <h4 class="text-sm font-bold text-main">Central inbox & backend setup</h4>
+              <p class="text-xs text-muted">Student feedback and contributed links are received by the authenticated backend. Messages stay pending on the sending device until the server confirms durable receipt.</p>
+              <p class="text-xs text-muted">The online backend must be hosted separately from GitHub Pages. This project does not use Netlify.</p>
+              <a class="hub-button" href="https://github.com/Fahim-Niloy2314/classroom-hub/blob/main/OWNER_MANUAL.md" target="_blank" rel="noopener noreferrer">Owner setup guide</a>
             </div>
           </div>
 
@@ -3110,8 +3099,22 @@
     <!-- Populated dynamically right before window.print() -->
   </div>
 
+  <dialog id="authDialog" class="hub-dialog" aria-labelledby="authDialogTitle">
+    <form id="ownerLoginForm" onsubmit="handleStandardAuthSubmit(event)">
+      <div class="hub-row"><h2 id="authDialogTitle">Owner sign in</h2><button type="button" onclick="closeAuthModal()" aria-label="Close sign in">✕</button></div>
+      <p>Students can use all personal tools without an account. Owner sign in manages public content.</p>
+      <p id="authBackendStatus" role="status">Checking backend connection…</p>
+      <label>Email<input id="authEmailInput" type="email" autocomplete="username" required></label>
+      <label>Password<input id="authPasswordInput" type="password" autocomplete="current-password" required></label>
+      <p id="authError" role="alert"></p>
+      <button id="ownerLoginSubmit" type="submit" class="hub-button">Sign in securely</button>
+      <a href="https://github.com/Fahim-Niloy2314/classroom-hub/blob/main/OWNER_MANUAL.md" target="_blank" rel="noopener noreferrer">Owner setup guide</a>
+    </form>
+  </dialog>
   <!-- Application Logic Scripts -->
-  <script src="data.js?v=4.0.0"></script>
-  <script src="app.js?v=4.0.0"></script>
+  <script src="data.js?v=4.1.0"></script>
+  <script src="hub-core.js?v=4.1.0"></script>
+  <script src="app.js?v=4.1.0"></script>
+  <script src="hub-fixes.js?v=4.1.0"></script>
 </body>
 </html>

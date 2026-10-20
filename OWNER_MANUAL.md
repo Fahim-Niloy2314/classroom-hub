@@ -1,147 +1,98 @@
-# Classroom Hub — Owner & Administrator Manual
-**Owner & Chief Architect:** Mohammad Fahim Ahmed (Fahim Niloy)  
-**ID / Batch:** 2003063 | ME '20 | CUET  
-**Contact:** fahimcuet63@gmail.com | +880 1850-162261  
-**Live Portal:** [https://fahim-niloy2314.github.io/classroom-hub/](https://fahim-niloy2314.github.io/classroom-hub/)  
-**GitHub Repository:** `Fahim-Niloy2314/classroom-hub`  
-**Local Codebase:** `D:\ClassroomHub`  
-**Academic Vault:** `G:\My Drive\Classroom` (3,896+ course materials)  
-**Version:** 3.3.0  
+# Classroom Hub owner guide — 4.1.0
 
----
+## What works on the GitHub Pages address
 
-## ১. ভূমিকা ও লক্ষ্য (Overview & Philosophy)
+Home → Student Tools → Faculty Directory → My Progress. Student Tools contains Routine, CV, GPA/CGPA and AI. Students do not need an account to keep personal work on their own device.
 
-**Classroom Hub** হলো চট্টগ্রাম প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় (CUET)-এর মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের শিক্ষার্থীদের জন্য একটি সমন্বিত ও সম্পূর্ণ উন্মুক্ত একাডেমিক পোর্টাল। 
+The public site is static. GitHub Pages cannot run `server.py`, receive an inbox message or authenticate an owner merely because Python code is in the repository. See [GitHub's hosting documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site).
 
-সাইটটির মূল দর্শন: **"মালিকের পূর্ণ স্বাধীনতা ও স্বনির্ভরতা" (Complete Owner Independence)**।
-- কোনো রুটিন পরিবর্তন, নতুন নোটিশ প্রকাশ, শিক্ষকের তথ্য আপডেট বা সাইট সেটিং বদলানোর জন্য Antigravity বা ChatGPT-এর মতো AI টুলের ওপর নির্ভরশীল হতে হবে না।
-- আপনি সরাসরি আপনার ব্রাউজারের অ্যাডমিন ড্যাশবোর্ড থেকে এক ক্লিকে যেকোনো তথ্য পরিবর্তন ও লাইভ পাবলিশ করতে পারবেন।
+**Current deployment:** `backend-config.json` has an empty `apiBase`. The public sign-in dialog therefore reports that the online backend is not connected. It does not grant a fake admin role. Feedback stays visibly pending on the student's device until a real backend acknowledges it. Do not report online admin, inbox or publishing as operational before completing the setup below.
 
----
+## First owner setup on your own computer
 
-## ২. অ্যাডমিন লগইন (How to Log In as Admin)
-
-১. লাইভ সাইট বা লোকালহোস্টে `Classroom Hub` খুলুন।
-২. পেজের ওপরের ডান কোণে থাকা **"Sign In"** বাটনে ক্লিক করুন।
-৩. অ্যাডমিন ক্রেডেনশিয়ালস:
-   - **ইমেইল / আইডি:** `fahimcuet63@gmail.com` অথবা `fahim.cuet.me20@gmail.com` অথবা রোল `2003063`
-   - **অ্যাডমিন পাসওয়ার্ড:** `[মালিকের নির্ধারিত গোপন পাসওয়ার্ড / Set during initial setup]`
-৪. লগইন সফল হলে আপনার নামের পাশে **"Admin"** ব্যাজ আসবে এবং মেনুতে **"Admin Workspace"** উন্মুক্ত হবে।
-
-> **নিরাপত্তা নোট:** পাসওয়ার্ডটি ব্রাউজারে বা সার্ভারে প্লেইন টেক্সট হিসেবে সংরক্ষিত থাকে না; এটি ক্রিপ্টোগ্রাফিক **SHA-256** হ্যাশ (`1c5ee9de...`) দ্বারা সুরক্ষিত।
-
----
-
-## ৩. সাইটের কনটেন্ট পরিবর্তন ও পরিচালনা (CMS Management)
-
-অ্যাডমিন ড্যাশবোর্ডে প্রবেশের পর আপনি নিচের অংশগুলো পরিচালনা করতে পারবেন:
-
-### ৩.১ সাইট পরিচিতি ও ক্রিয়েটর প্রোফাইল (Portal Settings)
-- **Settings & Branding** ট্যাবে যান।
-- সাইটের টাইটেল, সাবটাইটেল, ডিপার্টমেন্টের বিবরণ পরিবর্তন করুন।
-- আপনার নাম, ব্যাচ, রোল, ইমেইল, মোবাইল/হোয়াটসঅ্যাপ নম্বর, পোর্টফোলিও লিংক, লিংকডইন ও গিটহাব লিংক আপডেট করতে পারবেন।
-- পরিবর্তনের পর **"Save Settings"** এ ক্লিক করুন।
-
-### ৩.২ নোটিশ বোর্ড (Notices & Announcements)
-- **Notices** ট্যাবে ক্লিক করুন।
-- নতুন নোটিশ যোগ করতে: টাইটেল, ব্যাজ (URGENT / UPDATE / EXAM / NOTICE), টার্ম (ALL বা নির্দিষ্ট সেমিস্টার), বিবরণ ও লিংক দিন এবং **"Add Notice"** চাপুন।
-- নোটিশ এডিট বা ডিলিট করতে পাশে থাকা বাটন ব্যবহার করুন।
-- **স্বয়ংক্রিয় রিসারেকশন মুক্ত:** আপনি যদি সমস্ত নোটিশ ডিলিট করে ফাঁকা (`[]`) রাখতে চান, সিস্টেম তা গ্রহণ করবে; কোনো পুরনো ডিফল্ট নোটিশ নিজে নিজে ফিরে আসবে না।
-
-### ৩.৩ ফ্যাকাল্টি ও স্টাফ ডিরেক্টরি (Faculty & Staff Directory)
-- **Faculty Directory** ট্যাবে CUET ME-এর সকল সম্মানিত শিক্ষক ও স্টাফদের তালিকা রয়েছে।
-- প্রতিটি কার্ডের পাশে থাকা **Edit** বাটন চেপে ডেজিগনেশন, ইমেইল, ফোন ও রিসার্চ এরিয়া আপডেট করা যায়।
-- নতুন শিক্ষক/স্টাফ যোগ করতে **"+ Add Faculty Member"** বাটনে ক্লিক করুন।
-- *ক্যাটাগরি:* PROFESSOR, ASSOCIATE_PROFESSOR, ASSISTANT_PROFESSOR, LECTURER, STAFF।
-- *গুরুত্বপূর্ণ:* জনাবা ফাহিদা জাহান (Ms. Fahmida Zahan) বিভাগীয় কাঠামোনুযায়ী **STAFF** ক্যাটাগরিতে **Lab Assistant** হিসেবে অন্তর্ভুক্ত আছেন।
-
-### ৩.৪ পাবলিক রুটিন টেমপ্লেট (Department Routine Templates)
-- **Class Routine** ট্যাবে ৮টি সেমিস্টারের (L1-T1 থেকে L4-T2) ডিপার্টমেন্টাল টেমপ্লেট রয়েছে।
-- যেকোনো সেমিস্টার সিলেক্ট করে নতুন ক্লাস স্লট যোগ বা এডিট করতে পারবেন।
-- সেভ করলে তা `portal_sync.json`-এ আপডেট হয়ে সমস্ত শিক্ষার্থীর কাছে পৌঁছে যাবে।
-
-### ৩.৫ সচরাচর জিজ্ঞাসিত প্রশ্ন (FAQ Manager)
-- **FAQs** ট্যাবে পরীক্ষা, ক্যালকুলেটরের নিয়ম, ডিগ্রির মোট ক্রেডিট (১৬০.০০) ইত্যাদি প্রশ্নের উত্তর সংযোজন বা পরিবর্তন করা যায়।
-
----
-
-## ৪. লাইভ পাবলিশ করার নির্দেশিকা (Publishing Live to All Students)
-
-আপনি যখন অ্যাডমিন ড্যাশবোর্ডে কোনো পরিবর্তন করবেন, তা আপনার লোকাল ব্রাউজারে সংরক্ষিত হয়। পৃথিবীর সকল শিক্ষার্থীর কাছে তা লাইভ পৌঁছে দিতে **Publish Live** করতে হবে।
-
-### পদ্ধতি ক: লোকাল সার্ভারের মাধ্যমে ১-ক্লিকে লাইভ পাবলিশ (সবচেয়ে সহজ ও প্রস্তাবিত)
-১. আপনার কম্পিউটারে টার্মিনাল / PowerShell খুলুন:
-   ```powershell
-   cd D:\ClassroomHub
-   python server.py
+1. Install Python 3.10 or newer and clone/download this repository. The optional `server.js` launcher also uses this same Python backend.
+2. In the project directory, run:
+   ```sh
+   python server.py --set-password
    ```
-২. ব্রাউজারে অ্যাডমিন ড্যাশবোর্ডে গিয়ে **"Publish Live"** বাটনে ক্লিক করুন।
-৩. ব্যস! `server.py` স্বয়ংক্রিয়ভাবে আপনার পরিবর্তনগুলো `portal_sync.json` ফাইলে সংরক্ষণ করবে এবং `deploy_to_github.py` স্ক্রিপ্টের মাধ্যমে গিটহাবের মেইন ব্রাঞ্চে ডিপ্লয় করে দেবে।
-৪. ব্রাউজারে কোনো GitHub Token টাইপ করার প্রয়োজন নেই! ৩০ সেকেন্ডের মধ্যে GitHub Pages আপডেট হয়ে যাবে।
+   Enter a **new** password twice in your terminal. Use at least 12 characters. Do not reuse the password previously shared in chat. No built-in password or client-side password hash is accepted.
+3. Run `python server.py`, then open `http://127.0.0.1:8080`.
+4. Select **Sign In / Admin**, enter `fahimcuet63@gmail.com` and your new password. `CLASSROOM_OWNER_EMAIL` can change the owner email on the backend.
+5. An authenticated **Admin dashboard** button appears in the header, including mobile. Sessions expire after two hours. Sign out invalidates the backend token; restarting the backend also ends its sessions.
 
-### পদ্ধতি খ: সরাসরি `portal_sync.json` ডাউনলোড
-১. সার্ভার চালু না থাকলেও অ্যাডমিন ড্যাশবোর্ডে **"Download portal_sync.json"** বাটনে ক্লিক করে পুরো ডেটা বান্ডেল নামিয়ে নিতে পারবেন।
-২. ফাইলটি `D:\ClassroomHub\portal_sync.json` এ প্রতিস্থাপন করুন।
-৩. টার্মিনালে রান করুন:
-   ```powershell
-   python deploy_to_github.py
-   ```
+Passwords are hashed with salted scrypt. Session tokens exist in browser sessionStorage, not persistent localStorage. The old local identity, password hash and browser GitHub token keys are retired without deleting student routines, CVs, bookmarks or progress.
 
-### পদ্ধতি গ: ব্রাউজার থেকে সরাসরি GitHub API
-- অ্যাডমিন ড্যাশবোর্ডে আপনার GitHub Personal Access Token (PAT) সেভ করা থাকলে ব্রাউজার সরাসরি GitHub API দিয়েও কমিট করতে পারে।
+Private storage defaults to `~/.local/share/classroom-hub`, outside the public app directory. Use `CLASSROOM_PRIVATE_DIR` to select another **durable private directory outside the repository**. Back it up securely. The SQLite database contains private student submissions and owner snapshots; never commit or upload it to the public repository.
 
----
+## Enable one-click publishing
 
-## ৫. স্টুডেন্ট টুলস ও আধুনিক ফিচারসমূহ (Student Tools)
+Configure `GITHUB_TOKEN` **only in the backend host's secret/environment settings**. It needs Contents: read/write on `Fahim-Niloy2314/classroom-hub`; use a token restricted to that repository. Do not paste it into the site, chat, public JSON, HTML or source code. Protect the host and its secret settings with your own account.
 
-### ৫.১ ব্যক্তিগত ক্লাস রুটিন স্টুডিও (Personal Class Routine Studio)
-- **ব্যক্তিগত রুটিন (My Routine):** প্রতিটি শিক্ষার্থী সম্পূর্ণ ব্ল্যাঙ্ক টেবিল থেকে নিজের রুটিন তৈরি করতে পারে অথবা ডিপার্টমেন্টাল টেমপ্লেটের একটি ব্যক্তিগত কপি নিয়ে নিজের মতো সাজাতে পারে।
-- **ওয়ার্ড এক্সপোর্ট (.docx):** **"Export My Routine (.docx)"** বাটনে ক্লিক করলে শিক্ষার্থীর আসল ক্লাস, কোর্স কোড, শিক্ষক, রুম এবং সময়সহ একটি জেনুইন এডিটেবল মাইক্রোসফট ওয়ার্ড ফাইল ডাউনলোড হয়।
-- **ল্যান্ডস্কেপ পেজ লেআউট:** ওয়ার্ড টেবিলটি ল্যান্ডস্কেপ (`16838 x 11906 dxa`, 0.5 ইঞ্চি মার্জিন) মাপে তৈরি, যাতে প্রিন্ট বা এডিটের সময় কোনো কলাম কেটে না যায়।
-- **বিকালে ক্লাস ও ল্যাবের নির্ভুল ডিসপ্লে:** ১৩:৩০ বা ২.৫ ঘণ্টার ল্যাব ক্লাস ডে ভিউ এবং উইকলি গ্রিড—উভয় স্থানেই ইন্টারভ্যাল ওভারল্যাপ অ্যালগরিদম দ্বারা নিখুঁতভাবে প্রদর্শিত হয়।
-- **ক্যালেন্ডার এক্সপোর্ট (.ics):** গুগল ক্যালেন্ডার বা আউটলুকে সরাসরি রুটিন ইমপোর্ট করার ব্যবস্থা রয়েছে।
+1. Sign in, edit public content and review the result.
+2. The dashboard saves an owner draft on this device. It is separate from the downloaded public baseline and survives refresh while the owner session remains valid. After signing back in, the retained owner draft can be loaded. Public content changes are not shared just by clicking a local Save button.
+3. Select **Publish Live**. The backend validates the public-only payload and commits `portal_sync.json` to GitHub. The browser reports **deployment pending** until the exact revision is fetched from the public GitHub Pages address.
+4. If a build is slow, the message remains pending. A failed commit or timeout is never labelled “Published Live”. The draft is retained so you can retry or download `portal_sync.json`.
+5. For manual publishing, **Download portal_sync.json** exports public content only. Commit that file through your GitHub account and wait for Pages to update.
 
-### ৫.২ সিভি ও রিজিউমি বিল্ডার (CV & Resume Builder)
-- **সম্পূর্ণ ব্যক্তিগত ও অফলাইন:** শিক্ষার্থীর কোনো ব্যক্তিগত তথ্য সার্ভারে পাঠানো হয় না; এটি ১০০% শিক্ষার্থীর ব্রাউজারে সুরক্ষিত থাকে।
-- **৩টি আধুনিক টেমপ্লেট:**
-  1. *Simple Job Resume:* সাধারণ চাকরির আবেদন ও ফ্রেশ গ্র্যাজুয়েটদের জন্য।
-  2. *Engineering Graduate Resume:* ক্যাপস্টোন ডিজাইন, সিমুলেশন টুল (SolidWorks, ANSYS, MATLAB) ও ইন্ডাস্ট্রিয়াল ট্রেনিংয়ের ওপর জোর দেওয়া লেআউট।
-  3. *Academic & Research CV:* উচ্চশিক্ষা ও গবেষণার জন্য মাল্টি-পেজ কারিকুলাম ভিটা (গবেষণা, জার্নাল পাবলিকেশন, কনফারেন্স ও রেফারেন্স)।
-- **এক্সপোর্ট সুবিধা:** সিলেক্টেবল-টেক্সট ক্লিন PDF প্রিন্ট এবং জেনুইন এডিটেবল Word (.docx) এক্সপোর্ট।
+Public payloads include settings, contact content, curriculum, notices, faculty, department routines, resources, hidden/featured flags, videos, FAQs, timeline and CV-template metadata. They exclude passwords, tokens, API keys, webhooks, private inbox data and students' personal tools.
 
-### ৫.৩ জিপিএ / সিজিপিএ ক্যালকুলেটর (GPA & CGPA Calculator)
-- CUET-এর অফিসিয়াল ৪.০ স্কেল অর্ডিন্যান্স অনুযায়ী গ্রেড পয়েন্ট হিসাব।
-- কোনো অননুমোদিত ডিগ্রী ক্লাসিফিকেশন (যেমন "First Class" বা "Summa Cum Laude") প্রদর্শন না করে নিরপেক্ষ **"Earned Quality Points"** প্রদর্শন করে।
+## Connect an online backend to the existing public site
 
----
+This requires a host capable of running Python continuously with durable private disk and an HTTPS endpoint. It has **not** been provisioned by this release. A hosting subscription or credential must be supplied through your own hosting account; no paid plan was created.
 
-## ৬. ইনবক্স ও শিক্ষার্থী মতামত (Submissions & Feedback Inbox)
+1. Deploy the repository's Python backend to that host. Keep its private directory on durable disk, not an ephemeral container filesystem. Configure `CLASSROOM_BIND=0.0.0.0` only behind an HTTPS reverse proxy. Set the public port through `PORT` as required by your host. Configure request/time limits and access logging at the proxy without logging authorization headers or payloads.
+2. Set `CLASSROOM_PRIVATE_DIR`, `CLASSROOM_OWNER_EMAIL` and `GITHUB_TOKEN` in the host's private settings. Initialize a new password using `python server.py --set-password` on that host.
+3. Keep `CLASSROOM_ALLOWED_ORIGINS=https://fahim-niloy2314.github.io`. Add other legitimate origins as comma-separated full origins only if you actually host another frontend.
+4. Update the public `backend-config.json` to `{"apiBase":"https://YOUR-ACTUAL-BACKEND-HOST"}`. The value is the backend **origin**, with no `/api` suffix, passwords, query or fragment. Replace the example with the host you actually deployed; never publish this placeholder as a working endpoint.
+5. Verify `/api/status` returns JSON with `status: online` and `configured: true`. Verify login, logout, central inbox, a harmless test feedback submission, and a reversible public-content publish from a second device. Until these checks pass, online services remain incomplete.
 
-১. শিক্ষার্থীরা যখন হোমপেজ থেকে কোনো ফিডব্যাক, ব্রোকেন লিংক রিপোর্ট বা নতুন স্টাডি ম্যাটেরিয়ালের অনুরোধ পাঠায়, তখন প্রতিটি বার্তার জন্য সার্ভার থেকে একটি কনফার্মড ট্র্যাকিং আইডি উৎপন্ন হয় (যেমন: `#SUB-17292738-A1B2`)।
-২. শিক্ষার্থী চাইলে তৎক্ষণাৎ ১-ক্লিক **WhatsApp** বা **Email** বাটনে চাপ দিয়ে বার্তাটি আপনার কাছে পাঠিয়ে দিতে পারে।
-৩. অ্যাডমিন ড্যাশবোর্ডের **Feedback Inbox** ট্যাবে সমস্ত ইনকামিং বার্তা সংরক্ষিত থাকে।
+A Dockerfile and `compose.yaml` are included as an alternative for an existing Docker host. `docker compose up -d --build` binds the app to loopback on the host. Then `docker compose exec classroom-hub python server.py --set-password` initializes the password. Configure your own HTTPS reverse proxy. The named volume `classroom-private` must be retained and backed up. The container's copy of public data is refreshed on a new build; the durable inbox remains on the volume.
 
----
+Do not put the Python backend on a Netlify static deploy and expect Python execution. A serverless implementation would need a separate runtime and durable database adapter.
 
-## ৭. সিস্টেম ব্যাকআপ ও রিকভারি (Backup & Recovery)
+## Inbox and contributions
 
-- আপনার পুরো ডেটাবেজের ব্যাকআপ নিতে:
-  - অ্যাডমিন ড্যাশবোর্ডের **Backup & Restore** ট্যাবে যান এবং **"Download System Snapshot"** এ ক্লিক করুন।
-  - এটি বর্তমান সমস্ত নোটিশ, ফ্যাকাল্টি, রুটিন ও সেটিংসের একটি ভার্সনড JSON ফাইল ডাউনলোড করবে।
-- প্রয়োজনে **"Restore Backup"** বাটনে ফাইলটি আপলোড করে মুহূর্তেই পুরো সাইট পূর্বাবস্থায় ফিরিয়ে আনা যাবে।
+- A server receipt means the submission's SQLite transaction completed. Locally pending drafts are not receipts.
+- Duplicate retries carry the same request ID and produce the same server receipt.
+- The Feedback page displays a local outbox and a **Retry pending messages** button. An online event may retry those messages. A browser storage clear removes unsent messages, so forward important pending feedback through the offered Gmail/WhatsApp links if necessary.
+- Contact is voluntary; no email is invented from a roll number.
+- After owner sign-in, the central inbox loads from the backend. Set items to new, reviewed, resolved or archived. It does not display unrelated student messages gathered only from your own browser as a central inbox.
+- Resource contributions enter the same central inbox. **Add resource to review queue**, approve in the dashboard, then Publish Live. A contributed link does not become public automatically.
 
----
+The current Python implementation uses one process with a threaded HTTP server. Scaling to multiple processes requires shared authentication/rate-limit storage and operational review; do not describe it as a high-scale production platform.
 
-## ৮. সার্ভার কমান্ড নির্দেশিকা (Quick Command Reference)
+## Backups and restore
 
-| কাজ | কমান্ড |
-|---|---|
-| **ClassroomHub সার্ভার চালু** | `python server.py` (Local URL: `http://localhost:8080`) |
-| **সরাসরি GitHub Pages-এ ডিপ্লয়** | `python deploy_to_github.py` |
-| **পূর্ণ ভেরিফিকেশন টেস্ট রান** | `python scratch/verify_all_requirements.py` |
-| **নতুন ফাইল ইন্ডেক্স তৈরি** | `python scan_classroom.py` |
+Owner **Download Backup** exports a version 4 public-content draft plus local owner history and, when connected, a private backend inbox backup. Protect that downloaded file. Personal student CVs, routines and progress are intentionally separate.
 
----
+Restore validates the backup, retains `classroom_pre_restore_backup` on this device and saves a private backend snapshot before changing inbox records. It merges inbox records rather than deleting newer records absent from the backup. Restored public content remains an unpublished draft; inspect it and explicitly publish. Legacy version 3 backups need deliberate migration, rather than silently discarding unfamiliar fields.
 
-*Classroom Hub — Built with pride by Mohammad Fahim Ahmed (Niloy) for the CUET Mechanical Engineering family.*
+For disaster recovery, also back up the host's private directory, and keep GitHub access under your own account. Git commits preserve previous public revisions. Do not delete the private volume or clear browser storage as a troubleshooting shortcut.
+
+## Personal routine
+
+- Start blank or copy a department template. Days, times, courses, teachers, rooms and notes are editable per student.
+- Use explicit 24-hour `HH:mm` times. `01:30` means 1:30 AM; unpadded legacy `1:30` is interpreted as the afternoon. Imported older default grids are migrated only when the known old afternoon-grid pattern is present.
+- Set **Term start** and **Term end** before calendar export. Dates persist with the personal routine. Default range is 16 weeks including the first day (112 days), but it is editable.
+- `.ics` uses Dhaka UTC conversion, correct first weekdays, bounded weekly recurrence and UTF-8-safe line folding.
+- Download an editable blank/sample Word file, or export your own filled `.docx`. Routine Word and print use landscape; CV uses portrait. Wide routine grids fit the table width, though many columns naturally make text smaller.
+- JSON backup transfers the personal routine between devices. “Saved on this device” does not mean cloud sync.
+
+## CV, faculty and AI
+
+CV fields start blank. **Load Example CV** contains illustrative sample content—replace every qualification, grade, award and link before use. Save As preserves current content and template. Draft selection restores its template. Creating a blank draft with an existing name asks before replacing it. Delete draft and Import CV JSON are visible; the default draft can be cleared instead of deleted. Job, engineering and academic templates use different section orders, with research displayed in academic mode. Preview, print and Word are editable/text based; optional profile photos currently appear in preview/PDF, not the Word export.
+
+Faculty email addresses each have a separate Gmail action and copy button. Multiple-address cards show an address chooser. Institutional addresses are retained as recipients; opening Gmail does not convert an institutional email into a Gmail address. Ms. Fahmida Zahan remains **Lab Assistant / STAFF**; confirm official spelling with the department before renaming her.
+
+AI is inside Student Tools. The assistant cannot read private Drive files from filenames. Without a configured personal API key it uses a built-in reference search. The old Gemini 2.0 endpoint was retired; this release uses `gemini-3.8-flash`, following [Google's model lifecycle documentation](https://ai.google.dev/gemini-api/docs/deprecations/). Personal AI API calls and current account quota were not live-tested because no API credential was supplied. A configured key is visible to the browser running that call; do not share an owner's secret through public portal settings. Model availability and costs depend on the provider account.
+
+## Reproduce the checks
+
+```sh
+npm ci --ignore-scripts
+npm run check
+npm test
+python -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+See `acceptance_report.md` for exactly what was and was not verified. Passing a finite regression suite is not proof that every possible problem is absent.

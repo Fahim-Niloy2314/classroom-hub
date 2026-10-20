@@ -472,3 +472,16 @@ body.printing-cv {
   size: portrait;
   margin: 10mm;
 }
+
+/* Shared controls use the active academic theme, including sign-in and recovery. */
+.hub-button {display:inline-flex;align-items:center;justify-content:center;gap:.35rem;padding:.5rem .75rem;border:1px solid var(--border-line,#dce1d8);border-radius:.65rem;background:var(--bg-surface-tint,#f2f5ee);color:var(--text-main,#193b31);font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.hub-button:disabled {opacity:.5;cursor:not-allowed}
+.hub-dialog {width:min(94vw,450px);padding:1.5rem;border:1px solid #dce1d8;border-radius:1rem;background:#fcfcf8;color:#14221b;max-height:90dvh;overflow:auto}
+.hub-dialog::backdrop {background:#0e171399;backdrop-filter:blur(4px)}
+.hub-dialog form {display:grid;gap:1rem}.hub-dialog h2 {font-size:1.1rem;font-weight:700}.hub-dialog p,.hub-dialog a {font-size:.8rem;line-height:1.5}.hub-dialog label {display:grid;gap:.4rem;font-size:.8rem}.hub-dialog input {width:100%;padding:.65rem;border:1px solid #a4b4aa;border-radius:.5rem;background:white;color:#14221b}
+.hub-dialog a {text-decoration:underline}.hub-row {display:flex;justify-content:space-between;align-items:center}#authError {color:#b42318}#authBackendStatus {padding:.75rem;background:#eaf0e9;border-radius:.5rem}
+.hub-date-controls {display:flex;flex-wrap:wrap;align-items:end;gap:.75rem;margin:.75rem 0;font-size:.75rem}.hub-date-controls label {display:grid;gap:.3rem}.hub-date-controls input {padding:.4rem;border:1px solid #91a597;border-radius:.5rem;color:inherit;background:transparent}.hub-date-controls small {max-width:25rem}
+.hub-outbox,.hub-inbox-card {padding:1rem;border:1px solid #91a59766;border-radius:.75rem;margin:.5rem 0;font-size:.8rem}.hub-inbox-card p {margin:.6rem 0}.hub-inbox-card label {display:flex;gap:.75rem;align-items:center;margin-top:.5rem}.hub-inbox-card select {padding:.4rem;background:#edf2ed;color:#14221b;border-radius:.4rem}.hub-message {white-space:pre-wrap;overflow-wrap:anywhere}
+html.dark .hub-button,body.dark .hub-button {background:#193b31;color:#edf7f0;border-color:#426254}
+#cvLivePreviewPaper a {overflow-wrap:anywhere}
+@media(max-width:640px){#cvDraftsSelect{max-width:45vw}.hub-date-controls{align-items:start}#authHeaderContainer .hub-button{padding:.45rem;font-size:.65rem}#cvBuilderMainCard{overflow:hidden}}

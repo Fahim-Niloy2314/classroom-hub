@@ -1,0 +1,14 @@
+services:
+  classroom-hub:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      CLASSROOM_OWNER_EMAIL: ${CLASSROOM_OWNER_EMAIL:-fahimcuet63@gmail.com}
+      CLASSROOM_ALLOWED_ORIGINS: https://fahim-niloy2314.github.io
+    volumes:
+      - classroom-private:/var/lib/classroom-hub
+volumes:
+  classroom-private:
