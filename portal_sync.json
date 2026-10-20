@@ -1,6 +1,6 @@
 {
-  "version": "3.3.0",
-  "lastUpdated": "2026-10-18T18:33:45Z",
+  "version": "4.2.0",
+  "lastUpdated": "2026-10-20T17:59:00.820740Z",
   "publishedBy": "Mohammad Fahim Ahmed (Fahim Niloy)",
   "portalSettings": {
     "heroTitle": "Mechanical Engineering",
@@ -12,18 +12,18 @@
     "creatorDept": "Department of Mechanical Engineering",
     "creatorBatch": "'20",
     "creatorId": "2003063",
-    "primaryEmail": "fahimcuet63@gmail.com",
+    "primaryEmail": "fahimniloy2314@gmail.com",
     "phone": "+880 1850-162261",
     "portfolioUrl": "https://mohammad-fahim-ahmed.netlify.app/",
     "githubUrl": "https://github.com/Fahim-Niloy2314/classroom-hub",
     "card1Title": "Course Explorer",
-    "card1Desc": "Browse 3,896+ verified notes, questions, and lab manuals organized exactly by semester.",
+    "card1Desc": "Browse course materials organized by semester and folder.",
     "card2Title": "Student Hub & Tools",
     "card2Desc": "Personal Class Routine Studio, Editable Word (.docx) Timetable, and CUET GPA/CGPA Calculator.",
     "card3Title": "Syllabus & Course Registry",
     "card3Desc": "Official CUET 160-credit Mechanical Engineering degree requirements and course registry.",
     "card4Title": "AI Study Assistant",
-    "card4Desc": "Talk naturally with Fahim Niloy AI just like Gemini about mechanical theories and formulas.",
+    "card4Desc": "Use the official Gemini or ChatGPT app, or connect an online API for study questions.",
     "maintenanceMode": false
   },
   "courseRegistry": {
@@ -420,7 +420,7 @@
     {
       "id": "not_1",
       "title": "Welcome to ClassroomHub — Centralized CUET ME Portal",
-      "message": "Welcome all students of Mechanical Engineering, CUET! Access 3,896 course notes, question banks, class routines, and official faculty directory.",
+      "message": "Browse course materials, use personal student tools, and find faculty contacts. Verify current academic requirements with your department.",
       "badge": "UPDATE",
       "term": "All Semesters",
       "date": "2026-10-18",
@@ -429,8 +429,8 @@
     {
       "id": "not_2",
       "title": "Official Departmental Directory & Contacts Published",
-      "message": "Complete contact numbers and TNT extensions of all 51 faculty members, technical officers, and laboratory staff are now accessible in the Faculty Directory tab.",
-      "badge": "URGENT",
+      "message": "Faculty and staff contacts are available in the Faculty Directory tab. Addresses are shown separately with Gmail compose and copy options.",
+      "badge": "UPDATE",
       "term": "All Semesters",
       "date": "2026-10-18",
       "link": ""
@@ -588,7 +588,10 @@
           "address": "mmrahman.cuet@gmail.com",
           "label": "Primary email"
         }
-      ]
+      ],
+      "administrativeRole": "Dean, Faculty of Mechanical and Manufacturing Engineering",
+      "roleSource": "https://cuet.ac.bd/faculty/mechanical-and-manufacturing-eng",
+      "roleVerifiedAt": "2026-10-20"
     },
     {
       "id": "fac_8",
@@ -2200,28 +2203,19 @@
       "url": "https://www.youtube.com/playlist?list=PLbRMhDVUMngfdXZGkWc083n5p2GkY2iA1"
     }
   ],
-  "timeline": [
-    {
-      "id": "milestone_term_final",
-      "title": "Term Final Examinations",
-      "term": "L4-T2",
-      "date": "2026-11-20",
-      "type": "Exam",
-      "description": "Comprehensive term final written examination according to CUET academic calendar."
-    }
-  ],
+  "timeline": [],
   "faqs": [
     {
       "question": "How do I download an editable class routine in Microsoft Word format?",
-      "answer": "Go to Student Hub & Tools -> Timetable Studio -> Click 'Download Routine Template (.docx)'. You can choose either a clean Blank Template or the authentic CUET ME Sample Routine. Both open directly in Microsoft Word as standard editable tables without requiring any account or Google Drive permissions."
+      "answer": "Go to Student Tools → My Routine. Download the blank Word template or export your own routine as an editable .docx table. Published sample schedules are examples; verify actual class arrangements with your department."
     },
     {
       "question": "Where are my personal timetable changes saved?",
-      "answer": "Your customized classes and notes are stored securely on your current device browser storage. Your personal routine is private to you and is never merged with or overwritten by published department templates."
+      "answer": "Your personal routine is saved in this browser on this device. It is not a cloud backup. Export a JSON backup to transfer it or protect against browser storage being cleared."
     },
     {
-      "question": "Does installing the PWA automatically download all 48GB of Google Drive materials?",
-      "answer": "No. The PWA caches the web application interface, timetable studio, CV builder, calculators, and navigation so the site opens instantly offline. Large PDF textbooks and multi-gigabyte course archives remain hosted on Google Drive and stream on-demand when clicked."
+      "question": "Does installing the app download all Google Drive materials?",
+      "answer": "No. Installation caches the public application shell. Google Drive documents remain online; opening or downloading a file requires access to that file. AI also needs an online provider connection."
     }
   ],
   "cvTemplates": [
@@ -2232,10 +2226,12 @@
       "defaultSections": [
         "contact",
         "summary",
-        "education",
         "experience",
         "skills",
-        "projects"
+        "education",
+        "projects",
+        "certifications",
+        "references"
       ]
     },
     {

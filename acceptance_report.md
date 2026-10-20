@@ -1,50 +1,58 @@
-# Classroom Hub 4.1.1 — verification record
+# Classroom Hub 4.2.0 — verification record
 
-Date: 20 October 2026. Baseline: `5f1a9a6`. This report records finite checks, not a guarantee that every possible issue is absent.
+Date: 21 October 2026 (Asia/Dhaka). Baseline: b3b06ea. This is a record of finite checks, not a guarantee that every possible issue is absent.
 
-## Implemented corrections
+## Public release
 
-| Area | Change | Verification |
+| Area | Implemented behavior | Evidence / limit |
 | --- | --- | --- |
-| Navigation | Preserved Home → Student Tools → Faculty Directory → My Progress, with AI inside Tools | DOM integration routes through all four destinations and secondary views |
-| Sign In | Added the missing accessible dialog; removed client-side password/hash checks and email-based admin impersonation | Dialog opens; forged local role is rejected; disconnected backend is explicit |
-| Authentication | New salted scrypt owner password, expiring server session, logout revocation, login throttling | Python HTTP integration tests with synthetic credentials |
-| Backend files | Replaced unsafe Python/Node file servers; public-file allowlist; private storage outside repository; confined academic file access; no native shell launching | GET and HEAD deny private paths, traversal and escaping symlinks |
-| Inbox | Durable SQLite acknowledgements, idempotent retry, real central admin inbox and status changes | Concurrent retries produce one durable receipt; unauthenticated access rejected |
-| Feedback/contributions | Local outbox and retry, honest undelivered state, optional contact, no fabricated email; resource review connects to central inbox | Offline UI shows pending and never a confirmed receipt; backend receipt checks |
-| Publish | Public payload allowlist, credentials only on backend; commit pending until public revision matches | Missing publish credential is an error and leaves public file unchanged; real production publish requires backend setup |
-| Owner drafts/backups | Preserve a separate owner draft; include faculty, registry, template metadata and hidden/featured flags; versioned restore and pre-restore snapshots | Validation and backend restore rejection checked; full live disaster-recovery exercise remains to be performed after hosting |
-| Routine calendar | User-controlled term dates, true 24-hour inputs, legacy-label parsing, weekday calculation, UTC from Dhaka, bounded recurrence and UTF-8 line folding | Core tests check dates, times, Unicode byte lengths and invalid input |
-| Routine Word | Actual saved class content; no forced minimum width overflowing a wide grid; unmapped-grid warning | Generated DOCX opened as ZIP and inspected for data, landscape and a 16-slot table fitting page width |
-| CV | Save As preservation, restored/persisted template, visible delete and JSON import, overwrite confirmation, safer fields/URLs/photos and distinct section order | Synthetic form/save/reload/injection tests and portrait DOCX content checks |
-| Faculty | Preserved 51-member data and individual Gmail recipients; Fahmida remains Lab Assistant / STAFF | DOM test inspects generated Gmail URLs and staff designation |
-| Cache | Coherent 4.1.1 shell; same-origin public allowlist; no API/authenticated caching; correct offline fallback | JavaScript syntax checked; online/offline lifecycle still needs a device-level smoke test |
-| Claims | Removed invented visitor fallback, hardcoded audit passes and local-save “published live” messages | Source review; unavailable visitor service displays unavailable |
-| AI | Replaced retired Gemini 2.0 endpoint with current documented Flash model; API keys moved to headers; explicit built-in-reference/Drive limitations | Syntax and source checks only; no provider key/quota supplied for a real answer test |
+| Owner identity | Exactly the owner's two approved Gmail addresses; no public registration; no third-owner editor | Server authentication and rejection tests; emails are fixed in the backend |
+| Public documentation | Removed OWNER_MANUAL.md, public setup links and setup instructions | DOM/source checks; old repository history remains historical source |
+| Owner controls | Curriculum/course credits, faculty CRUD and administrative roles, restored notices/video/milestone/resource edit dialogs, CV template defaults, English/Bangla wording, advanced public modules | Verified-owner DOM integration exercises edits, preservation and validation |
+| Recovery | Full public revision snapshots, undo, separate owner draft, public-content/local-history/inbox backup and restore | Restore validation is checked; credentials/provider configuration are deliberately excluded from exported backups |
+| Faculty | Dr. Mohammad Mizanur Rahman's Professor rank is retained and Dean role added; Fahmida remains Lab Assistant / STAFF | Dean verified against CUET faculty page; existing 51 records and independent Gmail recipients preserved |
+| Curriculum and dates | No generated future examinations presented as confirmed dates; empty content stays empty | Faculty-empty regression; unsupported seeded exam dates removed; curriculum is owner-maintained, not independently certified for every cohort |
+| Routine | Blank personal routine, custom courses/teachers/days/time slots, overlap labels, term dates, editable landscape Word, calendar and JSON backups | Real OpenXML/time/calendar tests retained; samples are examples, not a verified current department timetable |
+| CV | Three layouts, private local drafts, section visibility/order without data loss, separate example draft, JSON backup and editable portrait Word | Save/reload/import, injection prevention and document-structure tests; photo appears in browser/PDF preview, not Word export |
+| AI | Official Gemini/ChatGPT app launch with question copy; actual Gemini/OpenAI API paths, explicit reference-search mode, honest connection errors; KaTeX auto-render added | Provider payloads/caps tested with mocks; no real provider key or paid request was used; official-app answers appear in that app |
+| Languages | Clear navigation translations and AI control relabeling preserve unsent question and selected mode; owner wording overrides | EN→BN→EN integration test |
+| Feedback | Durable server acknowledgement or honest local pending state; retry; Gmail/WhatsApp forwarding; real owner inbox statuses | Offline receipt and central HTTP tests; forwarding opens a draft and the student sends it |
+| WhatsApp automation | Private Business Cloud API settings, approved-template queue, instant/daily modes, bounded retry, revoke-token and retry controls | Mocked provider accepts are shown as accepted, never delivered/read; actual account/token/template not supplied |
+| Owner usage statistics | Anonymous browsers active in the last 90 seconds, current routes, daily browsers and AI attempts | Real counting/expiry and owner-only API tests; browsers are not verified people |
+| PWA/accessibility | Actual deferred browser install prompt, platform-specific fallback, coherent 4.2.0 public shell, API cache exclusion, zoom enabled | Captured browser-prompt test; a site cannot force installation without native browser confirmation |
+| Contact/archive | Feedback Gmail uses approved owner address; archived bulletin opens an existing repository release | Release PDF returned HTTP 200; CUET's indexed original URL returned 404, so it is not presented as a live official download |
 
-## Reproducible automated checks
+## Automated checks
 
-- `npm run check`: syntax checks for app, core helpers, corrective flows and service worker.
-- `npm test`: **14 tests passed** (7 core + 7 DOM integration).
-- `python -m unittest discover -s tests -p 'test_*.py' -v`: **11 tests passed**.
-- Total: **25 tests passed**. Tests are committed under `tests/`, with dependency lockfile and a GitHub Actions workflow. Their assertions are available for review.
+- `npm run check`: all five JavaScript entry files and service worker parse.
+- `npm test`: **24 passed** (7 core and 17 DOM integration tests).
+- `python -m unittest discover -s tests -p 'test_*.py' -q`: **24 passed** (14 HTTP integration and 10 service tests).
+- Public repository total: **48 passed**. Sources and lockfile are committed. GitHub Actions repeats these checks.
+- A separate owner-private hosted backend has **10 additional API tests** using a real in-memory SQLite adapter and mocked providers. These test fixed owner identities, sessions, throttling, private controls, durable idempotent feedback, publication, measured browser activity and secret redaction.
 
-DOM tests run in jsdom and do not establish pixel-perfect mobile layout. DOCX tests establish document structure and content; they do not replace a visual review in each Word version or certify PDF pagination.
+DOM tests do not certify pixel-perfect rendering on every phone. DOCX structure tests do not certify pagination in every Word version. Production Gemini/OpenAI and WhatsApp deliveries remain unverified without real provider configuration.
 
-## Deployment and remaining setup
+## Runtime status
 
-The public static changes are intended for the existing GitHub Pages site. No Netlify project, build or deployment is part of this change. Existing Drive archive/index files and the two downloadable Word templates are retained.
+The public frontend remains on GitHub Pages. No Netlify project was changed or deployed. A separate owner-private Sites backend is deployed with durable database storage. Its actual production owner login returned HTTP 200, the two-address owner identity was verified, and the test session was revoked. It is not yet connected to anonymous GitHub Pages visitors. The public Sign In dialog links to the private owner portal. Direct public-site owner login, central student feedback, activity reporting and shared AI cannot be claimed connected until that public API connection is enabled and verified. The public interface reports the missing backend honestly.
 
-**Online admin login, central message delivery and one-click publishing require an actual HTTPS Python backend, durable private storage, a newly configured owner password and a server-side repository credential.** `backend-config.json` is deliberately unconfigured until that real endpoint exists. This report does not claim those services are live.
+The Python runtime supports an always-running notification worker. The separate serverless backend checks daily alerts on subsequent site activity; exact unattended daily scheduling is not enabled. No real WhatsApp messages have been sent.
 
-Local backend integration tests run on loopback with temporary synthetic records. No user password was entered, no live student feedback was submitted, no Drive files were changed, and no API secret was put in browser/public content.
+## Primary-source design and technical references
 
-The owner guide includes local setup, online hosting configuration, Docker deployment files, backup/recovery and exact limitations. Remaining external checks: authenticate against the eventual online backend, submit a harmless cross-device test message, verify a real content publish, review mobile device layouts and print pagination, and verify Drive sharing and curriculum with the department. Live Pages smoke-test observations will be summarized separately after deployment is served.
+These sources informed specific patterns, not a claim to have reviewed every educational website:
 
-Sources for lifecycle/hosting decisions: [GitHub Pages capabilities](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site), [Google Gemini lifecycle](https://ai.google.dev/gemini-api/docs/deprecations/).
+- [Canvas: publication controls](https://community.instructure.com/en/kb/articles/660767-how-do-i-publish-a-course): separate editable draft and published state.
+- [Google Classroom: topics](https://support.google.com/edu/classroom/answer/9093681?co=GENIE.Platform%3DDesktop&hl=en): ordered, discoverable academic content.
+- [Moodle: restore](https://docs.moodle.org/en/Course_restore): validated backups and recoverability.
+- [CUET faculty](https://cuet.ac.bd/faculty/mechanical-and-manufacturing-eng): Dean role; search index exposed the faculty content while a direct fetch returned a reduced page.
+- [KaTeX auto-render](https://katex.org/docs/autorender): separate auto-render extension and whole-formula delimiters.
+- [OpenAI Responses](https://developers.openai.com/api/docs/guides/migrate-to-responses) and [Gemini deprecations](https://ai.google.dev/gemini-api/docs/deprecations/): actual provider integration and model maintenance.
+- [MDN install prompt](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/How_to/Trigger_install_prompt): browser-controlled install eligibility and confirmation.
+- [Meta-owned WhatsApp template reference](https://whatsapp.github.io/WhatsApp-Nodejs-SDK/api-reference/messages/template/): approved template prerequisites.
 
-## Live Pages smoke test
+## Mobile rendering check
 
-The first fixed release was served live as commit `c2a5302`. GitHub reported both Regression checks and Pages build/deployment successful. A real browser verified the four-tab order, loaded all eight semester cards, opened the sign-in dialog, confirmed the disconnected-backend notice with sign-in disabled, and found the CV delete/import controls. Faculty rendering contained 142 Gmail compose links with no combined recipients and retained the Lab Assistant designation. No application JavaScript error was observed; an unrelated browser-extension metadata error was excluded.
+Browser QA used an iframe with its own narrow layout viewport, rather than shrinking a desktop screenshot. The tested frame sizes were 320, 360, 390, 768 and 1024 CSS pixels. Measured content viewport / document scroll widths matched at 314/314, 354/354, 384/384, 762/762 and 1018/1018 respectively (iframe borders/scrollbar consume the difference). Home, routine, CV form/preview, CGPA, AI, faculty and progress views were exercised across the phone sizes; Home was also checked at tablet sizes.
 
-The 4.1.1 patch removes the remaining preselected personal semester/section display and adds a regression assertion. Online admin/inbox remain unconfigured; no live credential was entered.
+The header now uses two rows on phones; desktop tabs switch to bottom navigation before they become crowded. Student tool tabs wrap into two columns. Flex/grid children can shrink, long text wraps, dialogs fit the viewport, GPA fields stack, and large routine tables/equations scroll inside bounded panels. Browser inspection found no uncontained routine controls at the smallest size. Two actual KaTeX equations rendered through the chat UI with zero `.katex-error` elements; that check used a user question and did not spend provider quota. Physical-device installation and every possible long-content combination are not certified by this check.

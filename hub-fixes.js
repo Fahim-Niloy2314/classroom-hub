@@ -2,7 +2,7 @@
 'use strict';
 const Hub = (() => {
   const H = HubCore.html;
-  let apiBase = '', ready = false, verified = false, sessionExpiry = 0, retrying = false;
+  let apiBase = '', ready = false, verified = false, sessionExpiry = 0, retrying = false, onlineAiAvailable = false;
   const SESSION = 'classroom_admin_token', QUEUE = 'classroom_feedback_outbox_v1';
   const read = (key, fallback) => { try { const value = JSON.parse(localStorage.getItem(key)); return value === null ? fallback : value; } catch { return fallback; } };
   function download(name, data, type = 'application/json') {
@@ -10,7 +10,7 @@ const Hub = (() => {
     const a = document.createElement('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   async function request(path, options = {}) {
-    if (!ready) throw new Error('The online backend is not connected. See the owner setup guide.');
+    if (!ready) throw new Error('The owner service is not connected. Only the site owner can configure it privately.');
     const token = sessionStorage.getItem(SESSION);
     const controller = new AbortController(); const timer = setTimeout(()=>controller.abort(),30000);
     try {
@@ -27,7 +27,7 @@ const Hub = (() => {
     // Retire insecure credentials from earlier releases, preserving all student work.
     for (const key of ['classroom_admin_token','classroom_admin_github_token','classroom_admin_pwd_hash','classroom_user']) localStorage.removeItem(key);
     try {
-      const response = await fetch('backend-config.json?v=4.1.1', {cache:'no-store'});
+      const response = await fetch('backend-config.json?v=4.2.0', {cache:'no-store'});
       const config = await response.json();
       const url = config.apiBase ? new URL(config.apiBase) : new URL(location.origin);
       if (url.protocol !== 'https:' && !(['localhost','127.0.0.1','[::1]'].includes(url.hostname) && url.protocol === 'http:')) throw new Error('The backend requires HTTPS.');
@@ -36,21 +36,22 @@ const Hub = (() => {
       if (!config.apiBase && location.hostname.endsWith('github.io')) { updateConnectionText(); return; }
       apiBase = url.href.replace(/\/$/,''); ready = true;
       const status = await request('status');
-      ready = status.status === 'online';
+      ready = status.status === 'online'; onlineAiAvailable = status.aiAvailable === true;
       if (status.authenticated) { verified = true; currentUser = {name:'Fahim Niloy',role:'admin'}; sessionExpiry = Number(sessionStorage.getItem('classroom_session_expiry')) || 0; }
       else sessionStorage.removeItem(SESSION);
     } catch { ready = false; invalidateSession(); }
     updateConnectionText();
   }
   function updateConnectionText() {
-    const text = ready ? 'Backend connected: ' + apiBase : 'Online admin and inbox are not connected yet. Public tools work normally. Follow the owner setup guide to connect the backend.';
+    const text = ready ? 'Backend connected: ' + apiBase : 'Online admin and inbox are not connected yet. Public tools work normally. Only the site owner can connect the private owner service.';
     for (const id of ['authBackendStatus','backendPublishStatus']) { const el = document.getElementById(id); if (el) el.textContent = text; }
     const button = document.getElementById('ownerLoginSubmit'); if (button) button.disabled = !ready;
+    const portalLink=document.getElementById('privateOwnerPortalLink');if(portalLink)portalLink.hidden=ready;
   }
   function portalPayload() {
     const baseline = read('classroom_public_baseline',{});
     return HubCore.publicValue({
-      version:'4.1.1', lastUpdated:new Date().toISOString(), publishedBy:currentUser?.name || 'Owner',
+      version:'4.2.0', lastUpdated:new Date().toISOString(), publishedBy:currentUser?.name || 'Owner',
       portalSettings, courseRegistry:window.CUET_COURSE_REGISTRY || read('classroom_course_registry',baseline.courseRegistry || {}),
       notices:Array.isArray(adminNotices) ? adminNotices : [], faculty:getFacultyMembers(), routines:getStoredRoutine(),
       customResources:communityResources, videos:adminVideos, timeline:adminTimeline, faqs:adminFaqs,
@@ -75,13 +76,15 @@ const Hub = (() => {
     try {
       if (label) label.textContent = 'Submitting…';
       const result = await request('publish',{method:'POST',body:JSON.stringify({payload})});
-      if (!result.success || !result.revision || !result.commit) throw new Error(result.error || 'The backend did not confirm a GitHub commit.');
-      say('Committed. Waiting for the public site to update…'); if (label) label.textContent = 'Deployment pending';
+      if (!result.success || !result.revision || (!result.commit && result.publication!=='database')) throw new Error(result.error || 'The backend did not confirm publication.');
+      if(result.publication==='database' && !result.publicFrontendConnected){say('Saved to the private owner service. The public website is not connected yet; your draft is retained.');return;}
+      const publicUrl=result.publication==='database'?new URL('/api/portal',apiBase).href:'https://fahim-niloy2314.github.io/classroom-hub/portal_sync.json';
+      say('Saved. Waiting for the public revision to update…'); if (label) label.textContent = 'Deployment pending';
       let live = false;
       for (let i=0;i<15;i++) {
         await new Promise(resolve=>setTimeout(resolve,3000));
         try {
-          const response = await fetch('https://fahim-niloy2314.github.io/classroom-hub/portal_sync.json?revision='+encodeURIComponent(result.revision),{cache:'no-store'});
+          const response = await fetch(publicUrl+'?revision='+encodeURIComponent(result.revision),{cache:'no-store'});
           const publicData = await response.json();
           if (publicData.lastUpdated === result.revision) {
             localStorage.setItem('classroom_public_baseline',JSON.stringify(publicData));
@@ -111,10 +114,11 @@ const Hub = (() => {
     const id = result.receiptId || payload.requestId;
     const set = (selector,text) => { const el = document.getElementById(selector); if(el)el.textContent=text; };
     set('receiptSummaryId',received ? 'Received by server: #'+id : 'Saved on this device — not delivered');
+    set('receiptDeliveryExplanation',received ? (currentLang==='bn' ? 'আপনার বার্তা সার্ভারের ইনবক্সে সংরক্ষিত হয়েছে। চাইলে নিচের বাটন দিয়ে আলাদাভাবে WhatsApp বা Gmail-এ পাঠাতে পারেন।' : 'Your message is saved in the server inbox. You may also forward it separately using WhatsApp or Gmail below.') : (currentLang==='bn' ? 'বার্তাটি এখনো পৌঁছায়নি; এই ডিভাইসে পুনরায় পাঠানোর জন্য রাখা আছে। সরাসরি যোগাযোগ করতে নিচের WhatsApp বা Gmail বাটনে ক্লিক করে নিজে পাঠিয়ে দিন।' : 'Your message has not been delivered. It is saved on this device for retry. To contact the owner directly, open WhatsApp or Gmail below and send it yourself.'));
     set('receiptSummaryCategory',payload.type); set('receiptSummaryName',name); set('receiptSummarySnippet',message);
     const full = `Classroom Hub feedback\nCategory: ${payload.type}\nFrom: ${name}\nRoll: ${payload.roll}\nContact: ${contact}\n\n${message}`;
     const wa=document.getElementById('receiptWhatsappLink'); if(wa)wa.href='https://wa.me/8801850162261?text='+encodeURIComponent(full);
-    const mail=document.getElementById('receiptEmailLink'); if(mail)mail.href='https://mail.google.com/mail/?view=cm&fs=1&to=fahimcuet63%40gmail.com&su='+encodeURIComponent('Classroom Hub feedback')+'&body='+encodeURIComponent(full);
+    const mail=document.getElementById('receiptEmailLink'); if(mail)mail.href='https://mail.google.com/mail/?view=cm&fs=1&to=fahimniloy2314%40gmail.com&su='+encodeURIComponent('Classroom Hub feedback')+'&body='+encodeURIComponent(full);
     document.getElementById('feedbackReceiptDialog')?.showModal();
     showToast(received ? 'Your message was received by the server.' : 'Not delivered. Saved locally for retry; you can also forward it manually.');
     event?.target?.reset?.(); renderOutbox();
@@ -165,7 +169,8 @@ const Hub = (() => {
     list.textContent='Loading the central inbox…';
     try {
       const result=await request('submissions');
-      list.innerHTML='<button type="button" class="hub-button" onclick="renderAdminFeedbacks()">Refresh inbox</button>'+(result.submissions.length? result.submissions.map(f=>`<article class="hub-inbox-card"><div><strong>${H(f.studentName)}</strong> · ${H(f.type)} · ${H(f.createdAt)}</div><p class="hub-message">${H(f.description)}</p><small>${H(f.studentEmail || f.studentPhone || 'No contact provided')} · ${H(f.receiptId)}</small>${f.resource?`<button type="button" class="hub-button" onclick="Hub.queueResource('${H(f.id)}')">Add resource to review queue</button>`:''}<label>Status<select onchange="Hub.submissionStatus('${H(f.id)}',this.value)">${['new','reviewed','resolved','archived'].map(s=>`<option ${s===f.status?'selected':''}>${s}</option>`).join('')}</select></label></article>`).join(''):'<p>No messages received by the backend.</p>');
+      for(const id of ['adminFeedbackCount','adminFeedbackBadge']) {const counter=document.getElementById(id);if(counter)counter.textContent=result.submissions.length;}
+      list.innerHTML='<button type="button" class="hub-button" onclick="renderAdminFeedbacks()">Refresh inbox</button>'+(result.submissions.length? result.submissions.map(f=>`<article class="hub-inbox-card"><div><strong>${H(f.studentName)}</strong> · ${H(f.type)} · ${H(f.createdAt)}</div><p class="hub-message">${H(f.description)}</p><small>${H(f.studentEmail || f.studentPhone || 'No contact provided')} · ${H(f.receiptId)} · WhatsApp: ${H(f.notificationState || 'disabled')}</small>${f.resource?`<button type="button" class="hub-button" onclick="Hub.queueResource('${H(f.id)}')">Add resource to review queue</button>`:''}<label>Status<select onchange="Hub.submissionStatus('${H(f.id)}',this.value)">${['new','reviewed','resolved','archived'].map(s=>`<option ${s===f.status?'selected':''}>${s}</option>`).join('')}</select></label></article>`).join(''):'<p>No messages received by the backend.</p>');
     }catch(e){list.textContent='Inbox unavailable: '+e.message;}
   }
   async function submissionStatus(id,status) {try{await request('submissions/status',{method:'POST',body:JSON.stringify({id,status})});showToast('Status saved.');}catch(e){showToast(e.message);await inbox();}}
@@ -190,6 +195,7 @@ const Hub = (() => {
         if(typeof blank[key]==='boolean')blank[key]=!!cv[key];
         if(Array.isArray(blank[key]) && Array.isArray(cv[key]))blank[key]=cv[key].slice(0,100).filter(x=>x && typeof x==='object' && !Array.isArray(x)).map(x=>Object.fromEntries(Object.entries(x).filter(([k,v])=>!['__proto__','constructor','prototype'].includes(k)&&typeof v==='string').map(([k,v])=>[k,v.slice(0,20000)])));
       }
+      if(cv.sectionLayouts&&typeof cv.sectionLayouts==='object'){blank.sectionLayouts={};for(const [key,value]of Object.entries(cv.sectionLayouts))if(['template_job','template_eng','template_academic'].includes(key)&&Array.isArray(value))blank.sectionLayouts[key]=value.filter(k=>['summary','education','experience','projects','research','skills','certifications','references'].includes(k));}
       blank.template=['template_job','template_eng','template_academic'].includes(cv.template)?cv.template:'template_job';
       const name=prompt('Import as a new draft named:', 'Imported CV '+new Date().toISOString().slice(0,10));if(!name?.trim())return;
       const drafts=getStoredCvDrafts();if(['__proto__','constructor','prototype'].includes(name.trim()))throw new Error('Choose a different draft name.');
@@ -237,19 +243,19 @@ const Hub = (() => {
     return ['Professional Summary','Education','Engineering & Design Projects','Technical Skills & Tools','Experience & Internships','Research & Publications','Certifications & Honors','References'];
   }
   function orderCvSections(paper,template) {
-    const order=cvOrder(template), sections=[...paper.querySelectorAll(':scope > .cv-section-block')];
+    const order=typeof HubFeatures!=='undefined'?HubFeatures.sectionHeadings(template):cvOrder(template), sections=[...paper.querySelectorAll(':scope > .cv-section-block')];
     sections.sort((a,b)=>{const x=order.indexOf(a.querySelector('h2')?.textContent.trim()),y=order.indexOf(b.querySelector('h2')?.textContent.trim());return (x<0?99:x)-(y<0?99:y);});
-    sections.forEach(section=>paper.append(section));
+    sections.forEach(section=>{const title=section.querySelector('h2')?.textContent.trim();if(order.includes(title))paper.append(section);else section.remove();});
   }
   function orderCvWord(paragraphs,template) {
-    const order=cvOrder(template), groups=[{title:'',parts:[]}];
+    const order=typeof HubFeatures!=='undefined'?HubFeatures.sectionHeadings(template):cvOrder(template), allHeadings=['Professional Summary','Education','Experience & Internships','Engineering & Design Projects','Research & Publications','Technical Skills & Tools','Certifications & Honors','References'], groups=[{title:'',parts:[]}];
     for(const part of paragraphs) {
-      const heading=order.find(title=>part.includes('<w:t>'+title.replace(/&/g,'&amp;')+'</w:t>'));
+      const heading=allHeadings.find(title=>part.includes('<w:t>'+title.replace(/&/g,'&amp;')+'</w:t>'));
       if(heading)groups.push({title:heading,parts:[]});
       groups[groups.length-1].parts.push(part);
     }
     const header=groups.shift();groups.sort((a,b)=>order.indexOf(a.title)-order.indexOf(b.title));
-    return header.parts.join('')+groups.map(g=>g.parts.join('')).join('');
+    return header.parts.join('')+groups.filter(g=>order.includes(g.title)).map(g=>g.parts.join('')).join('');
   }
   let draftTimer;
   function saveOwnerDraft(event) {
@@ -261,7 +267,7 @@ const Hub = (() => {
   window.addEventListener('hashchange',()=>{syncTermDates();renderOutbox();});
   document.addEventListener('DOMContentLoaded',()=>{syncTermDates();renderOutbox();});
   setInterval(()=>{if(verified&&sessionExpiry&&Date.now()/1000>=sessionExpiry){invalidateSession();showToast('Owner session expired. Sign in again.');}},30000);
-  return {showRoutineWarnings,orderCvSections,orderCvWord,initialize,updateConnectionText,download,request,portalPayload,applySupplementalData,publish,submitFeedback,submitResource,queueResource,retryOutbox,inbox,submissionStatus,saveTermDates,exportCalendar,importCv,exportBackup,importBackup,get authenticated(){return verified&&(!sessionExpiry||Date.now()/1000<sessionExpiry);},setSession(data){verified=true;sessionExpiry=data.expiresAt;sessionStorage.setItem(SESSION,data.token);sessionStorage.setItem('classroom_session_expiry',String(data.expiresAt));},invalidateSession};
+  return {showRoutineWarnings,orderCvSections,orderCvWord,initialize,updateConnectionText,download,request,portalPayload,applySupplementalData,publish,submitFeedback,submitResource,queueResource,retryOutbox,inbox,submissionStatus,saveTermDates,exportCalendar,importCv,exportBackup,importBackup,get connected(){return ready;},get aiAvailable(){return onlineAiAvailable;},get authenticated(){return verified&&(!sessionExpiry||Date.now()/1000<sessionExpiry);},setSession(data){verified=true;sessionExpiry=data.expiresAt;sessionStorage.setItem(SESSION,data.token);sessionStorage.setItem('classroom_session_expiry',String(data.expiresAt));},invalidateSession};
 })();
 
 function isAdmin(user) { return !!user && user.role==='admin' && Hub.authenticated; }

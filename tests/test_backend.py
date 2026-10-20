@@ -86,6 +86,26 @@ class BackendTests(unittest.TestCase):
         token=self.login();backup=self.call('/api/backup',token=token)[1]['backup'];backup['submissions']=[{'id':'bad','status':'invalid'}]
         self.assertEqual(self.call('/api/restore',{'backup':backup},token)[0],400)
         self.assertEqual(self.call('/api/restore',{'backup':{'app':'invalid'}},token)[0],400)
+    def test_both_owner_emails_work_and_old_email_is_not_an_owner(self):
+        for email in ['fahimniloy2314@gmail.com','fahim.cuet.me20@gmail.com']:
+            status,data,_=self.call('/api/login',{'email':email,'password':'synthetic-test-password'})
+            self.assertEqual(status,200);self.assertEqual(data['user']['email'],email)
+        self.assertEqual(self.call('/api/login',{'email':'fahimcuet63@gmail.com','password':'synthetic-test-password'})[0],401)
+    def test_private_owner_settings_revoke_sessions_and_never_return_password_hash(self):
+        token=self.login();status,data,_=self.call('/api/owner',token=token);self.assertEqual(status,200);self.assertNotIn('hash',data)
+        self.assertEqual(self.call('/api/owner',{'emails':['owner@example.com'],'currentPassword':'wrong'},token)[0],401)
+        token=self.login()
+        try:
+            self.assertEqual(self.call('/api/owner',{'emails':['owner@example.com'],'currentPassword':'synthetic-test-password'},token)[0],400)
+            self.assertEqual(self.call('/api/owner',{'emails':[hub.DEFAULT_OWNER_EMAILS[0]],'currentPassword':'synthetic-test-password'},token)[0],400)
+            status,data,_=self.call('/api/owner',{'emails':hub.DEFAULT_OWNER_EMAILS,'currentPassword':'synthetic-test-password'},token)
+            self.assertEqual(status,200);self.assertTrue(data['reauthenticate']);self.assertEqual(self.call('/api/backup',token=token)[0],401)
+        finally:
+            stored=hub.make_password('synthetic-test-password');stored['emails']=hub.DEFAULT_OWNER_EMAILS;hub.atomic_json(hub.PRIVATE_DIR/'owner.json',stored)
+    def test_analytics_and_service_configuration_require_owner(self):
+        for route in ['/api/analytics','/api/ai/config','/api/notifications/config','/api/owner']:
+            self.assertEqual(self.call(route)[0],401)
+        self.assertEqual(self.call('/api/ai/chat',{'question':'Fixture'})[0],503)
     def test_rate_limit(self):
         hub.ATTEMPTS.pop('127.0.0.1',None)
         for _ in range(5):self.assertEqual(self.call('/api/login',{'email':hub.OWNER_EMAIL,'password':'wrong'})[0],401)

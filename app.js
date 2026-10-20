@@ -1,7 +1,7 @@
 /**
  * Classroom Hub - Full Application Controller
  * Author: Fahim Niloy (CUET ME '20, Roll: 2003063)
- * Admin Emails: fahimcuet63@gmail.com, fahimniloy2314@gmail.com, fahim.cuet.me20@gmail.com
+ * Admin Emails: fahimniloy2314@gmail.com, fahimniloy2314@gmail.com, fahim.cuet.me20@gmail.com
  */
 
 // Application State
@@ -62,7 +62,6 @@ const STORAGE_KEYS = {
 
 // Admin Email List
 const ADMIN_EMAILS = [
-  'fahimcuet63@gmail.com',
   'fahimniloy2314@gmail.com',
   'fahim.cuet.me20@gmail.com'
 ];
@@ -89,7 +88,7 @@ const DEFAULT_PORTAL_SETTINGS = {
   creatorDept: "Department of Mechanical Engineering",
   creatorBatch: "'20",
   creatorId: "2003063",
-  primaryEmail: "fahimcuet63@gmail.com",
+  primaryEmail: "fahimniloy2314@gmail.com",
   phone: "+880 1850-162261",
   portfolioUrl: "https://mohammad-fahim-ahmed.netlify.app/",
   githubUrl: "https://github.com/Fahim-Niloy2314/classroom-hub",
@@ -148,32 +147,7 @@ let adminFeaturedItems = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMI
 let adminLogs = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_LOGS), '[]');
 let adminSeoSettings = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_SEO), '{}');
 let adminFaqs = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.ADMIN_FAQS), 'null');
-if (!adminFaqs || adminFaqs.length === 0) {
-  adminFaqs = [
-    {
-      id: 'faq_1',
-      question: 'টার্ম ফাইনাল পরীক্ষার জন্য কোন ক্যালকুলেটর অনুমোদিত?',
-      answer: 'সিইউইটি পরীক্ষার নিয়মানুযায়ী সাধারণত নন-প্রোগ্রামেবল সায়েন্টিফিক ক্যালকুলেটর (যেমন: Casio fx-991ES Plus, Casio fx-991EX ClassWiz, Casio fx-991CW) অনুমোদিত। কোনো প্রোগ্রামিং মেমরিযুক্ত বা গ্রাফিং ক্যালকুলেটর পরীক্ষার হলে নিষিদ্ধ।',
-      category: 'EXAM',
-      keywords: ['calculator', 'ক্যালকুলেটর', 'fx-991es', 'পরীক্ষার ক্যালকুলেটর', 'fx-991ex']
-    },
-    {
-      id: 'faq_2',
-      question: 'ফাহিম নিলয়ের সাথে কীভাবে যোগাযোগ করব?',
-      answer: 'মোহাম্মদ ফাহিম আহমেদ (ফাহিম নিলয়, রোল: ২০০৩০৬৩, মেকানিক্যাল ইঞ্জিনিয়ারিং \'২০ ব্যাচ, চুয়েট)।\\n• ইমেইল: fahimcuet63@gmail.com\\n• মোবাইল / হোয়াটসঅ্যাপ: +880 1850-162261\\n• পোর্টফোলিও: https://mohammad-fahim-ahmed.netlify.app/\\n• গিটহাব: https://github.com/Fahim-Niloy2314/classroom-hub',
-      category: 'GENERAL',
-      keywords: ['contact', 'যোগাযোগ', 'fahim', 'email', 'phone', 'নাম্বার', 'ফোন']
-    },
-    {
-      id: 'faq_3',
-      question: 'সিইউইটি মেকানিক্যাল ইঞ্জিনিয়ারিংয়ের মোট ক্রেডিট কত?',
-      answer: 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের ৪ বছর মেয়াদী বি.এসসি. ইঞ্জিনিয়ারিং ডিগ্রির মোট ক্রেডিট সংখ্যা ১৬০.০০ ক্রেডিট। এতে ৮টি সেমিস্টার (L1-T1 থেকে L4-T2) অন্তর্ভুক্ত রয়েছে। বিস্তারিত জানতে হোমপেজের Undergraduate ME Bulletin ডাউনলোড করুন।',
-      category: 'COURSE',
-      keywords: ['credit', 'ক্রেডিট', 'ডিগ্রি', 'সিলেবাস', 'bulletin', 'বুলেটিন']
-    }
-  ];
-  localStorage.setItem(STORAGE_KEYS.ADMIN_FAQS, JSON.stringify(adminFaqs));
-}
+if (!Array.isArray(adminFaqs)) { adminFaqs = []; }
 
 let adminRoutine = null;
 const rawStoredRoutine = localStorage.getItem(STORAGE_KEYS.ADMIN_ROUTINE);
@@ -184,33 +158,7 @@ if (rawStoredRoutine !== null) {
     adminRoutine = null;
   }
 }
-if (!adminRoutine) {
-  adminRoutine = {
-    'L4-T2': {
-      'Sunday': [
-        { time: '08:00 AM - 08:50 AM', course: 'ME-411 Power Plant Engineering', room: 'ME-304', teacher: 'Prof. Dr. XYZ' },
-        { time: '08:50 AM - 09:40 AM', course: 'ME-421 Automobile Engineering', room: 'ME-304', teacher: 'Dr. ABC' },
-        { time: '10:00 AM - 12:30 PM', course: 'ME-498 Project & Thesis Sessional', room: 'ME Lab', teacher: 'Supervisor' }
-      ],
-      'Monday': [
-        { time: '08:50 AM - 10:30 AM', course: 'ME-455 Operations Management', room: 'ME-304', teacher: 'Faculty' },
-        { time: '10:50 AM - 01:20 PM', course: 'ME-412 Power Plant Engineering Sessional', room: 'Thermal Lab', teacher: 'Lab Faculty' }
-      ],
-      'Tuesday': [
-        { time: '08:00 AM - 09:40 AM', course: 'ME-411 Power Plant Engineering', room: 'ME-304', teacher: 'Prof. Dr. XYZ' },
-        { time: '10:00 AM - 11:40 AM', course: 'ME-421 Automobile Engineering', room: 'ME-304', teacher: 'Dr. ABC' }
-      ],
-      'Wednesday': [
-        { time: '08:50 AM - 10:30 AM', course: 'ME-455 Operations Management', room: 'ME-304', teacher: 'Faculty' },
-        { time: '10:50 AM - 01:20 PM', course: 'ME-422 Automobile Engineering Sessional', room: 'Auto Lab', teacher: 'Lab Faculty' }
-      ],
-      'Thursday': [
-        { time: '09:40 AM - 11:20 AM', course: 'ME-498 Project Consultation', room: 'Dept Library', teacher: 'Advisors' }
-      ]
-    }
-  };
-  localStorage.setItem(STORAGE_KEYS.ADMIN_ROUTINE, JSON.stringify(adminRoutine));
-}
+if (!adminRoutine) { adminRoutine = {}; }
 
 // Default initial notices if never initialized (preserves intentionally empty lists [])
 const rawStoredNotices = localStorage.getItem(STORAGE_KEYS.ADMIN_NOTICES);
@@ -221,7 +169,7 @@ if (rawStoredNotices === null) {
       title: 'Welcome to CUET ME Academic Vault & ClassroomHub',
       badge: 'UPDATE',
       term: 'ALL',
-      message: 'All 8 semesters (L1-T1 to L4-T2) verified course materials, question banks, lab sheets, and lecture slides are now available. 100% complimentary access for all CUETians.',
+      message: 'Browse course materials organized by semester. Confirm current academic requirements with your department.',
       link: 'https://drive.google.com/drive/folders/1v4Gni71jdRExyyIMW6-udmiy7UIsK89h',
       active: true,
       date: new Date().toISOString()
@@ -541,39 +489,14 @@ const VERIFIED_VIDEO_COLLECTIONS = [
 
 // Always migrate to verified videos if local copy is empty or older version
 const VIDEO_COLLECTION_VER = 'v5_verified_2026_fixed';
-if (localStorage.getItem('classroom_video_ver') !== VIDEO_COLLECTION_VER || adminVideos.length === 0 || adminVideos.some(v => v.url && (v.url.includes('PLDN15nk5uLi') || v.url.includes('@Lesics')))) {
+if (localStorage.getItem(STORAGE_KEYS.ADMIN_VIDEOS) === null) {
   adminVideos = [...VERIFIED_VIDEO_COLLECTIONS];
   localStorage.setItem(STORAGE_KEYS.ADMIN_VIDEOS, JSON.stringify(adminVideos));
   localStorage.setItem('classroom_video_ver', VIDEO_COLLECTION_VER);
 }
 
 // Default initial exam / CT timeline
-if (adminTimeline.length === 0) {
-  adminTimeline = [
-    {
-      id: 'tm_1',
-      title: 'ME 411 Power Plant Engineering CT 3',
-      date: '2026-10-25',
-      term: 'L4-T1',
-      desc: 'Syllabus: Gas Turbines, Brayton Cycle with Regeneration & Jet Propulsion.'
-    },
-    {
-      id: 'tm_2',
-      title: 'L4-T1 Central Sessional Lab Viva & Central Quiz',
-      date: '2026-11-10',
-      term: 'L4-T1',
-      desc: 'All sessional lab courses (Heat Transfer, Fluid Machinery, Instrumentation).'
-    },
-    {
-      id: 'tm_3',
-      title: 'L4-T1 Term Final Examinations (Tentative)',
-      date: '2026-11-28',
-      term: 'L4-T1',
-      desc: 'CUET Academic Council announced tentative commencement date.'
-    }
-  ];
-  localStorage.setItem(STORAGE_KEYS.ADMIN_TIMELINE, JSON.stringify(adminTimeline));
-}
+if (localStorage.getItem(STORAGE_KEYS.ADMIN_TIMELINE) === null) { adminTimeline = []; }
 
 /* =========================================================================
    1. BILINGUAL TRANSLATION DICTIONARY (EN default + BN toggle)
@@ -581,6 +504,8 @@ if (adminTimeline.length === 0) {
 const I18N = {
   en: {
     nav_sub: 'CUET Mechanical Engineering Archive',
+    cgpa_intro: 'Enter course credits and grades to estimate term GPA and cumulative CGPA. Confirm the applicable rules with your department.',
+    cv_intro: 'Create an editable CV for internships, jobs or further study. Export Word (.docx), print to PDF and keep a JSON backup on your own device.',
     tab_home: 'Home',
     tab_tools: 'Student Tools',
     tab_faculty: 'Faculty Directory',
@@ -701,9 +626,11 @@ const I18N = {
     google_security_note: '🔒 Authenticated Google portal for CUET ME ClassroomHub. Admin rights are granted exclusively to designated admin accounts.'
   },
   bn: {
+    cgpa_intro: 'কোর্সের ক্রেডিট ও গ্রেড দিয়ে টার্ম GPA এবং মোট CGPA হিসাব করুন। আপনার বিভাগের প্রযোজ্য নিয়ম যাচাই করুন।',
+    cv_intro: 'ইন্টার্নশিপ, চাকরি বা উচ্চশিক্ষার জন্য সম্পাদনাযোগ্য CV তৈরি করুন। Word (.docx) এক্সপোর্ট, PDF প্রিন্ট এবং নিজের ডিভাইসে JSON ব্যাকআপ রাখতে পারবেন।',
     nav_sub: 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং আর্কাইভ',
     tab_home: 'হোম',
-    tab_tools: 'স্টুডেন্ট টুলস',
+    tab_tools: 'শিক্ষার্থীদের টুলস',
     tab_faculty: 'শিক্ষক ও কর্মকর্তা',
     tab_progress: 'মাই প্রগ্রেস',
     progress_header: 'আমার পড়ার প্রগ্রেস ও প্রস্তুতি',
@@ -1018,6 +945,7 @@ function toggleLanguage() {
   localStorage.setItem(STORAGE_KEYS.LANG, currentLang);
   applyLanguage(currentLang);
   applyPortalSettings();
+  if (typeof HubFeatures !== 'undefined') HubFeatures.refreshLanguage();
   renderHome();
   renderExplorer();
   renderTracker();
@@ -1027,13 +955,14 @@ function toggleLanguage() {
 }
 
 function applyLanguage(lang) {
-  const dict = I18N[lang] || I18N.en;
+  const dict = {...(I18N[lang] || I18N.en), ...(portalSettings.uiTranslations?.[lang] || {})};
   
+  document.documentElement.lang = lang;
   // Update all [data-i18n] elements
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (dict[key]) {
-      el.innerHTML = dict[key];
+      el.textContent = dict[key];
     }
   });
 
@@ -1251,7 +1180,6 @@ function switchStudentTool(toolName, updateHash = true) {
    6. USER AUTHENTICATION & ACCESS CONTROL (Clean, Modern, Reliable)
    ========================================================================= */
 const ADMIN_EMAILS_LIST = [
-  'fahimcuet63@gmail.com',
   'fahimniloy2314@gmail.com',
   'fahim.cuet.me20@gmail.com'
 ];
@@ -1318,10 +1246,10 @@ function loadCustomContacts() {
     saved.netlify = 'https://mohammad-fahim-ahmed.netlify.app/';
   }
   if (!saved.email || saved.email === 'fahimniloy2314@gmail.com' || saved.email === 'fahim.cuet.me20@gmail.com') {
-    saved.email = 'fahimcuet63@gmail.com';
+    saved.email = 'fahimniloy2314@gmail.com';
     localStorage.setItem(STORAGE_KEYS.CONTACT, JSON.stringify(saved));
   }
-  const email = saved.email || 'fahimcuet63@gmail.com';
+  const email = saved.email || 'fahimniloy2314@gmail.com';
   const phone = saved.phone || appData?.student?.phone || '+880 1850-162261';
   const netlify = (saved.netlify && !saved.netlify.includes('fahim-classroom-archive')) ? saved.netlify : (appData?.student?.portfolio || 'https://mohammad-fahim-ahmed.netlify.app/');
   const github = saved.github || appData?.student?.github_link || 'https://github.com/Fahim-Niloy2314/classroom-hub';
@@ -1352,7 +1280,7 @@ function openEditContactModal() {
     return;
   }
   const saved = HubCore.readJSON(localStorage.getItem(STORAGE_KEYS.CONTACT), '{}');
-  document.getElementById('editEmailInput').value = saved.email || 'fahimcuet63@gmail.com';
+  document.getElementById('editEmailInput').value = saved.email || 'fahimniloy2314@gmail.com';
   document.getElementById('editEmailSecondaryInput').value = saved.secondary_email || 'fahimniloy2314@gmail.com';
   document.getElementById('editPhoneInput').value = saved.phone || '+880 1850-162261';
   document.getElementById('editNetlifyInput').value = (saved.netlify && !saved.netlify.includes('fahim-classroom-archive')) ? saved.netlify : 'https://mohammad-fahim-ahmed.netlify.app/';
@@ -1392,7 +1320,6 @@ function saveContactSettings() {
 function openBulletinModal() {
   const dialog = document.getElementById('bulletinDialog');
   if (!dialog) return;
-  switchBulletinTab('summary');
   dialog.showModal();
   lucide.createIcons();
 }
@@ -2368,6 +2295,7 @@ function createRevisionSnapshot(actionDesc) {
       videos: adminVideos.length,
       timeline: adminTimeline.length
     },
+    publicSnapshot: typeof Hub !== 'undefined' ? Hub.portalPayload() : null,
     data: {
       communityResources: JSON.parse(JSON.stringify(communityResources)),
       adminNotices: JSON.parse(JSON.stringify(adminNotices)),
@@ -2395,6 +2323,11 @@ function rollbackToRevision(revId) {
   }
 
   createRevisionSnapshot('Pre-rollback auto-backup');
+  if (rev.publicSnapshot && typeof HubFeatures !== 'undefined') {
+    HubFeatures.applyDraft(rev.publicSnapshot);
+    renderAdminWorkspace(); renderExplorer(); renderHomeNotices();
+    showToast('Public content restored in your draft. Publish Live to share it.'); return;
+  }
 
   communityResources = JSON.parse(JSON.stringify(rev.data.communityResources));
   adminNotices = JSON.parse(JSON.stringify(rev.data.adminNotices));
@@ -2452,7 +2385,7 @@ function switchAdminSubTab(tabName) {
   else if (tabName === 'layout') renderAdminLayoutSettings();
   else if (tabName === 'ai') renderAdminAiPanel();
   else if (tabName === 'routine') renderAdminRoutineTable();
-  else if (tabName === 'security') renderAdminSecurityPanel();
+  else if (tabName === 'security') { renderAdminSecurityPanel(); if(typeof HubFeatures !== 'undefined') HubFeatures.renderOwnerAccess(); }
   lucide.createIcons();
 }
 
@@ -2484,6 +2417,7 @@ function renderAdminWorkspace() {
   renderAdminAudit();
   renderAdminActivityLog();
   renderAdminFeedbacks();
+  if (typeof HubFeatures !== "undefined") HubFeatures.renderAdmin();
 }
 
 /* 1. Review Queue CMS */
@@ -2927,6 +2861,7 @@ function closeNoticeModal() {
 
 function saveNoticeItem(e) {
   if (e && e.preventDefault) e.preventDefault();
+  if (!isAdmin(currentUser)) return openAuthModal();
   const noticeId = document.getElementById('noticeEditId').value;
   const title = document.getElementById('noticeTitleInput').value.trim();
   const badge = document.getElementById('noticeBadgeInput').value;
@@ -2939,7 +2874,7 @@ function saveNoticeItem(e) {
   if (noticeId) {
     const idx = adminNotices.findIndex(x => x.id === noticeId);
     if (idx !== -1) {
-      adminNotices[idx] = { id: noticeId, title, badge, term, message, link, date: new Date().toLocaleDateString() };
+      adminNotices[idx] = { ...adminNotices[idx], id: noticeId, title, badge, term, message, link, date: new Date().toLocaleDateString() };
     }
   } else {
     adminNotices.unshift({
@@ -3062,6 +2997,7 @@ function closeVideoModal() {
 
 function saveVideoItem(e) {
   if (e && e.preventDefault) e.preventDefault();
+  if (!isAdmin(currentUser)) return openAuthModal();
   const vidId = document.getElementById('videoEditId').value;
   const title = document.getElementById('videoTitleInput').value.trim();
   const subject = document.getElementById('videoSubjectInput').value.trim();
@@ -3075,7 +3011,7 @@ function saveVideoItem(e) {
   if (vidId) {
     const idx = adminVideos.findIndex(x => x.id === vidId);
     if (idx !== -1) {
-      adminVideos[idx] = { id: vidId, title, subject, lang, channel, term, url };
+      adminVideos[idx] = { ...adminVideos[idx], id: vidId, title, subject, lang, channel, term, url };
     }
   } else {
     adminVideos.unshift({
@@ -3185,6 +3121,7 @@ function closeTimelineModal() {
 
 function saveTimelineItem(e) {
   if (e && e.preventDefault) e.preventDefault();
+  if (!isAdmin(currentUser)) return openAuthModal();
   const tmId = document.getElementById('timelineEditId').value;
   const title = document.getElementById('timelineTitleInput').value.trim();
   const date = document.getElementById('timelineDateInput').value;
@@ -3196,7 +3133,7 @@ function saveTimelineItem(e) {
   if (tmId) {
     const idx = adminTimeline.findIndex(x => x.id === tmId);
     if (idx !== -1) {
-      adminTimeline[idx] = { id: tmId, title, date, term, desc };
+      adminTimeline[idx] = { ...adminTimeline[idx], id: tmId, title, date, term, desc };
     }
   } else {
     adminTimeline.unshift({
@@ -3459,7 +3396,7 @@ function clearAllFeedbacks() {
 }
 
 function saveAdminSettings() {
-  const email = document.getElementById('adminSettingsEmail')?.value.trim() || 'fahimcuet63@gmail.com';
+  const email = document.getElementById('adminSettingsEmail')?.value.trim() || 'fahimniloy2314@gmail.com';
   const phone = document.getElementById('adminSettingsPhone')?.value.trim() || '+880 1850-162261';
   const portfolio = document.getElementById('adminSettingsPortfolio')?.value.trim() || 'https://mohammad-fahim-ahmed.netlify.app/';
   const github = document.getElementById('adminSettingsGithub')?.value.trim() || 'https://github.com/Fahim-Niloy2314/classroom-hub';
@@ -4346,7 +4283,7 @@ function applyPortalSettings() {
       if (btn) {
         btn.classList.toggle('hidden', !tabCfg.visible);
         const span = btn.querySelector('span[data-i18n], span:not([id])');
-        if (span && tabCfg.label) span.textContent = tabCfg.label;
+        if (span && tabCfg.label) span.textContent = portalSettings.uiTranslations?.[currentLang]?.['tab_'+tabCfg.id] || (currentLang === 'bn' ? I18N.bn['tab_'+tabCfg.id] : tabCfg.label) || tabCfg.label;
         desktopNav.appendChild(btn);
       }
     });
@@ -4376,7 +4313,7 @@ function applyPortalSettings() {
       if (mBtn) {
         mBtn.classList.toggle('hidden', !tabCfg.visible);
         const span = mBtn.querySelector('span');
-        if (span && tabCfg.label) span.textContent = tabCfg.label;
+        if (span && tabCfg.label) span.textContent = portalSettings.uiTranslations?.[currentLang]?.['tab_'+tabCfg.id] || (currentLang === 'bn' ? I18N.bn['tab_'+tabCfg.id] : tabCfg.label) || tabCfg.label;
         mobileNav.appendChild(mBtn);
       }
     });
@@ -4760,7 +4697,7 @@ function updateAiKeyStatusBadge() {
       badge.className = 'px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-semibold flex items-center gap-1';
       badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Connected (Active)';
     }
-    if (statusText) statusText.textContent = 'Gemini (Active)';
+    if (statusText) statusText.textContent = 'Gemini key saved';
   } else {
     if (badge) {
       badge.className = 'px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] font-semibold flex items-center gap-1';
@@ -5920,7 +5857,7 @@ function confirmEmptyTrash() {
 function createManualSnapshot() {
   const note = prompt('এই স্ন্যাপশটের জন্য একটি বিবরণ লিখুন (যেমন: "বিফোর ফাইনাল আপগ্রেড"):', 'ম্যানুয়াল ব্যাকআপ');
   if (note === null) return;
-  saveRevision(`ম্যানুয়াল স্ন্যাপশট: ${note}`);
+  createRevisionSnapshot(`Manual snapshot: ${note}`);
   renderAdminRevisions();
   showToast('নতুন সিস্টেম স্ন্যাপশট তৈরি হয়েছে!');
 }
@@ -7507,6 +7444,9 @@ function openGeminiApiKeyModal() {
   const oInput = document.getElementById('openaiApiKeyInput');
   if (gInput) gInput.value = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY) || portalSettings.geminiApiKey || '';
   if (oInput) oInput.value = localStorage.getItem(STORAGE_KEYS.OPENAI_API_KEY) || portalSettings.openaiApiKey || '';
+  const gm=document.getElementById('personalGeminiModel'), om=document.getElementById('personalOpenAiModel');
+  if(gm)gm.value=localStorage.getItem('classroom_personal_gemini_model')||'gemini-3.8-flash';
+  if(om)om.value=localStorage.getItem('classroom_personal_openai_model')||'';
   if (dialog) dialog.showModal();
 }
 
@@ -7540,7 +7480,7 @@ function saveGeminiApiKey() {
   localStorage.setItem(STORAGE_KEYS.PORTAL_SETTINGS, JSON.stringify(portalSettings));
   updateAiKeyStatusBadge();
   closeGeminiApiKeyModal();
-  showToast('Google Gemini API Key সফলভাবে সেভ ও কানেক্ট করা হয়েছে!');
+  showToast('API key সংরক্ষিত হয়েছে। প্রশ্ন পাঠালে সংযোগ যাচাই হবে।');
 }
 
 function clearGeminiApiKey() {
@@ -8947,15 +8887,15 @@ function renderCgpaRows() {
   if (!container) return;
 
   container.innerHTML = cgpaCourseList.map((c, idx) => `
-    <div class="grid grid-cols-12 gap-2 items-center">
+    <div class="cgpa-course-row grid grid-cols-12 gap-2 items-center">
       <div class="col-span-5 sm:col-span-6">
         <input type="text" value="${c.name}" oninput="cgpaCourseList[${idx}].name = this.value" placeholder="Course Name" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-amber-500">
       </div>
       <div class="col-span-3 sm:col-span-3">
-        <input type="number" step="0.25" min="0.75" max="6.0" value="${c.credits}" oninput="cgpaCourseList[${idx}].credits = parseFloat(this.value) || 0; calculateCgpa();" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white font-mono outline-none focus:border-amber-500">
+        <input aria-label="Course credits" type="number" step="0.25" min="0.75" max="6.0" value="${c.credits}" oninput="cgpaCourseList[${idx}].credits = parseFloat(this.value) || 0; calculateCgpa();" class="w-full px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white font-mono outline-none focus:border-amber-500">
       </div>
       <div class="col-span-3 sm:col-span-2">
-        <select onchange="cgpaCourseList[${idx}].grade = this.value; calculateCgpa();" class="w-full px-2 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-amber-300 font-bold outline-none focus:border-amber-500">
+        <select aria-label="Course grade" onchange="cgpaCourseList[${idx}].grade = this.value; calculateCgpa();" class="w-full px-2 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-amber-300 font-bold outline-none focus:border-amber-500">
           ${Object.keys(CUET_GRADE_POINTS).map(g => `<option value="${g}" ${c.grade === g ? 'selected' : ''}>${g} (${CUET_GRADE_POINTS[g].toFixed(2)})</option>`).join('')}
         </select>
       </div>
@@ -9221,6 +9161,7 @@ const DEFAULT_FACULTY_MEMBERS = [
   {
     "id": "fac_7",
     "name": "Dr. Mohammad Mizanur Rahman",
+    "administrativeRole": "Dean, Faculty of Mechanical and Manufacturing Engineering",
     "designation": "Professor",
     "category": "PROFESSOR",
     "room": "Automobile Lab, ME Building",
@@ -10220,7 +10161,7 @@ function getFacultyMembers() {
   if (saved !== null) {
     try {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         // Return CMS-managed directory, ensuring .emails array is normalized
         return parsed.map(f => {
           if (!f.emails || !Array.isArray(f.emails) || f.emails.length === 0) {
@@ -10298,6 +10239,7 @@ function renderFacultyDirectory() {
       return (
         (f.name && f.name.toLowerCase().includes(facultySearchKeyword)) ||
         (f.designation && f.designation.toLowerCase().includes(facultySearchKeyword)) ||
+        (f.administrativeRole && f.administrativeRole.toLowerCase().includes(facultySearchKeyword)) ||
         (f.specialization && f.specialization.toLowerCase().includes(facultySearchKeyword)) ||
         (f.room && f.room.toLowerCase().includes(facultySearchKeyword)) ||
         emailMatches ||
@@ -10342,6 +10284,7 @@ function renderFacultyDirectory() {
           <div>
             <h4 class="text-sm font-bold text-white leading-snug">${HubCore.html(f.name)}</h4>
             <p class="text-xs text-cyan-400 font-medium mt-0.5">${HubCore.html(f.designation)}</p>
+            ${f.administrativeRole ? `<p class="hub-role-badge">${HubCore.html(f.administrativeRole)}</p>` : ""}
           </div>
 
           <div class="space-y-2 text-xs text-slate-300 pt-2 border-t border-slate-800/80">
@@ -10355,7 +10298,7 @@ function renderFacultyDirectory() {
               <div class="space-y-1.5 pt-1">
                 <div class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
                   <i data-lucide="mail" class="w-3.5 h-3.5 text-forest"></i>
-                  <span>${isSingleEmail ? 'ইমেইল এড্রেস:' : `ইমেইল এড্রেস (${emails.length}টি):`}</span>
+                  <span>${currentLang==='en' ? `Email addresses (${emails.length}):` : `ইমেইল ঠিকানা (${emails.length}টি):`}</span>
                 </div>
                 <div class="space-y-1.5">
                   ${emails.map(e => {
@@ -10518,6 +10461,7 @@ function renderFacultyDirectory() {
 }
 
 function openAddFacultyModal() {
+  if (!isAdmin(currentUser)) { if(typeof e !== "undefined") e?.preventDefault?.(); openAuthModal(); return; }
   const modal = document.getElementById('editFacultyModal');
   const title = document.getElementById('facultyModalTitle');
   const form = document.getElementById('facultyMemberForm');
@@ -10529,6 +10473,7 @@ function openAddFacultyModal() {
 }
 
 function openEditFacultyModal(id) {
+  if (!isAdmin(currentUser)) { if(typeof e !== "undefined") e?.preventDefault?.(); openAuthModal(); return; }
   const list = getFacultyMembers();
   const member = list.find(m => m.id === id);
   if (!member) return;
@@ -10540,12 +10485,14 @@ function openEditFacultyModal(id) {
   document.getElementById('facultyEditId').value = member.id || '';
   document.getElementById('facultyNameInput').value = member.name || '';
   document.getElementById('facultyDesignationInput').value = member.designation || '';
+  document.getElementById('facultyAdministrativeRoleInput').value = member.administrativeRole || '';
   document.getElementById('facultyCategoryInput').value = member.category || 'PROFESSOR';
   document.getElementById('facultyRoomInput').value = member.room || '';
   
   const emails = normalizeFacultyEmails(member);
   document.getElementById('facultyEmailInput').value = emails.length > 0 ? emails.map(e => e.address).join(', ') : (member.email || '');
   document.getElementById('facultyPhoneInput').value = member.phone || '';
+  document.getElementById('facultyTntInput').value = member.tnt || '';
   document.getElementById('facultyWhatsappInput').value = member.whatsapp || '';
   document.getElementById('facultySpecializationInput').value = member.specialization || '';
   document.getElementById('facultyOrderInput').value = member.order || 1;
@@ -10559,21 +10506,26 @@ function closeEditFacultyModal() {
 }
 
 function handleSaveFaculty(e) {
+  if (!isAdmin(currentUser)) { if(typeof e !== "undefined") e?.preventDefault?.(); openAuthModal(); return; }
   if (e && e.preventDefault) e.preventDefault();
   const list = getFacultyMembers();
   const editId = document.getElementById('facultyEditId')?.value;
   const rawEmail = document.getElementById('facultyEmailInput')?.value.trim() || '';
   const parsedEmails = normalizeFacultyEmails({ email: rawEmail });
 
+  if(typeof HubFeatures!=='undefined') HubFeatures.snapshot();
   const newEntry = {
+    ...(list.find(member => member.id === editId) || {}),
     id: editId || ('fac_' + Date.now()),
     name: document.getElementById('facultyNameInput')?.value.trim() || '',
     designation: document.getElementById('facultyDesignationInput')?.value.trim() || '',
+    administrativeRole: document.getElementById('facultyAdministrativeRoleInput')?.value.trim() || '',
     category: document.getElementById('facultyCategoryInput')?.value || 'PROFESSOR',
     room: document.getElementById('facultyRoomInput')?.value.trim() || '',
     email: parsedEmails[0]?.address || rawEmail,
     emails: parsedEmails,
     phone: document.getElementById('facultyPhoneInput')?.value.trim() || '',
+    tnt: document.getElementById('facultyTntInput')?.value.trim() || '',
     whatsapp: document.getElementById('facultyWhatsappInput')?.value.trim() || '',
     specialization: document.getElementById('facultySpecializationInput')?.value.trim() || '',
     order: parseInt(document.getElementById('facultyOrderInput')?.value || '1', 10)
@@ -10596,6 +10548,8 @@ function handleSaveFaculty(e) {
 }
 
 function deleteFacultyMember(id) {
+  if (!isAdmin(currentUser)) return openAuthModal();
+  if(typeof HubFeatures!=='undefined') HubFeatures.snapshot();
   if (!confirm('আপনি কি নিশ্চিত যে এই ফ্যাকাল্টি মেম্বারকে ডিরেক্টরি থেকে মুছে ফেলতে চান?')) return;
   let list = getFacultyMembers();
   list = list.filter(m => m.id !== id);
@@ -10761,10 +10715,10 @@ const DEFAULT_BLANK_CV_DATA = {
 
 
 function loadCvSampleTemplate() {
-  const sampleCopy = JSON.parse(JSON.stringify(CUET_SAMPLE_CV_DATA));
-  saveActiveCvData(sampleCopy);
-  initCvBuilder();
-  showToast(currentLang === 'en' ? 'Loaded CUET Mechanical Engineering sample template!' : 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং স্যাম্পল সিভি লোড হয়েছে!');
+  const drafts=getStoredCvDrafts(); let name='Example CV'; let suffix=2;
+  while(Object.hasOwn(drafts,name))name='Example CV '+suffix++;
+  drafts[name]=JSON.parse(JSON.stringify(CUET_SAMPLE_CV_DATA));saveStoredCvDrafts(drafts);cvCurrentDraftName=name;initCvBuilder();
+  showToast(currentLang==='en'?'Example loaded as a separate draft. Replace all sample qualifications.':'উদাহরণটি আলাদা ড্রাফটে রাখা হয়েছে। নমুনার সব যোগ্যতা নিজের তথ্য দিয়ে বদলান।');
 }
 
 function resetCvToBlank() {
@@ -10875,6 +10829,7 @@ function initCvBuilder() {
 
   renderCvFormArrays();
   switchCvTemplate(cvCurrentTemplate);
+  if(typeof HubFeatures !== "undefined") HubFeatures.renderCvSections();
 }
 
 function switchCvTemplate(tplId) {
@@ -10892,6 +10847,7 @@ function switchCvTemplate(tplId) {
     }
   });
   updateCvLivePreview();
+  if(typeof HubFeatures !== "undefined") HubFeatures.renderCvSections();
 }
 
 function renderCvFormArrays() {
@@ -11253,7 +11209,7 @@ function updateCvLivePreview() {
     ` : ''}
 
     <!-- Research -->
-    ${cv.research && cv.research.length > 0 && cvCurrentTemplate === 'template_academic' ? `
+    ${cv.research && cv.research.length > 0 ? `
       <div class="cv-section-block mb-3.5">
         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-300 pb-0.5 mb-1.5 flex items-center gap-1.5">
           <span>Research &amp; Publications</span>
@@ -11524,7 +11480,7 @@ async function exportMyCvDocx() {
     }
 
     // Research
-    if (cv.research && cv.research.length > 0 && cvCurrentTemplate === 'template_academic') {
+    if (cv.research && cv.research.length > 0) {
       bodyParagraphs.push(makeHeading('Research & Publications'));
       cv.research.forEach(resItem => {
         bodyParagraphs.push(`
@@ -12176,3 +12132,10 @@ function renderPublicFaqs() {
 }
 
 window.handleAiQuestionSubmit = handleAiSubmit;
+
+function highlightConflictingSlots() {
+  const ids = detectRoutineConflicts(getMyPersonalRoutine().entries);
+  const target = document.getElementById('myRoutineOutputContainer');
+  if (target) target.scrollIntoView({behavior:'smooth',block:'start'});
+  showToast(currentLang === 'bn' ? `${ids.size}টি ক্লাসের সময় অন্য ক্লাসের সঙ্গে মিলেছে। রুটিনে Time Conflict চিহ্ন দেখুন।` : `${ids.size} classes overlap. Look for Time Conflict labels in your routine.`);
+}

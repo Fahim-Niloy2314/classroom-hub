@@ -1,14 +1,17 @@
 {
   "name": "ClassroomHub — CUET Mechanical Engineering Vault",
   "short_name": "ClassroomHub",
-  "description": "CUET Mechanical Engineering centralized academic vault, verified lecture notes, question banks, video lectures, and AI study chatbot curated by Fahim Niloy.",
+  "description": "Academic resources, editable personal routines, CV tools and faculty contacts for CUET Mechanical Engineering students.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#090d16",
-  "theme_color": "#4f46e5",
-  "categories": ["education", "reference", "productivity"],
+  "background_color": "#fcfcf8",
+  "theme_color": "#193b31",
+  "categories": [
+    "education",
+    "reference",
+    "productivity"
+  ],
   "lang": "en",
   "icons": [
     {
@@ -28,6 +31,20 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Student Tools",
+      "url": "./index.html#/tools/routine"
+    },
+    {
+      "name": "Faculty Directory",
+      "url": "./index.html#/faculty"
+    },
+    {
+      "name": "My Progress",
+      "url": "./index.html#/progress"
     }
   ]
 }

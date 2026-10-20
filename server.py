@@ -17,6 +17,7 @@ import re
 import secrets
 import sqlite3
 import threading
+import hub_services as services
 import time
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs, quote
@@ -26,9 +27,28 @@ from urllib.error import HTTPError
 APP_DIR = Path(__file__).resolve().parent
 PRIVATE_DIR = Path(os.environ.get('CLASSROOM_PRIVATE_DIR', str(Path.home() / '.local/share/classroom-hub'))).resolve()
 ACADEMIC_DIR = Path(os.environ['CLASSROOM_ACADEMIC_DIR']).resolve() if os.environ.get('CLASSROOM_ACADEMIC_DIR') else None
-OWNER_EMAIL = os.environ.get('CLASSROOM_OWNER_EMAIL', 'fahimcuet63@gmail.com').lower()
+DEFAULT_OWNER_EMAILS = ['fahimniloy2314@gmail.com', 'fahim.cuet.me20@gmail.com']
+OWNER_EMAILS = DEFAULT_OWNER_EMAILS.copy()  # Fixed owner identity; no public registration or environment override.
+OWNER_EMAIL = OWNER_EMAILS[0]  # Compatibility for local integrations.
+
+def owner_emails():
+    try:
+        configured = json.loads((PRIVATE_DIR / 'owner.json').read_text()).get('emails')
+        return validate_owner_emails(configured) if configured is not None else OWNER_EMAILS
+    except (OSError,ValueError,TypeError):
+        return OWNER_EMAILS
+
+def validate_owner_emails(emails):
+    if not isinstance(emails,list) or len(emails) != 2:
+        raise ValueError('Owner access is restricted to the two configured owner addresses.')
+    normalized = list(dict.fromkeys(str(email).strip().lower() for email in emails))
+    if any(not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', email) for email in normalized):
+        raise ValueError('Enter valid owner email addresses.')
+    if set(normalized) != set(DEFAULT_OWNER_EMAILS):
+        raise ValueError('Owner access is restricted to the two configured owner addresses.')
+    return DEFAULT_OWNER_EMAILS.copy()
 ALLOWED_ORIGINS = set(filter(None, os.environ.get('CLASSROOM_ALLOWED_ORIGINS', 'https://fahim-niloy2314.github.io').split(',')))
-PUBLIC_FILES = {'index.html','styles.css','app.js','hub-core.js','hub-fixes.js','data.js','classroom_index.json','portal_sync.json','backend-config.json','manifest.json','sw.js','jszip.min.js','icon.svg','icon-192.png','icon-512.png','cuet_routine_template_blank.docx','cuet_routine_template_sample.docx'}
+PUBLIC_FILES = {'index.html','styles.css','app.js','hub-core.js','hub-fixes.js','hub-features.js','data.js','classroom_index.json','portal_sync.json','backend-config.json','manifest.json','sw.js','jszip.min.js','icon.svg','icon-192.png','icon-512.png','cuet_routine_template_blank.docx','cuet_routine_template_sample.docx'}
 PUBLIC_KEYS = {'version','lastUpdated','publishedBy','portalSettings','courseRegistry','notices','faculty','routines','customResources','videos','timeline','faqs','cvTemplates','hiddenItems','featuredItems','contacts'}
 SESSIONS = {}
 ATTEMPTS = {}
@@ -43,6 +63,7 @@ def private_setup():
     with connect() as db:
         db.execute('CREATE TABLE IF NOT EXISTS submissions (id TEXT PRIMARY KEY, request_id TEXT UNIQUE NOT NULL, created TEXT NOT NULL, status TEXT NOT NULL, payload TEXT NOT NULL)')
         db.execute('CREATE TABLE IF NOT EXISTS snapshots (id INTEGER PRIMARY KEY, created TEXT NOT NULL, payload TEXT NOT NULL)')
+    services.initialize(PRIVATE_DIR)
 
 
 def connect():
@@ -230,12 +251,20 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
             return self.reply(403, {'error': 'Origin is not allowed.'})
         parsed = urlparse(self.path)
         if parsed.path == '/api/status':
-            return self.reply(200, {'status': 'online', 'version': '4.1.1', 'authenticated': self.authenticated(), 'configured': (PRIVATE_DIR / 'owner.json').exists(), 'publishingConfigured': bool(os.environ.get('GITHUB_TOKEN')), 'timestamp': utcnow()})
+            return self.reply(200, {'status': 'online', 'version': '4.2.0', 'aiAvailable': services.ai_status()['enabled'] and services.ai_status()['configured'], 'authenticated': self.authenticated(), 'configured': (PRIVATE_DIR / 'owner.json').exists(), 'publishingConfigured': bool(os.environ.get('GITHUB_TOKEN')), 'timestamp': utcnow()})
+        if parsed.path in {'/api/analytics','/api/ai/config','/api/notifications/config'}:
+            if not self.require_admin(): return
+            result = services.analytics() if parsed.path=='/api/analytics' else services.ai_status() if parsed.path=='/api/ai/config' else services.notification_status()
+            return self.reply(200, result)
+        if parsed.path == '/api/owner':
+            if not self.require_admin(): return
+            return self.reply(200, {'success':True, 'emails':owner_emails()})
         if parsed.path == '/api/submissions':
             if not self.require_admin(): return
             with connect() as db:
                 rows = db.execute('SELECT * FROM submissions ORDER BY created DESC LIMIT 1000').fetchall()
-            return self.reply(200, {'success': True, 'submissions': [dict(json.loads(r['payload']), id=r['id'], receiptId=r['id'], createdAt=r['created'], status=r['status']) for r in rows]})
+            notification_states = services.notification_states()
+            return self.reply(200, {'success': True, 'submissions': [dict(json.loads(r['payload']), notificationState=notification_states.get(r['id'],'disabled'), id=r['id'], receiptId=r['id'], createdAt=r['created'], status=r['status']) for r in rows]})
         if parsed.path == '/api/backup':
             if not self.require_admin(): return
             with connect() as db:
@@ -268,20 +297,25 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
         if not self.origin_allowed():
             return self.reply(403, {'error': 'Origin is not allowed.'})
         route = urlparse(self.path).path
-        if route not in {'/api/login','/api/logout','/api/submissions','/api/submissions/status','/api/publish','/api/restore'}:
+        if route not in {'/api/login','/api/logout','/api/submissions','/api/submissions/status','/api/publish','/api/restore','/api/owner','/api/presence','/api/ai/chat','/api/ai/config','/api/notifications/config','/api/notifications/retry'}:
             return self.reply(404, {'error': 'Unknown API endpoint.'})
-        if route not in {'/api/login','/api/submissions'} and not self.require_admin(): return
+        if route not in {'/api/login','/api/submissions','/api/presence','/api/ai/chat'} and not self.require_admin(): return
         try:
             data = self.read_json()
+            if route == '/api/presence': return self.reply(200, services.presence(data))
+            if route == '/api/ai/chat': return self.reply(200, services.ai_chat(data,self.client_address[0],public_state().get('courseRegistry',{})))
+            if route == '/api/ai/config': return self.reply(200, services.save_ai_config(data))
+            if route == '/api/notifications/retry': return self.reply(200, services.retry_failed_notifications())
+            if route == '/api/notifications/config': return self.reply(200, services.save_notification_config(data))
             if route == '/api/login':
                 if not (PRIVATE_DIR / 'owner.json').exists():
-                    return self.reply(503, {'error': 'Owner password is not configured. Run python server.py --set-password on the backend host.'})
+                    return self.reply(503, {'error': 'The private owner service has not been configured by the site owner.'})
                 ip = self.client_address[0]
                 with LOCK:
                     attempts = [t for t in ATTEMPTS.get(ip, []) if time.time()-t < 300]
                     ATTEMPTS[ip] = attempts
                     if len(attempts) >= 5: return self.reply(429, {'error': 'Too many attempts. Try again in 5 minutes.'})
-                    if str(data.get('email','')).lower() != OWNER_EMAIL or not verify_password(str(data.get('password',''))):
+                    if str(data.get('email','')).strip().lower() not in owner_emails() or not verify_password(str(data.get('password',''))):
                         attempts.append(time.time())
                         return self.reply(401, {'error': 'Incorrect email or password.'})
                     ATTEMPTS.pop(ip, None)
@@ -290,7 +324,20 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
                         if expiry <= time.time(): SESSIONS.pop(token, None)
                     token = secrets.token_urlsafe(32)
                     SESSIONS[token] = time.time() + 7200
-                return self.reply(200, {'success': True, 'token': token,'expiresAt': SESSIONS[token], 'user': {'name':'Fahim Niloy','email':OWNER_EMAIL,'role':'admin'}})
+                return self.reply(200, {'success': True, 'token': token,'expiresAt': SESSIONS[token], 'user': {'name':'Fahim Niloy','email':str(data.get('email','')).strip().lower(),'role':'admin'}})
+            if route == '/api/owner':
+                if not verify_password(str(data.get('currentPassword',''))):
+                    return self.reply(401, {'error':'The current owner password is required.'})
+                emails = validate_owner_emails(data.get('emails'))
+                new_password = data.get('newPassword','')
+                if not isinstance(new_password,str) or (new_password and len(new_password) < 12):
+                    raise ValueError('A new password must contain at least 12 characters.')
+                with LOCK:
+                    stored = make_password(new_password) if new_password else json.loads((PRIVATE_DIR/'owner.json').read_text())
+                    stored['emails'] = emails
+                    atomic_json(PRIVATE_DIR/'owner.json', stored)
+                    SESSIONS.clear()
+                return self.reply(200, {'success':True,'reauthenticate':True,'message':'Owner access updated. Sign in again.'})
             if route == '/api/logout':
                 with LOCK: SESSIONS.pop(self.headers.get('Authorization','').removeprefix('Bearer '), None)
                 return self.reply(200, {'success':True})
@@ -317,7 +364,9 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
                     receipt = 'SUB-' + secrets.token_hex(8).upper()
                     db.execute('INSERT INTO submissions VALUES (?,?,?,?,?)',(receipt,request_id,utcnow(),'new',json.dumps(safe,ensure_ascii=False)))
                     db.commit()  # Receipt means the durable transaction has completed.
-                return self.reply(201, {'success':True,'receiptId':receipt,'state':'received'})
+                try: notification_state = services.queue_notification(receipt, safe)
+                except Exception: notification_state = 'unavailable'
+                return self.reply(201, {'success':True,'receiptId':receipt,'state':'received','notificationState':notification_state})
             if route == '/api/submissions/status':
                 status = data.get('status')
                 if status not in {'new','reviewed','resolved','archived'}: raise ValueError('Invalid status.')
@@ -351,6 +400,8 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
                             db.execute('INSERT OR REPLACE INTO submissions VALUES (?,?,?,?,?)',tuple(r[k] for k in ['id','request_id','created','status','payload']))
                     # Restoring is deliberately a draft; publishing remains an explicit action.
                 return self.reply(200, {'success':True,'portalDraft':backup['portalSync'],'message':'Inbox restored; portal content is an unpublished draft.'})
+        except services.ServiceError as e:
+            return self.reply(e.status, {'error':str(e)})
         except (ValueError,KeyError,TypeError,UnicodeError) as e:
             return self.reply(400, {'error':str(e)})
         except Exception:
@@ -360,18 +411,28 @@ class ClassroomHubHandler(SimpleHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--set-password', action='store_true')
+    parser.add_argument('--setup-if-needed', action='store_true')
+    parser.add_argument('--open-browser', action='store_true')
+    parser.add_argument('--owner-email', action='append', help='Owner email; repeat for multiple owners when setting a password.')
     args = parser.parse_args()
     private_setup()
-    if args.set_password:
+    initializing = args.set_password or (args.setup_if_needed and not (PRIVATE_DIR/'owner.json').exists())
+    if initializing:
         password = getpass.getpass('New owner password (12+ characters): ')
         if len(password) < 12: raise SystemExit('Use at least 12 characters.')
         if password != getpass.getpass('Repeat new password: '): raise SystemExit('Passwords do not match.')
-        atomic_json(PRIVATE_DIR / 'owner.json', make_password(password))
+        stored = make_password(password)
+        stored['emails'] = validate_owner_emails(args.owner_email or owner_emails())
+        atomic_json(PRIVATE_DIR / 'owner.json', stored)
         print('Owner password configured. Existing sessions end when the backend restarts.')
-        return
+        if args.set_password: return
     host = os.environ.get('CLASSROOM_BIND','127.0.0.1')
     port = int(os.environ.get('PORT','8080'))
     print(f'Classroom Hub: http://{host}:{port} (HTTPS reverse proxy required for public hosting)')
+    if args.open_browser:
+        import webbrowser
+        threading.Timer(0.5,lambda:webbrowser.open(f'http://127.0.0.1:{port}')).start()
+    services.start_worker()
     ThreadingHTTPServer((host,port),ClassroomHubHandler).serve_forever()
 
 if __name__ == '__main__':

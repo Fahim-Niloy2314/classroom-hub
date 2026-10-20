@@ -2,7 +2,7 @@
 <html lang="en" class="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Classroom Hub — CUET Mechanical Engineering Academic Vault</title>
   <meta name="description" content="Chittagong University of Engineering and Technology (CUET), Department of Mechanical Engineering (ME '20). Digital academic repository preserving 3,896+ course materials across 8 semesters.">
   <meta name="author" content="Mohammad Fahim Ahmed (Niloy), Roll: 2003063, CUET ME '20">
@@ -53,14 +53,16 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- KaTeX for Mathematical Equations -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.19.0/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.19.0/dist/katex.min.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.19.0/dist/contrib/auto-render.min.js"></script>
 
   <!-- JSZip for Client-side OpenXML (.docx) Generation -->
   <script src="jszip.min.js"></script>
 
   <!-- Custom Academic UI Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=4.1.1">
+  <link rel="stylesheet" href="styles.css?v=4.2.0">
 </head>
 <body class="min-h-screen flex flex-col font-sans antialiased text-main bg-canvas">
 
@@ -83,7 +85,7 @@
       <h2 class="text-2xl font-bold text-main tracking-tight">Portal Under Scheduled Maintenance</h2>
       <p id="publicMaintenanceMsg" class="text-sm text-muted">ClassroomHub is undergoing routine academic upgrades. Please check back shortly!</p>
       <div class="p-3 rounded-xl bg-surface-subtle border border-line text-xs text-muted font-mono">
-        Curator: Mohammad Fahim Ahmed (CUET ME '20) • Contact: fahimcuet63@gmail.com
+        Curator: Mohammad Fahim Ahmed (CUET ME '20) • Contact: fahimniloy2314@gmail.com
       </div>
     </div>
     <div class="flex items-center gap-3">
@@ -96,10 +98,10 @@
 
   <!-- ==================== TOP NAVIGATION BAR ==================== -->
   <header class="sticky top-0 z-40 glass-panel border-b border-line bg-surface/95 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3 min-w-0">
+    <div id="siteHeaderInner" class="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3 min-w-0">
       
       <!-- Brand Logo -->
-      <div class="flex items-center space-x-2.5 cursor-pointer flex-shrink-0" onclick="navigateTo('home')">
+      <div id="siteBrand" class="flex items-center space-x-2.5 cursor-pointer flex-shrink-0" onclick="navigateTo('home')">
         <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl btn-forest flex items-center justify-center text-white shadow-sm flex-shrink-0">
           <i data-lucide="graduation-cap" class="w-4 h-4 sm:w-5 sm:h-5"></i>
         </div>
@@ -138,7 +140,7 @@
       </nav>
 
       <!-- Right Header Actions (Language, Theme, Account) -->
-      <div class="flex items-center gap-2 flex-shrink-0">
+      <div id="siteHeaderActions" class="flex items-center gap-2 flex-shrink-0">
         <!-- PWA Install App Button -->
         <button id="pwaInstallHeaderBtn" onclick="triggerPwaInstall()" title="Install ClassroomHub App on Mobile / PC" class="px-2.5 py-1.5 rounded-xl border border-line bg-surface hover:bg-surface-tint text-main text-xs font-semibold flex items-center gap-1.5 transition-all flex-shrink-0 shadow-sm">
           <i data-lucide="smartphone" class="w-3.5 h-3.5 text-forest"></i>
@@ -236,7 +238,7 @@
                 <span>GitHub</span>
               </a>
               <span>•</span>
-              <a id="homeEmailLink" href="mailto:fahimcuet63@gmail.com" class="hover:underline font-mono">fahimcuet63@gmail.com</a>
+              <a id="homeEmailLink" href="mailto:fahimniloy2314@gmail.com" class="hover:underline font-mono">fahimniloy2314@gmail.com</a>
               <span>•</span>
               <a id="homePhoneLink" href="tel:+8801850162261" class="hover:underline font-mono">+880 1850-162261</a>
             </div>
@@ -449,7 +451,7 @@
     <section id="view-tools" class="hidden space-y-6">
       
       <!-- Secondary Tab Switcher: Routine | CV Builder | CGPA Calculator -->
-      <div class="academic-card p-1.5 rounded-2xl flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+      <div id="studentToolTabs" class="academic-card p-1.5 rounded-2xl flex items-center gap-1.5 overflow-x-auto no-scrollbar">
         <button id="toolSubtab-routine" onclick="switchStudentTool('routine')" class="tool-subtab-active px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap shadow-sm">
           <i data-lucide="calendar" class="w-4 h-4"></i>
           <span>My Routine</span>
@@ -700,7 +702,7 @@
               <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                 <span>CUET Student CV &amp; Resume Builder</span>
               </h3>
-              <p class="text-xs text-slate-400">
+              <p class="text-xs text-slate-400" data-i18n="cv_intro">
                 ইঞ্জিনিয়ারিং ইন্টার্নশিপ, জব ও হায়ার স্টাডিজ (M.Sc / Ph.D)-এর জন্য প্রফেশনাল সিভি তৈরি করুন। সম্পূর্ণ এডিটেবল ওয়ার্ড (.docx) ও প্রিন্টেবল PDF ডাউনলোড করুন।
               </p>
             </div>
@@ -767,6 +769,7 @@
             </div>
           </div>
 
+          <details class="hub-inbox-card"><summary>Customize CV sections</summary><p>Choose sections and their order for this draft. Hidden fields remain saved.</p><div id="cvSectionControls"></div></details>
           <!-- Mobile View Switcher between Form Editor and Live Preview -->
           <div class="lg:hidden flex items-center gap-2 p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold">
             <button id="cvMobileBtn-form" onclick="toggleCvMobileView('form')" class="flex-1 py-1.5 rounded-lg bg-indigo-600 text-white font-bold transition-all text-center">
@@ -1017,7 +1020,7 @@
                 <i data-lucide="calculator" class="w-4.5 h-4.5 text-amber-400"></i>
                 <span>CUET 4.0 Scale GPA & CGPA Calculator</span>
               </h3>
-              <p class="text-xs text-slate-400 mt-0.5">চুয়েট অর্ডিন্যান্স অনুযায়ী টার্ম জিপিএ ও সর্বমোট কিউমুলেটিভ সিজিপিএ নির্ভুলভাবে হিসাব করুন</p>
+              <p class="text-xs text-slate-400 mt-0.5" data-i18n="cgpa_intro">Enter course credits and grades to estimate term GPA and cumulative CGPA. Confirm the applicable rules with your department.</p>
             </div>
             <div class="flex items-center gap-2">
               <button onclick="loadCgpaPreset('L4-T2')" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 border border-slate-700 text-xs font-semibold transition-all">
@@ -1031,7 +1034,7 @@
 
           <!-- Calculator Course Rows -->
           <div class="space-y-2.5">
-            <div class="grid grid-cols-12 gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2">
+            <div id="cgpaColumnLabels" class="grid grid-cols-12 gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2">
               <div class="col-span-5 sm:col-span-6">Course Name / Code</div>
               <div class="col-span-3 sm:col-span-3">Credits (Cr)</div>
               <div class="col-span-3 sm:col-span-2">Grade</div>
@@ -2047,7 +2050,7 @@
               </h4>
               <div>
                 <label class="block text-xs font-medium text-slate-300 mb-1">Primary Email</label>
-                <input id="adminSettingsEmail" type="email" value="fahimcuet63@gmail.com" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
+                <input id="adminSettingsEmail" type="email" value="fahimniloy2314@gmail.com" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none">
               </div>
               <div>
                 <label class="block text-xs font-medium text-slate-300 mb-1">Mobile Contact Number</label>
@@ -2094,7 +2097,7 @@
         </div>
 
         <!-- 13. SUB-TAB: SITE LAYOUT & NAVIGATION CMS -->
-        <div id="adminPanel-layout" class="hidden space-y-6">
+        <div id="adminPanel-layout" class="hidden space-y-6"><section id="ownerDataStudio" class="hub-inbox-card"></section>
           <div class="flex items-center justify-between pb-3 border-b border-slate-800">
             <div>
               <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -2185,7 +2188,7 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-xs font-medium text-slate-300 mb-1">Primary Email (হোমপেজ ও ফুটার ইমেইল)</label>
-                  <input id="cfgPrimaryEmail" type="email" placeholder="fahimcuet63@gmail.com" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
+                  <input id="cfgPrimaryEmail" type="email" placeholder="fahimniloy2314@gmail.com" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-indigo-500">
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-slate-300 mb-1">Phone Number (ফোন নম্বর)</label>
@@ -2467,7 +2470,7 @@
         </div>
 
         <!-- 16. SUB-TAB: SECURITY, MAINTENANCE MODE, BANNER & PERMISSIONS -->
-        <div id="adminPanel-security" class="hidden space-y-6">
+        <div id="adminPanel-security" class="hidden space-y-6"><section id="ownerAccessSettings" class="hub-inbox-card"></section>
           <div class="flex items-center justify-between pb-3 border-b border-slate-800">
             <div>
               <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -2659,10 +2662,9 @@
             </div>
 
             <div class="p-5 rounded-2xl bg-surface border border-line space-y-3">
-              <h4 class="text-sm font-bold text-main">Central inbox & backend setup</h4>
+              <h4 class="text-sm font-bold text-main">Central feedback inbox</h4>
               <p class="text-xs text-muted">Student feedback and contributed links are received by the authenticated backend. Messages stay pending on the sending device until the server confirms durable receipt.</p>
               <p class="text-xs text-muted">The online backend must be hosted separately from GitHub Pages. This project does not use Netlify.</p>
-              <a class="hub-button" href="https://github.com/Fahim-Niloy2314/classroom-hub/blob/main/OWNER_MANUAL.md" target="_blank" rel="noopener noreferrer">Owner setup guide</a>
             </div>
           </div>
 
@@ -2677,6 +2679,7 @@
 
   </main>
 
+  <p class="hub-privacy-note">Anonymous activity counts are used when the backend is connected. Personal CV and routine content is not included.</p>
   <!-- ==================== FIXED MOBILE BOTTOM NAVIGATION BAR ==================== -->
   <nav id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-line px-2 py-1.5 flex items-center justify-around text-[10px] shadow-lg">
     <button onclick="navigateTo('home')" id="mobileNav-home" class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all mobile-nav-active">
@@ -2716,7 +2719,7 @@
           <i data-lucide="github" class="w-3.5 h-3.5"></i>
           <span>GitHub</span>
         </a>
-        <a href="mailto:fahimcuet63@gmail.com" class="hover:text-forest transition-colors font-mono">fahimcuet63@gmail.com</a>
+        <a href="mailto:fahimniloy2314@gmail.com" class="hover:text-forest transition-colors font-mono">fahimniloy2314@gmail.com</a>
       </div>
     </div>
   </footer>
@@ -2737,7 +2740,7 @@
       </div>
 
       <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
-        <p>
+        <p id="receiptDeliveryExplanation">
           আপনার বার্তার ড্রাফট প্রস্তুত করা হয়েছে এবং এই ডিভাইসে সুরক্ষিত আছে। বার্তাটি সরাসরি <strong>ফাহিম নিলয় (Mohammad Fahim Ahmed)</strong>-এর কাছে পৌঁছাতে অনুগ্রহ করে নিচের <strong>WhatsApp</strong> বা <strong>Email</strong> বাটনে ক্লিক করে পাঠিয়ে দিন। যতক্ষণ না আপনি নিচের বাটনে ট্যাপ করছেন, মেসেজটি ফাহিম নিলয়ের ইনবক্সে পৌঁছাবে না:
         </p>
         <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 space-y-1">
@@ -3105,17 +3108,27 @@
       <div class="hub-row"><h2 id="authDialogTitle">Owner sign in</h2><button type="button" onclick="closeAuthModal()" aria-label="Close sign in">✕</button></div>
       <p>Students can use all personal tools without an account. Owner sign in manages public content.</p>
       <p id="authBackendStatus" role="status">Checking backend connection…</p>
+      <a id="privateOwnerPortalLink" class="hub-button" href="https://classroom-hub-owner-service.f6050.chatgpt.site" target="_blank" rel="noopener noreferrer">Open private owner portal</a>
       <label>Email<input id="authEmailInput" type="email" autocomplete="username" required></label>
       <label>Password<input id="authPasswordInput" type="password" autocomplete="current-password" required></label>
       <p id="authError" role="alert"></p>
       <button id="ownerLoginSubmit" type="submit" class="hub-button">Sign in securely</button>
-      <a href="https://github.com/Fahim-Niloy2314/classroom-hub/blob/main/OWNER_MANUAL.md" target="_blank" rel="noopener noreferrer">Owner setup guide</a>
     </form>
   </dialog>
+<dialog id="editFacultyModal" class="hub-dialog" aria-labelledby="facultyModalTitle"><form id="facultyMemberForm" onsubmit="handleSaveFaculty(event)"><div class="hub-row"><h2 id="facultyModalTitle">Faculty / Staff</h2><button type="button" onclick="closeEditFacultyModal()" aria-label="Close faculty editor">✕</button></div><input type="hidden" id="facultyEditId"><label for="facultyNameInput">Full name<input class="hub-data-input" id="facultyNameInput" type="text" value="" required></label><label for="facultyDesignationInput">Academic designation<input class="hub-data-input" id="facultyDesignationInput" type="text" value="" required></label><label for="facultyAdministrativeRoleInput">Administrative role (e.g. Dean)<input class="hub-data-input" id="facultyAdministrativeRoleInput" type="text" value="" ></label><label>Category<select class="hub-data-input" id="facultyCategoryInput"><option value="HEAD">Head of Department</option><option value="PROFESSOR" selected>Professor</option><option value="ASSOCIATE">Associate Professor</option><option value="ASSISTANT">Assistant Professor</option><option value="LECTURER">Lecturer</option><option value="STAFF">Staff</option></select></label><label for="facultyRoomInput">Room / office<input class="hub-data-input" id="facultyRoomInput" type="text" value="" ></label><label for="facultyEmailInput">Email addresses (separate with commas)<input class="hub-data-input" id="facultyEmailInput" type="text" value="" ></label><label for="facultyPhoneInput">Phone<input class="hub-data-input" id="facultyPhoneInput" type="text" value="" ></label><label for="facultyTntInput">TNT / PABX extension<input class="hub-data-input" id="facultyTntInput" type="text" value="" ></label><label for="facultyWhatsappInput">WhatsApp number<input class="hub-data-input" id="facultyWhatsappInput" type="text" value="" ></label><label for="facultySpecializationInput">Specialization<input class="hub-data-input" id="facultySpecializationInput" type="text" value="" ></label><label for="facultyOrderInput">Display order<input class="hub-data-input" id="facultyOrderInput" type="number" value="1" ></label><button class="hub-button" type="submit">Save faculty draft</button></form></dialog>
+<dialog id="editContactDialog" class="hub-dialog" aria-labelledby="contactDialogTitle"><form onsubmit="event.preventDefault();saveContactSettings()"><div class="hub-row"><h2 id="contactDialogTitle">Public contact details</h2><button type="button" onclick="closeEditContactModal()" aria-label="Close contact editor">✕</button></div><label for="editEmailInput">Public primary email<input class="hub-data-input" id="editEmailInput" type="email" value="" ></label><label for="editEmailSecondaryInput">Public secondary email<input class="hub-data-input" id="editEmailSecondaryInput" type="email" value="" ></label><label for="editPhoneInput">Phone<input class="hub-data-input" id="editPhoneInput" type="text" value="" ></label><label for="editNetlifyInput">Portfolio URL<input class="hub-data-input" id="editNetlifyInput" type="url" value="" ></label><label for="editGithubInput">GitHub URL<input class="hub-data-input" id="editGithubInput" type="url" value="" ></label><button type="submit" class="hub-button">Save contact draft</button></form></dialog>
+<dialog id="submitResourceDialog" class="hub-dialog" aria-labelledby="resourceSubmitTitle"><form onsubmit="handleResourceSubmission(event)"><div class="hub-row"><h2 id="resourceSubmitTitle">Contribute a resource link</h2><button type="button" onclick="closeSubmitResourceModal()" aria-label="Close contribution form">✕</button></div><p>A link becomes public only after owner review and publishing. Delivery requires the backend; pending links are retained on this device.</p><label for="contribTitle">Title<input class="hub-data-input" id="contribTitle" type="text" value="" required></label><label for="contribAuthor">Your name (optional)<input class="hub-data-input" id="contribAuthor" type="text" value="" ></label><label for="contribCourse">Course code / name<input class="hub-data-input" id="contribCourse" type="text" value="" required></label><label for="contribUrl">Resource URL<input class="hub-data-input" id="contribUrl" type="url" value="" required></label><label>Semester<select id="contribTerm" class="hub-data-input"><option>L1-T1</option><option>L1-T2</option><option>L2-T1</option><option>L2-T2</option><option>L3-T1</option><option>L3-T2</option><option>L4-T1</option><option>L4-T2</option></select></label><label>Category<select id="contribCategory" class="hub-data-input"><option>Lecture Notes</option><option>Question Banks</option><option>Reference Books</option><option>Lab & Sessional</option><option>Lecture Slides</option><option>Software & CAD</option></select></label><button type="submit" class="hub-button">Submit for review</button></form></dialog>
+<dialog id="geminiApiKeyDialog" class="hub-dialog" aria-labelledby="personalAiKeyTitle"><form onsubmit="event.preventDefault();saveGeminiApiKey()"><div class="hub-row"><h2 id="personalAiKeyTitle">Personal AI connection</h2><button type="button" onclick="closeGeminiApiKeyModal()" aria-label="Close AI connection">✕</button></div><p>Use your own provider account. Keys stay in this browser; requests go directly to the selected provider and may use your provider quota. Do not use an owner/shared secret here.</p><label for="geminiApiKeyInput">Gemini API key<input class="hub-data-input" id="geminiApiKeyInput" type="password" value="" ></label><label for="openaiApiKeyInput">OpenAI API key (optional)<input class="hub-data-input" id="openaiApiKeyInput" type="password" value="" ></label><label>Gemini model ID<input class="hub-data-input" id="personalGeminiModel" value="gemini-3.8-flash"></label><label>OpenAI model ID (from your provider account)<input class="hub-data-input" id="personalOpenAiModel" placeholder="Enter an available model ID"></label><button type="submit" class="hub-button">Save on this device</button><button type="button" class="hub-button" onclick="HubFeatures.clearPersonalAiKeys()">Remove saved keys</button></form></dialog>
   <!-- Application Logic Scripts -->
-  <script src="data.js?v=4.1.1"></script>
-  <script src="hub-core.js?v=4.1.1"></script>
-  <script src="app.js?v=4.1.1"></script>
-  <script src="hub-fixes.js?v=4.1.1"></script>
+<dialog id="adminNoticeDialog" aria-label="Content editor" class="hub-dialog"><h2>Edit notice</h2><form id="adminNoticeForm" onsubmit="saveNoticeItem(event)"><input id="noticeEditId" type="hidden"><label class="hub-field">Title<input id="noticeTitleInput" type="text" class="hub-data-input" required></label><label class="hub-field">Badge<select id="noticeBadgeInput" class="hub-data-input"><option value="UPDATE">UPDATE</option><option value="URGENT">URGENT</option><option value="EXAM">EXAM</option><option value="NOTICE">NOTICE</option></select></label><label class="hub-field">Semester<select id="noticeTermInput" class="hub-data-input"><option value="All Semesters">All Semesters</option><option value="L1-T1">L1-T1</option><option value="L1-T2">L1-T2</option><option value="L2-T1">L2-T1</option><option value="L2-T2">L2-T2</option><option value="L3-T1">L3-T1</option><option value="L3-T2">L3-T2</option><option value="L4-T1">L4-T1</option><option value="L4-T2">L4-T2</option></select></label><label class="hub-field">Message<textarea id="noticeMessageInput" class="hub-data-input" rows="4"></textarea></label><label class="hub-field">Reference link<input id="noticeLinkInput" type="url" class="hub-data-input"></label><div class="hub-toolbar"><button type="submit" class="hub-button">Save draft</button><button type="button" class="hub-button" onclick="closeNoticeModal()">Cancel</button></div></form></dialog>
+<dialog id="adminVideoDialog" aria-label="Content editor" class="hub-dialog"><h2>Edit video resource</h2><form id="adminVideoForm" onsubmit="saveVideoItem(event)"><input id="videoEditId" type="hidden"><label class="hub-field">Title<input id="videoTitleInput" type="text" class="hub-data-input" required></label><label class="hub-field">Subject<input id="videoSubjectInput" type="text" class="hub-data-input"></label><label class="hub-field">Language<select id="videoLangInput" class="hub-data-input"><option value="en">en</option><option value="bn">bn</option><option value="hi">hi</option></select></label><label class="hub-field">Channel<input id="videoChannelInput" type="text" class="hub-data-input"></label><label class="hub-field">Semester<select id="videoTermInput" class="hub-data-input"><option value="ALL">ALL</option><option value="L1-T1">L1-T1</option><option value="L1-T2">L1-T2</option><option value="L2-T1">L2-T1</option><option value="L2-T2">L2-T2</option><option value="L3-T1">L3-T1</option><option value="L3-T2">L3-T2</option><option value="L4-T1">L4-T1</option><option value="L4-T2">L4-T2</option></select></label><label class="hub-field">Video or playlist URL<input id="videoUrlInput" type="url" class="hub-data-input"></label><div class="hub-toolbar"><button type="submit" class="hub-button">Save draft</button><button type="button" class="hub-button" onclick="closeVideoModal()">Cancel</button></div></form></dialog>
+<dialog id="adminTimelineDialog" aria-label="Content editor" class="hub-dialog"><h2>Edit academic milestone</h2><form id="adminTimelineForm" onsubmit="saveTimelineItem(event)"><input id="timelineEditId" type="hidden"><label class="hub-field">Title<input id="timelineTitleInput" type="text" class="hub-data-input" required></label><label class="hub-field">Date<input id="timelineDateInput" type="date" class="hub-data-input"></label><label class="hub-field">Semester<select id="timelineTermInput" class="hub-data-input"><option value="All Semesters">All Semesters</option><option value="L1-T1">L1-T1</option><option value="L1-T2">L1-T2</option><option value="L2-T1">L2-T1</option><option value="L2-T2">L2-T2</option><option value="L3-T1">L3-T1</option><option value="L3-T2">L3-T2</option><option value="L4-T1">L4-T1</option><option value="L4-T2">L4-T2</option></select></label><label class="hub-field">Description<textarea id="timelineDescInput" class="hub-data-input" rows="4"></textarea></label><div class="hub-toolbar"><button type="submit" class="hub-button">Save draft</button><button type="button" class="hub-button" onclick="closeTimelineModal()">Cancel</button></div></form></dialog>
+<dialog id="adminEditResourceDialog" aria-label="Content editor" class="hub-dialog"><h2>Edit resource</h2><form id="adminEditResourceForm" onsubmit="saveEditedResource(event)"><input id="editResId" type="hidden"><label class="hub-field">Title<input id="editResTitle" type="text" class="hub-data-input" required></label><label class="hub-field">Semester<select id="editResTerm" class="hub-data-input"><option value="L1-T1">L1-T1</option><option value="L1-T2">L1-T2</option><option value="L2-T1">L2-T1</option><option value="L2-T2">L2-T2</option><option value="L3-T1">L3-T1</option><option value="L3-T2">L3-T2</option><option value="L4-T1">L4-T1</option><option value="L4-T2">L4-T2</option></select></label><label class="hub-field">Category<select id="editResCategory" class="hub-data-input"><option value="QUESTION_BANKS">QUESTION_BANKS</option><option value="LECTURE_NOTES">LECTURE_NOTES</option><option value="BOOKS">BOOKS</option><option value="LAB">LAB</option><option value="SLIDES">SLIDES</option><option value="SOFTWARE">SOFTWARE</option><option value="OTHER">OTHER</option></select></label><label class="hub-field">Course<input id="editResCourse" type="text" class="hub-data-input"></label><label class="hub-field">Preview link<input id="editResDriveViewUrl" type="url" class="hub-data-input"></label><label class="hub-field">Download link<input id="editResDriveDownloadUrl" type="url" class="hub-data-input"></label><div class="hub-toolbar"><button type="submit" class="hub-button">Save draft</button><button type="button" class="hub-button" onclick="closeAdminEditResourceModal()">Cancel</button></div></form></dialog>
+<dialog id="bulletinDialog" aria-label="Content editor" class="hub-dialog"><h2>Archived CUET Undergraduate Bulletin</h2><p>This archived department bulletin is stored in the Classroom Hub repository. Confirm the applicable edition, current requirements and examination dates with your department.</p><a class="hub-button" href="https://github.com/Fahim-Niloy2314/classroom-hub/releases/download/v1.0.0/Bulletin_UG_ME.pdf" target="_blank" rel="noopener noreferrer">Open archived bulletin PDF</a><button type="button" class="hub-button" onclick="closeBulletinModal()">Close</button></dialog>
+  <script src="data.js?v=4.2.0"></script>
+  <script src="hub-core.js?v=4.2.0"></script>
+  <script src="app.js?v=4.2.0"></script>
+  <script src="hub-fixes.js?v=4.2.0"></script>
+  <script src="hub-features.js?v=4.2.0"></script>
 </body>
 </html>
