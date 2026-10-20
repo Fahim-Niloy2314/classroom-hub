@@ -62,7 +62,7 @@
   <script src="jszip.min.js"></script>
 
   <!-- Custom Academic UI Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=4.3.0">
+  <link rel="stylesheet" href="styles.css?v=4.3.1">
 </head>
 <body class="min-h-screen flex flex-col font-sans antialiased text-main bg-canvas">
 
@@ -1371,7 +1371,7 @@
           </div>
 
           <!-- Search & Filter Controls -->
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+            <div class="flex flex-col items-stretch gap-3 pt-1">
             <!-- Search Input -->
             <div class="relative flex-1">
               <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
@@ -1385,12 +1385,15 @@
             </div>
 
             <!-- Designation Filters -->
-            <div class="flex items-center gap-1 overflow-x-auto no-scrollbar text-xs">
+            <div id="facultyCategoryControls" class="flex flex-wrap items-center gap-2 text-xs" aria-label="Faculty categories">
               <button onclick="filterFacultyCategory('ALL')" id="facFilter-ALL" class="px-3 py-1.5 rounded-xl bg-cyan-600 text-white font-semibold whitespace-nowrap shadow-sm transition-all">All</button>
-              <button onclick="filterFacultyCategory('HEAD')" id="facFilter-HEAD" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium whitespace-nowrap transition-all">Head & Dean</button>
+              <button onclick="filterFacultyCategory('HEAD')" id="facFilter-HEAD" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium whitespace-nowrap transition-all">Head</button>
+              <button onclick="filterFacultyCategory('DEAN')" id="facFilter-DEAN" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium whitespace-nowrap transition-all">Dean</button>
               <button onclick="filterFacultyCategory('PROFESSOR')" id="facFilter-PROFESSOR" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium whitespace-nowrap transition-all">Professors</button>
-              <button onclick="filterFacultyCategory('ASSOCIATE')" id="facFilter-ASSOCIATE" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium whitespace-nowrap transition-all">Associate Prof</button>
-              <button onclick="filterFacultyCategory('STAFF')" id="facFilter-STAFF" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium whitespace-nowrap transition-all">Office & Staff</button>
+              <button onclick="filterFacultyCategory('ASSOCIATE')" id="facFilter-ASSOCIATE" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium whitespace-nowrap transition-all">Associate Professors</button>
+              <button onclick="filterFacultyCategory('ASSISTANT')" id="facFilter-ASSISTANT" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium whitespace-nowrap transition-all">Assistant Professors</button>
+              <button onclick="filterFacultyCategory('LECTURER')" id="facFilter-LECTURER" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium whitespace-nowrap transition-all">Lecturers</button>
+              <button onclick="filterFacultyCategory('STAFF')" id="facFilter-STAFF" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium whitespace-nowrap transition-all">Staff &amp; Lab Assistants</button>
             </div>
           </div>
         </div>
@@ -2787,7 +2790,7 @@
         <!-- Day Selection -->
         <div>
           <label class="block font-semibold text-slate-300 mb-1">Teaching Day *</label>
-          <select id="slotDaySelect" required class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium outline-none focus:border-indigo-500">
+          <select id="slotDaySelect" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium outline-none focus:border-indigo-500">
             <option value="Sunday">Sunday (রবিবার)</option>
             <option value="Monday">Monday (সোমবার)</option>
             <option value="Tuesday">Tuesday (মঙ্গলবার)</option>
@@ -2798,15 +2801,22 @@
           </select>
         </div>
 
+        <p class="text-xs text-muted" data-i18n="routine_entry_hint">Only course name is required. The default is your first teaching day, 9:00–9:50 AM; change the schedule below as needed. Teacher, course code, room and notes are optional.</p>
+        <label class="hub-field">Time preset (optional)<select id="slotTimePreset" onchange="applyRoutineTimePreset(this.value)" class="hub-data-input">
+          <option value="">Custom time</option><option value="08:30|09:00">CT: 8:30–9:00 AM</option>
+          <option value="09:00|09:50" selected>Class 1: 9:00–9:50 AM</option><option value="09:50|10:40">Class 2: 9:50–10:40 AM</option>
+          <option value="11:00|11:50">Class 3: 11:00–11:50 AM</option><option value="11:50|12:40">Class 4: 11:50 AM–12:40 PM</option>
+          <option value="14:30|16:00">Lab: 2:30–4:00 PM</option><option value="14:30|17:00">Lab: 2:30–5:00 PM</option>
+        </select></label>
         <!-- Time Range (Start & End Time) -->
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block font-semibold text-slate-300 mb-1">Start Time *</label>
-            <input type="time" id="slotStartTime" required onchange="validateSlotTimes()" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs outline-none focus:border-indigo-500">
+            <label class="block font-semibold text-slate-300 mb-1">Start Time (optional)</label>
+            <input type="time" id="slotStartTime" onchange="validateSlotTimes()" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs outline-none focus:border-indigo-500">
           </div>
           <div>
-            <label class="block font-semibold text-slate-300 mb-1">End Time *</label>
-            <input type="time" id="slotEndTime" required onchange="validateSlotTimes()" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs outline-none focus:border-indigo-500">
+            <label class="block font-semibold text-slate-300 mb-1">End Time (optional)</label>
+            <input type="time" id="slotEndTime" onchange="validateSlotTimes()" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs outline-none focus:border-indigo-500">
           </div>
         </div>
         <div id="slotTimeValidationAlert" class="hidden text-[11px] text-red-400 font-semibold flex items-center gap-1">
@@ -2817,8 +2827,8 @@
         <!-- Course Code & Name -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label class="block font-semibold text-slate-300 mb-1">Course Code *</label>
-            <input type="text" id="slotCourseCode" required placeholder="e.g. ME 4201" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs outline-none focus:border-indigo-500">
+            <label class="block font-semibold text-slate-300 mb-1">Course Code (optional)</label>
+            <input type="text" id="slotCourseCode" placeholder="e.g. ME 411" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs outline-none focus:border-indigo-500">
           </div>
           <div class="sm:col-span-2">
             <label class="block font-semibold text-slate-300 mb-1">Course Name / Title *</label>
@@ -2831,10 +2841,10 @@
           <label class="block font-semibold text-slate-300 mb-1">Course Teacher / Instructor</label>
           <div class="space-y-1.5">
             <select id="slotTeacherSelect" onchange="handleTeacherSelectChange()" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 text-xs outline-none focus:border-indigo-500">
-              <option value="">-- Choose from CUET ME Faculty / Staff List --</option>
+              <option value="">-- Optional: choose a teacher --</option>
               <!-- Populated dynamically via JS -->
             </select>
-            <input type="text" id="slotTeacherManual" placeholder="Or enter teacher name / initials manually (e.g. Prof. Dr. XYZ / Lab Team)" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium text-xs outline-none focus:border-indigo-500">
+            <input type="text" id="slotTeacherManual" placeholder="Or enter teacher name / initials (optional)" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium text-xs outline-none focus:border-indigo-500">
           </div>
         </div>
 
@@ -2913,8 +2923,9 @@
         <div>
           <label class="block font-bold text-slate-300 mb-1">Standard Time Slot Labels</label>
           <p class="text-[11px] text-slate-400 mb-2">Supports morning classes, afternoon sessional, and custom breaks.</p>
+          <button type="button" class="hub-button" onclick="useCuetPeriodLayout()">Use CT / 50-minute classes / afternoon labs</button>
           <textarea id="cfgTimeSlotsTextarea" rows="4" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono text-xs outline-none focus:border-indigo-500 leading-relaxed"></textarea>
-          <span class="text-[10px] text-slate-500">Enter each slot on a new line (e.g. 08:00 - 08:50)</span>
+          <span class="text-[10px] text-slate-500">Enter each slot on a new line (e.g. 09:00 - 09:50)</span>
         </div>
       </div>
 
@@ -3117,7 +3128,7 @@
       </fieldset>
     </form>
   </dialog>
-<dialog id="editFacultyModal" class="hub-dialog" aria-labelledby="facultyModalTitle"><form id="facultyMemberForm" onsubmit="handleSaveFaculty(event)"><div class="hub-row"><h2 id="facultyModalTitle">Faculty / Staff</h2><button type="button" onclick="closeEditFacultyModal()" aria-label="Close faculty editor">✕</button></div><input type="hidden" id="facultyEditId"><label for="facultyNameInput">Full name<input class="hub-data-input" id="facultyNameInput" type="text" value="" required></label><label for="facultyDesignationInput">Academic designation<input class="hub-data-input" id="facultyDesignationInput" type="text" value="" required></label><label for="facultyAdministrativeRoleInput">Administrative role (e.g. Dean)<input class="hub-data-input" id="facultyAdministrativeRoleInput" type="text" value="" ></label><label>Category<select class="hub-data-input" id="facultyCategoryInput"><option value="HEAD">Head of Department</option><option value="PROFESSOR" selected>Professor</option><option value="ASSOCIATE">Associate Professor</option><option value="ASSISTANT">Assistant Professor</option><option value="LECTURER">Lecturer</option><option value="STAFF">Staff</option></select></label><label for="facultyRoomInput">Room / office<input class="hub-data-input" id="facultyRoomInput" type="text" value="" ></label><label for="facultyEmailInput">Email addresses (separate with commas)<input class="hub-data-input" id="facultyEmailInput" type="text" value="" ></label><label for="facultyPhoneInput">Phone<input class="hub-data-input" id="facultyPhoneInput" type="text" value="" ></label><label for="facultyTntInput">TNT / PABX extension<input class="hub-data-input" id="facultyTntInput" type="text" value="" ></label><label for="facultyWhatsappInput">WhatsApp number<input class="hub-data-input" id="facultyWhatsappInput" type="text" value="" ></label><label for="facultySpecializationInput">Specialization<input class="hub-data-input" id="facultySpecializationInput" type="text" value="" ></label><label for="facultyOrderInput">Display order<input class="hub-data-input" id="facultyOrderInput" type="number" value="1" ></label><button class="hub-button" type="submit">Save faculty draft</button></form></dialog>
+<dialog id="editFacultyModal" class="hub-dialog" aria-labelledby="facultyModalTitle"><form id="facultyMemberForm" onsubmit="handleSaveFaculty(event)"><div class="hub-row"><h2 id="facultyModalTitle">Faculty / Staff</h2><button type="button" onclick="closeEditFacultyModal()" aria-label="Close faculty editor">✕</button></div><input type="hidden" id="facultyEditId"><label for="facultyNameInput">Full name<input class="hub-data-input" id="facultyNameInput" type="text" value="" required></label><label for="facultyDesignationInput">Academic designation<input class="hub-data-input" id="facultyDesignationInput" type="text" value="" required></label><label for="facultyAdministrativeRoleInput">Administrative role (e.g. Dean)<input class="hub-data-input" id="facultyAdministrativeRoleInput" type="text" value="" ></label><label>Category<select class="hub-data-input" id="facultyCategoryInput"><option value="HEAD">Head of Department</option><option value="DEAN">Dean</option><option value="PROFESSOR" selected>Professor</option><option value="ASSOCIATE">Associate Professor</option><option value="ASSISTANT">Assistant Professor</option><option value="LECTURER">Lecturer</option><option value="STAFF">Staff</option></select></label><label for="facultyRoomInput">Room / office<input class="hub-data-input" id="facultyRoomInput" type="text" value="" ></label><label for="facultyEmailInput">Email addresses (separate with commas)<input class="hub-data-input" id="facultyEmailInput" type="text" value="" ></label><label for="facultyPhoneInput">Phone<input class="hub-data-input" id="facultyPhoneInput" type="text" value="" ></label><label for="facultyTntInput">TNT / PABX extension<input class="hub-data-input" id="facultyTntInput" type="text" value="" ></label><label for="facultyWhatsappInput">WhatsApp number<input class="hub-data-input" id="facultyWhatsappInput" type="text" value="" ></label><label for="facultySpecializationInput">Specialization<input class="hub-data-input" id="facultySpecializationInput" type="text" value="" ></label><label for="facultyOrderInput">Display order<input class="hub-data-input" id="facultyOrderInput" type="number" value="1" ></label><button class="hub-button" type="submit">Save faculty draft</button></form></dialog>
 <dialog id="editContactDialog" class="hub-dialog" aria-labelledby="contactDialogTitle"><form onsubmit="event.preventDefault();saveContactSettings()"><div class="hub-row"><h2 id="contactDialogTitle">Public contact details</h2><button type="button" onclick="closeEditContactModal()" aria-label="Close contact editor">✕</button></div><label for="editEmailInput">Public primary email<input class="hub-data-input" id="editEmailInput" type="email" value="" ></label><label for="editEmailSecondaryInput">Public secondary email<input class="hub-data-input" id="editEmailSecondaryInput" type="email" value="" ></label><label for="editPhoneInput">Phone<input class="hub-data-input" id="editPhoneInput" type="text" value="" ></label><label for="editNetlifyInput">Portfolio URL<input class="hub-data-input" id="editNetlifyInput" type="url" value="" ></label><label for="editGithubInput">GitHub URL<input class="hub-data-input" id="editGithubInput" type="url" value="" ></label><button type="submit" class="hub-button">Save contact draft</button></form></dialog>
 <dialog id="submitResourceDialog" class="hub-dialog" aria-labelledby="resourceSubmitTitle"><form onsubmit="handleResourceSubmission(event)"><div class="hub-row"><h2 id="resourceSubmitTitle">Contribute a resource link</h2><button type="button" onclick="closeSubmitResourceModal()" aria-label="Close contribution form">✕</button></div><p>A link becomes public only after owner review and publishing. Delivery requires the backend; pending links are retained on this device.</p><label for="contribTitle">Title<input class="hub-data-input" id="contribTitle" type="text" value="" required></label><label for="contribAuthor">Your name (optional)<input class="hub-data-input" id="contribAuthor" type="text" value="" ></label><label for="contribCourse">Course code / name<input class="hub-data-input" id="contribCourse" type="text" value="" required></label><label for="contribUrl">Resource URL<input class="hub-data-input" id="contribUrl" type="url" value="" required></label><label>Semester<select id="contribTerm" class="hub-data-input"><option>L1-T1</option><option>L1-T2</option><option>L2-T1</option><option>L2-T2</option><option>L3-T1</option><option>L3-T2</option><option>L4-T1</option><option>L4-T2</option></select></label><label>Category<select id="contribCategory" class="hub-data-input"><option>Lecture Notes</option><option>Question Banks</option><option>Reference Books</option><option>Lab & Sessional</option><option>Lecture Slides</option><option>Software & CAD</option></select></label><button type="submit" class="hub-button">Submit for review</button></form></dialog>
 <dialog id="geminiApiKeyDialog" class="hub-dialog" aria-labelledby="personalAiKeyTitle"><form onsubmit="event.preventDefault();saveGeminiApiKey()"><div class="hub-row"><h2 id="personalAiKeyTitle">Personal AI connection</h2><button type="button" onclick="closeGeminiApiKeyModal()" aria-label="Close AI connection">✕</button></div><p>Use your own provider account. Keys stay in this browser; requests go directly to the selected provider and may use your provider quota. Do not use an owner/shared secret here.</p><label for="geminiApiKeyInput">Gemini API key<input class="hub-data-input" id="geminiApiKeyInput" type="password" value="" ></label><label for="openaiApiKeyInput">OpenAI API key (optional)<input class="hub-data-input" id="openaiApiKeyInput" type="password" value="" ></label><label>Gemini model ID<input class="hub-data-input" id="personalGeminiModel" value="gemini-3.8-flash"></label><label>OpenAI model ID (from your provider account)<input class="hub-data-input" id="personalOpenAiModel" placeholder="Enter an available model ID"></label><button type="submit" class="hub-button">Save on this device</button><button type="button" class="hub-button" onclick="HubFeatures.clearPersonalAiKeys()">Remove saved keys</button></form></dialog>
@@ -3127,10 +3138,10 @@
 <dialog id="adminTimelineDialog" aria-label="Content editor" class="hub-dialog"><h2>Edit academic milestone</h2><form id="adminTimelineForm" onsubmit="saveTimelineItem(event)"><input id="timelineEditId" type="hidden"><label class="hub-field">Title<input id="timelineTitleInput" type="text" class="hub-data-input" required></label><label class="hub-field">Date<input id="timelineDateInput" type="date" class="hub-data-input"></label><label class="hub-field">Semester<select id="timelineTermInput" class="hub-data-input"><option value="All Semesters">All Semesters</option><option value="L1-T1">L1-T1</option><option value="L1-T2">L1-T2</option><option value="L2-T1">L2-T1</option><option value="L2-T2">L2-T2</option><option value="L3-T1">L3-T1</option><option value="L3-T2">L3-T2</option><option value="L4-T1">L4-T1</option><option value="L4-T2">L4-T2</option></select></label><label class="hub-field">Description<textarea id="timelineDescInput" class="hub-data-input" rows="4"></textarea></label><div class="hub-toolbar"><button type="submit" class="hub-button">Save draft</button><button type="button" class="hub-button" onclick="closeTimelineModal()">Cancel</button></div></form></dialog>
 <dialog id="adminEditResourceDialog" aria-label="Content editor" class="hub-dialog"><h2>Edit resource</h2><form id="adminEditResourceForm" onsubmit="saveEditedResource(event)"><input id="editResId" type="hidden"><label class="hub-field">Title<input id="editResTitle" type="text" class="hub-data-input" required></label><label class="hub-field">Semester<select id="editResTerm" class="hub-data-input"><option value="L1-T1">L1-T1</option><option value="L1-T2">L1-T2</option><option value="L2-T1">L2-T1</option><option value="L2-T2">L2-T2</option><option value="L3-T1">L3-T1</option><option value="L3-T2">L3-T2</option><option value="L4-T1">L4-T1</option><option value="L4-T2">L4-T2</option></select></label><label class="hub-field">Category<select id="editResCategory" class="hub-data-input"><option value="QUESTION_BANKS">QUESTION_BANKS</option><option value="LECTURE_NOTES">LECTURE_NOTES</option><option value="BOOKS">BOOKS</option><option value="LAB">LAB</option><option value="SLIDES">SLIDES</option><option value="SOFTWARE">SOFTWARE</option><option value="OTHER">OTHER</option></select></label><label class="hub-field">Course<input id="editResCourse" type="text" class="hub-data-input"></label><label class="hub-field">Preview link<input id="editResDriveViewUrl" type="url" class="hub-data-input"></label><label class="hub-field">Download link<input id="editResDriveDownloadUrl" type="url" class="hub-data-input"></label><div class="hub-toolbar"><button type="submit" class="hub-button">Save draft</button><button type="button" class="hub-button" onclick="closeAdminEditResourceModal()">Cancel</button></div></form></dialog>
 <dialog id="bulletinDialog" aria-label="Content editor" class="hub-dialog"><h2>Archived CUET Undergraduate Bulletin</h2><p>This archived department bulletin is stored in the Classroom Hub repository. Confirm the applicable edition, current requirements and examination dates with your department.</p><a class="hub-button" href="https://github.com/Fahim-Niloy2314/classroom-hub/releases/download/v1.0.0/Bulletin_UG_ME.pdf" target="_blank" rel="noopener noreferrer">Open archived bulletin PDF</a><button type="button" class="hub-button" onclick="closeBulletinModal()">Close</button></dialog>
-  <script src="data.js?v=4.3.0"></script>
-  <script src="hub-core.js?v=4.3.0"></script>
-  <script src="app.js?v=4.3.0"></script>
-  <script src="hub-fixes.js?v=4.3.0"></script>
-  <script src="hub-features.js?v=4.3.0"></script>
+  <script src="data.js?v=4.3.1"></script>
+  <script src="hub-core.js?v=4.3.1"></script>
+  <script src="app.js?v=4.3.1"></script>
+  <script src="hub-fixes.js?v=4.3.1"></script>
+  <script src="hub-features.js?v=4.3.1"></script>
 </body>
 </html>

@@ -503,6 +503,7 @@ if (localStorage.getItem(STORAGE_KEYS.ADMIN_TIMELINE) === null) { adminTimeline 
    ========================================================================= */
 const I18N = {
   en: {
+    routine_entry_hint: 'Only course name is required. The default is your first teaching day, 9:00–9:50 AM; change the schedule below as needed. Teacher, course code, room and notes are optional.',
     nav_sub: 'CUET Mechanical Engineering Archive',
     cgpa_intro: 'Enter course credits and grades to estimate term GPA and cumulative CGPA. Confirm the applicable rules with your department.',
     cv_intro: 'Create an editable CV for internships, jobs or further study. Export Word (.docx), print to PDF and keep a JSON backup on your own device.',
@@ -626,6 +627,7 @@ const I18N = {
     google_security_note: '🔒 Authenticated Google portal for CUET ME ClassroomHub. Admin rights are granted exclusively to designated admin accounts.'
   },
   bn: {
+    routine_entry_hint: 'শুধু কোর্সের নাম অবশ্যই দিতে হবে। শুরুতে আপনার প্রথম ক্লাসের দিন সকাল ৯টা–৯টা ৫০ মিনিট বেছে নেওয়া থাকবে; প্রয়োজনমতো দিন ও সময় বদলাতে পারবেন। শিক্ষক, কোর্স কোড, কক্ষ ও নোট দেওয়া ঐচ্ছিক।',
     cgpa_intro: 'কোর্সের ক্রেডিট ও গ্রেড দিয়ে টার্ম GPA এবং মোট CGPA হিসাব করুন। আপনার বিভাগের প্রযোজ্য নিয়ম যাচাই করুন।',
     cv_intro: 'ইন্টার্নশিপ, চাকরি বা উচ্চশিক্ষার জন্য সম্পাদনাযোগ্য CV তৈরি করুন। Word (.docx) এক্সপোর্ট, PDF প্রিন্ট এবং নিজের ডিভাইসে JSON ব্যাকআপ রাখতে পারবেন।',
     nav_sub: 'চুয়েট মেকানিক্যাল ইঞ্জিনিয়ারিং আর্কাইভ',
@@ -7668,7 +7670,20 @@ let routineCurrentViewMode = 'grid'; // 'grid' | 'day'
 let personalRoutineCurrentDay = 'Sunday';
 let publishedRoutineCurrentDay = 'Sunday';
 
-// Default blank routine for new visits (Zero prefill of personal data!)
+// Owner-specified period layout; no student courses or teachers are prefilled.
+const CUET_ROUTINE_PERIODS = [
+  {start:'08:30',end:'09:00',label:'Class Test (CT)'},
+  {start:'09:00',end:'09:50',label:'Class 1'},
+  {start:'09:50',end:'10:40',label:'Class 2'},
+  {start:'10:40',end:'11:00',label:'Break'},
+  {start:'11:00',end:'11:50',label:'Class 3'},
+  {start:'11:50',end:'12:40',label:'Class 4'},
+  {start:'12:40',end:'14:30',label:'Lunch / prayer break'},
+  {start:'14:30',end:'16:00',label:'Lab (until 4:00 PM)'},
+  {start:'16:00',end:'17:00',label:'Lab extension (until 5:00 PM)'}
+];
+const CUET_DEFAULT_TIME_SLOTS = CUET_ROUTINE_PERIODS.map(period=>`${period.start} - ${period.end}`);
+const LEGACY_DEFAULT_TIME_SLOTS = ['08:00 - 08:50','08:50 - 09:40','10:00 - 10:50','10:50 - 11:40','11:40 - 12:30','13:30 - 14:20','14:30 - 17:00'];
 const DEFAULT_BLANK_ROUTINE = {
   id: 'my_routine_personal',
   title: 'My Weekly Timetable',
@@ -7677,15 +7692,7 @@ const DEFAULT_BLANK_ROUTINE = {
   section: '',
   room: '',
   days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'],
-  timeSlots: [
-    '08:00 - 08:50',
-    '08:50 - 09:40',
-    '10:00 - 10:50',
-    '10:50 - 11:40',
-    '11:40 - 12:30',
-    '13:30 - 14:20',
-    '14:30 - 17:00'
-  ],
+  timeSlots: [...CUET_DEFAULT_TIME_SLOTS],
   entries: [], // Intentionally blank: Every student builds or imports their own!
   isCustomized: false,
   lastModified: new Date().toISOString()
@@ -7697,9 +7704,7 @@ function getMyPersonalRoutine() {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed && Array.isArray(parsed.entries)) {
-        if (parsed.timeSlots?.some(slot => /^01:30/.test(slot))) {
-          parsed.timeSlots = parsed.timeSlots.map(slot => slot.replace(/\b0([1-6]):/g, (_,h) => String(Number(h)+12)+':'));
-        }
+        if (!parsed.entries.length && JSON.stringify(parsed.timeSlots)===JSON.stringify(LEGACY_DEFAULT_TIME_SLOTS)) parsed.timeSlots=[...CUET_DEFAULT_TIME_SLOTS];
         return parsed;
       }
     }
@@ -7922,7 +7927,7 @@ function renderMyRoutineStudio() {
 
   // B. Grid View (Desktop & Tablet Matrix)
   if (routineCurrentViewMode === 'grid') {
-    const timeSlots = routine.timeSlots || ['08:00 - 08:50', '08:50 - 09:40', '10:00 - 10:50', '10:50 - 11:40', '11:40 - 12:30', '13:30 - 14:20', '14:30 - 17:00'];
+    const timeSlots = routine.timeSlots || CUET_DEFAULT_TIME_SLOTS;
     
     outputContainer.innerHTML = `
       <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/90 shadow-sm">
@@ -8103,14 +8108,19 @@ function openAddRoutineSlotModal(prefillDay, prefillTime) {
   const alertEl = document.getElementById('slotTimeValidationAlert');
 
   if (form) form.reset();
+  const submit=document.getElementById('slotSubmitBtn');if(submit)submit.disabled=false;
   if (editId) editId.value = '';
   if (titleEl) if (titleEl) titleEl.textContent = 'Add Class Entry';
   if (alertEl) alertEl.classList.add('hidden');
 
-  if (daySel && prefillDay) daySel.value = prefillDay;
+  if (daySel) daySel.value = prefillDay || getMyPersonalRoutine().days?.[0] || 'Sunday';
+  if (startInp) startInp.value = '09:00';
+  if (endInp) endInp.value = '09:50';
   if (startInp && prefillTime) {
     startInp.value = normalizeTimeTo24h(prefillTime);
-    if (endInp && !endInp.value) {
+    const configured=getMyPersonalRoutine().timeSlots?.find(slot=>slot.split('-')[0].trim()===startInp.value);
+    if(endInp && configured) endInp.value=configured.split('-')[1].trim();
+    else if (endInp) {
       const startMin = parseTimeToMinutes(startInp.value);
       const endMin = startMin + 50;
       const h = Math.floor(endMin / 60) % 24;
@@ -8118,6 +8128,7 @@ function openAddRoutineSlotModal(prefillDay, prefillTime) {
       endInp.value = `${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}`;
     }
   }
+  const preset=document.getElementById('slotTimePreset');if(preset)preset.value=[startInp?.value,endInp?.value].join('|');
 
   if (modal) modal.showModal();
   if (window.lucide) lucide.createIcons();
@@ -8147,6 +8158,9 @@ function openEditRoutineSlotModal(slotId) {
   if (daySel) daySel.value = slot.day;
   if (startInp) startInp.value = slot.startTime;
   if (endInp) endInp.value = slot.endTime;
+  const preset=document.getElementById('slotTimePreset');if(preset)preset.value=[slot.startTime,slot.endTime].join('|');
+  const select=document.getElementById('slotTeacherSelect');if(select)select.value=[...select.options].find(option=>option.value===slot.teacher)?.value||'';
+  const submit=document.getElementById('slotSubmitBtn');if(submit)submit.disabled=false;
   if (codeInp) codeInp.value = slot.courseCode;
   if (nameInp) nameInp.value = slot.courseName;
   if (teachManual) teachManual.value = slot.teacher || '';
@@ -8169,12 +8183,13 @@ function validateSlotTimes() {
   const alertEl = document.getElementById('slotTimeValidationAlert');
   const submitBtn = document.getElementById('slotSubmitBtn');
 
-  if (!startInp || !endInp || !startInp.value || !endInp.value) return true;
+  if (!startInp || !endInp) return true;
+  if (!startInp.value || !endInp.value) { if(alertEl)alertEl.classList.add('hidden');if(submitBtn)submitBtn.disabled=false;return true; }
 
-  const startMin = parseTimeToMinutes(startInp.value);
-  const endMin = parseTimeToMinutes(endInp.value);
+  const startMin = HubCore.minutes(startInp.value);
+  const endMin = HubCore.minutes(endInp.value);
 
-  if (endMin <= startMin) {
+  if (!Number.isFinite(startMin)||!Number.isFinite(endMin)||endMin <= startMin) {
     if (alertEl) alertEl.classList.remove('hidden');
     if (submitBtn) submitBtn.disabled = true;
     return false;
@@ -8195,10 +8210,22 @@ function handleTeacherSelectChange() {
 
 function populateRoutineFacultyDropdown() {
   const sel = document.getElementById('slotTeacherSelect');
-  if (!sel || sel.options.length > 5) return;
-  const faculty = getFacultyMembers();
-  sel.innerHTML = '<option value="">-- Choose from CUET ME Faculty / Staff List --</option>' +
+  if (!sel) return;
+  const previous=sel.value;
+  const faculty = getRoutineTeachingFaculty();
+  sel.innerHTML = '<option value="">-- Optional: choose a teacher --</option>' +
     faculty.map(f => `<option value="${HubCore.html(f.name)} (${HubCore.html(f.designation)})">${HubCore.html(f.name)} — ${HubCore.html(f.designation)}</option>`).join('');
+  if([...sel.options].some(option=>option.value===previous))sel.value=previous;
+}
+
+function applyRoutineTimePreset(value) {
+  const [start,end]=String(value||'').split('|');if(!Number.isFinite(HubCore.minutes(start))||!Number.isFinite(HubCore.minutes(end)))return;
+  document.getElementById('slotStartTime').value=start;document.getElementById('slotEndTime').value=end;validateSlotTimes();
+}
+
+function useCuetPeriodLayout() {
+  const area=document.getElementById('cfgTimeSlotsTextarea');if(area)area.value=CUET_DEFAULT_TIME_SLOTS.join('\n');
+  showToast(currentLang==='bn'?'সময়গুলো বসানো হয়েছে। Apply & Save দিলে সংরক্ষিত হবে; আগের ক্লাসের সময় বদলাবে না।':'Period layout loaded. Apply & Save to keep it; existing class times stay unchanged.');
 }
 
 function handleRoutineSlotFormSubmit(e) {
@@ -8211,13 +8238,16 @@ function handleRoutineSlotFormSubmit(e) {
   const routine = getMyPersonalRoutine();
   const editId = document.getElementById('slotEditId')?.value;
   const day = document.getElementById('slotDaySelect')?.value || 'Sunday';
-  const startTime = document.getElementById('slotStartTime')?.value || '';
-  const endTime = document.getElementById('slotEndTime')?.value || '';
+  const startTime = document.getElementById('slotStartTime')?.value || '09:00';
+  const defaultEnd=HubCore.minutes(startTime)+50;
+  const endTime = document.getElementById('slotEndTime')?.value || `${String(Math.floor(defaultEnd/60)).padStart(2,'0')}:${String(defaultEnd%60).padStart(2,'0')}`;
   const courseCode = (document.getElementById('slotCourseCode')?.value || '').trim();
   const courseName = (document.getElementById('slotCourseName')?.value || '').trim();
   const teacher = (document.getElementById('slotTeacherManual')?.value || '').trim();
   const room = (document.getElementById('slotRoom')?.value || '').trim();
   const notes = (document.getElementById('slotNotes')?.value || '').trim();
+  if(!courseName){showToast(currentLang==='bn'?'শুধু কোর্সের নামটি অবশ্যই দিন।':'Course name is required.');document.getElementById('slotCourseName')?.focus();return;}
+  if(!Number.isFinite(HubCore.minutes(startTime))||!Number.isFinite(HubCore.minutes(endTime))||HubCore.minutes(endTime)<=HubCore.minutes(startTime)||HubCore.minutes(endTime)>=1440){showToast('Choose a valid class time range.');return;}
 
   if (editId) {
     const idx = routine.entries.findIndex(x => x.id === editId);
@@ -8454,7 +8484,7 @@ async function exportMyRoutineDocx() {
 
     const timeSlots = (routine.timeSlots && routine.timeSlots.length > 0)
       ? routine.timeSlots
-      : ['08:00 - 08:50', '08:50 - 09:40', '10:00 - 10:50', '10:50 - 11:40', '11:40 - 12:30', '13:30 - 14:20', '14:30 - 17:00'];
+      : CUET_DEFAULT_TIME_SLOTS;
     const activeDays = (routine.days && routine.days.length > 0)
       ? routine.days
       : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
@@ -8728,7 +8758,7 @@ function printMyRoutine() {
 
   const timeSlots = (routine.timeSlots && routine.timeSlots.length > 0)
     ? routine.timeSlots
-    : ['08:00 - 08:50', '08:50 - 09:40', '10:00 - 10:50', '10:50 - 11:40', '11:40 - 12:30', '13:30 - 14:20', '14:30 - 17:00'];
+    : CUET_DEFAULT_TIME_SLOTS;
   const activeDays = (routine.days && routine.days.length > 0)
     ? routine.days
     : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
@@ -10214,11 +10244,31 @@ function saveFacultyMembers(list) {
   localStorage.setItem(STORAGE_KEYS.ADMIN_FACULTY, JSON.stringify(normalized));
 }
 
+const FACULTY_DIRECTORY_CATEGORIES=['ALL','HEAD','DEAN','PROFESSOR','ASSOCIATE','ASSISTANT','LECTURER','STAFF'];
+function getFacultyDirectoryCategory(member) {
+  const designation=String(member.designation||'');
+  if(member.category==='STAFF'||/\blab(?:oratory)?\s+assistant\b|\btechnician\b/i.test(designation))return 'STAFF';
+  const role=String(member.administrativeRole||'');
+  if(member.category==='HEAD'||/\bhead(?:\s+of\s+(?:the\s+)?department)?\b/i.test(role+' '+designation))return 'HEAD';
+  if(member.category==='DEAN'||/\bdean\b/i.test(role+' '+designation))return 'DEAN';
+  if(/\bassociate\s+professor\b/i.test(designation))return 'ASSOCIATE';
+  if(/\bassistant\s+professor\b/i.test(designation))return 'ASSISTANT';
+  if(/\blecturer\b/i.test(designation))return 'LECTURER';
+  if(/\bprofessor\b/i.test(designation))return 'PROFESSOR';
+  return FACULTY_DIRECTORY_CATEGORIES.includes(member.category)?member.category:'STAFF';
+}
+
+function getRoutineTeachingFaculty(){
+  return getFacultyMembers().filter(member=>['HEAD','DEAN','PROFESSOR','ASSOCIATE','ASSISTANT','LECTURER'].includes(getFacultyDirectoryCategory(member))).sort((a,b)=>a.name.localeCompare(b.name));
+}
+
 function filterFacultyCategory(cat) {
+  if(!FACULTY_DIRECTORY_CATEGORIES.includes(cat))return;
   facultyCategoryFilter = cat;
-  ['ALL', 'HEAD', 'PROFESSOR', 'ASSOCIATE', 'STAFF'].forEach(c => {
+  FACULTY_DIRECTORY_CATEGORIES.forEach(c => {
     const btn = document.getElementById(`facFilter-${c}`);
     if (btn) {
+      btn.setAttribute('aria-pressed',String(c===cat));
       if (c === cat) {
         btn.className = 'px-3 py-1.5 rounded-xl bg-cyan-600 text-white font-semibold whitespace-nowrap shadow-sm transition-all';
       } else {
@@ -10248,6 +10298,8 @@ function renderFacultyDirectory() {
   }
 
   const allMembers = getFacultyMembers();
+  const categoryLabels=currentLang==='bn'?['সকল','বিভাগীয় প্রধান','ডিন','প্রফেসর','অ্যাসোসিয়েট প্রফেসর','অ্যাসিস্ট্যান্ট প্রফেসর','লেকচারার','স্টাফ ও ল্যাব অ্যাসিস্ট্যান্ট']:['All','Head','Dean','Professors','Associate Professors','Assistant Professors','Lecturers','Staff & Lab Assistants'];
+  FACULTY_DIRECTORY_CATEGORIES.forEach((category,index)=>{const button=document.getElementById('facFilter-'+category);if(button){button.textContent=categoryLabels[index];button.setAttribute('aria-pressed',String(category===facultyCategoryFilter));}});
   if (countBadge) countBadge.textContent = `${allMembers.length} Members`;
   if (homeBadge) homeBadge.textContent = allMembers.length;
   if (homeBannerBadge) homeBannerBadge.textContent = `${allMembers.length} Members`;
@@ -10256,9 +10308,7 @@ function renderFacultyDirectory() {
 
   let filtered = allMembers;
   if (facultyCategoryFilter !== 'ALL') {
-    filtered = filtered.filter(f => facultyCategoryFilter === 'HEAD'
-      ? ['HEAD', 'DEAN'].includes(f.category) || /\b(?:dean|head)\b/i.test(String(f.administrativeRole || ''))
-      : f.category === facultyCategoryFilter);
+    filtered = filtered.filter(f => getFacultyDirectoryCategory(f) === facultyCategoryFilter);
   }
   if (facultySearchKeyword) {
     filtered = filtered.filter(f => {

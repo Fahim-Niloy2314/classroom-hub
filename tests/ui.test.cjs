@@ -141,10 +141,35 @@ test('actual tool-tab buttons select isolated workspaces and preserve the correc
  assert.deepEqual(errors,[]);
 }finally{await tick();dom.window.close();}});
 
-test('Head & Dean filter includes the dean without removing him from Professors',async()=>{const {dom,w,run,errors}=await setup();try{
- run("navigateTo('faculty')");w.document.getElementById('facFilter-HEAD').click();const grid=w.document.getElementById('facultyDirectoryGrid');
- assert.ok(grid.textContent.includes('Dr. Mohammad Mizanur Rahman'));assert.ok(grid.textContent.includes('Dr. Muhammad Mostafa Kamal Bhuiya'));assert.equal(grid.textContent.includes('Lab Assistant'),false);
- w.document.getElementById('facFilter-PROFESSOR').click();assert.ok(grid.textContent.includes('Dr. Mohammad Mizanur Rahman'));assert.deepEqual(errors,[]);
+test('faculty filters are separate, ordered, searchable and retain academic designations',async()=>{const {dom,w,run,errors}=await setup();try{
+ run("navigateTo('faculty')");const controls=w.document.getElementById('facultyCategoryControls'),grid=w.document.getElementById('facultyDirectoryGrid');
+ assert.deepEqual([...controls.querySelectorAll('button')].map(b=>b.id),['ALL','HEAD','DEAN','PROFESSOR','ASSOCIATE','ASSISTANT','LECTURER','STAFF'].map(c=>'facFilter-'+c));
+ w.document.getElementById('facFilter-HEAD').click();assert.ok(grid.textContent.includes('Dr. Muhammad Mostafa Kamal Bhuiya'));assert.equal(grid.textContent.includes('Dr. Mohammad Mizanur Rahman'),false);
+ w.document.getElementById('facFilter-DEAN').click();assert.ok(grid.textContent.includes('Dr. Mohammad Mizanur Rahman'));assert.equal(grid.textContent.includes('Dr. Muhammad Mostafa Kamal Bhuiya'),false);assert.match(run("getFacultyMembers().find(m=>m.id==='fac_7').designation"),/Professor/);
+ w.document.getElementById('facFilter-PROFESSOR').click();assert.equal(grid.textContent.includes('Dr. Mohammad Mizanur Rahman'),false);assert.equal(grid.textContent.includes('Lab Assistant'),false);
+ w.document.getElementById('facFilter-STAFF').click();assert.match(grid.textContent,/Lab Assistant/);run("handleFacultySearch('Fahmida')");assert.match(grid.textContent,/Fahmida/);assert.equal(grid.textContent.includes('Mizanur Rahman'),false);
+ run("handleFacultySearch('');filterFacultyCategory('ALL');toggleLanguage()");assert.match(w.document.getElementById('facFilter-DEAN').textContent,/ডিন/);assert.deepEqual(errors,[]);
+}finally{await tick();dom.window.close();}});
+test('routine accepts only a course name and lab presets preserve exact 24-hour times',async()=>{const {dom,w,run,errors}=await setup();try{
+ run("navigateTo('tools','routine');openAddRoutineSlotModal()");const form=w.document.getElementById('routineSlotForm');assert.deepEqual([...form.querySelectorAll('[required]')].map(i=>i.id),['slotCourseName']);
+ for(const id of ['slotCourseCode','slotTeacherManual','slotRoom','slotNotes','slotStartTime','slotEndTime'])w.document.getElementById(id).value='';
+ w.document.getElementById('slotCourseName').value='  Thermodynamics  ';assert.equal(form.checkValidity(),true);run('handleRoutineSlotFormSubmit({preventDefault(){}})');let entries=run('getMyPersonalRoutine().entries');assert.equal(entries.length,1);assert.equal(entries[0].courseName,'Thermodynamics');assert.equal(entries[0].startTime,'09:00');assert.equal(entries[0].endTime,'09:50');assert.equal(entries[0].teacher,'');assert.equal(entries[0].courseCode,'');
+ run("openAddRoutineSlotModal('Monday');applyRoutineTimePreset('14:30|17:00')");w.document.getElementById('slotCourseName').value='  ';run('handleRoutineSlotFormSubmit({preventDefault(){}})');assert.equal(run('getMyPersonalRoutine().entries.length'),1);
+ w.document.getElementById('slotCourseName').value='Engineering Lab';run('handleRoutineSlotFormSubmit({preventDefault(){}})');entries=run('getMyPersonalRoutine().entries');assert.equal(entries[1].startTime,'14:30');assert.equal(entries[1].endTime,'17:00');assert.equal(entries[1].day,'Monday');
+ run(`openEditRoutineSlotModal(${JSON.stringify(entries[1].id)})`);assert.equal(w.document.getElementById('slotTimePreset').value,'14:30|17:00');
+ run("applyRoutineTimePreset('08:30|09:00')");assert.equal(run('validateSlotTimes()'),true);assert.deepEqual(errors,[]);
+}finally{await tick();dom.window.close();}});
+test('routine teacher choices exclude support staff and refresh after directory edits',async()=>{const {dom,w,run}=await setup({owner:true});try{
+ run('openAddRoutineSlotModal()');let values=[...w.document.getElementById('slotTeacherSelect').options].map(o=>o.textContent);assert.equal(values.length,30);assert.equal(values.some(s=>/Lab Assistant|Fahmida|Technician/i.test(s)),false);assert.equal(values.some(s=>/Mizanur Rahman/.test(s)),true);
+ run("{const list=getFacultyMembers();list.push({id:'synthetic-lecturer',name:'Synthetic Lecturer',designation:'Lecturer',category:'LECTURER'});saveFacultyMembers(list);populateRoutineFacultyDropdown();}");assert.match(w.document.getElementById('slotTeacherSelect').textContent,/Synthetic Lecturer/);
+ run("{const list=getFacultyMembers();list.find(m=>m.id==='synthetic-lecturer').category='STAFF';saveFacultyMembers(list);populateRoutineFacultyDropdown();}");assert.equal(w.document.getElementById('slotTeacherSelect').textContent.includes('Synthetic Lecturer'),false);
+}finally{await tick();dom.window.close();}});
+test('new routine periods migrate blank legacy defaults while preserving custom and filled schedules',async()=>{const {dom,w,run}=await setup();try{
+ const defaults=Array.from(run('CUET_DEFAULT_TIME_SLOTS'));assert.deepEqual(defaults,['08:30 - 09:00','09:00 - 09:50','09:50 - 10:40','10:40 - 11:00','11:00 - 11:50','11:50 - 12:40','12:40 - 14:30','14:30 - 16:00','16:00 - 17:00']);
+ run("localStorage.setItem(STORAGE_KEYS.MY_ROUTINE,JSON.stringify({...DEFAULT_BLANK_ROUTINE,timeSlots:LEGACY_DEFAULT_TIME_SLOTS,entries:[]}))");assert.deepEqual(Array.from(run('getMyPersonalRoutine().timeSlots')),defaults);
+ run("localStorage.setItem(STORAGE_KEYS.MY_ROUTINE,JSON.stringify({...DEFAULT_BLANK_ROUTINE,timeSlots:LEGACY_DEFAULT_TIME_SLOTS,entries:[{id:'existing',courseName:'Existing',day:'Sunday',startTime:'13:30',endTime:'14:20'}]}))");assert.deepEqual(Array.from(run('getMyPersonalRoutine().timeSlots')),Array.from(run('LEGACY_DEFAULT_TIME_SLOTS')));
+ run("openRoutineDaysConfigModal();useCuetPeriodLayout()");assert.equal(w.document.getElementById('cfgTimeSlotsTextarea').value,defaults.join('\n'));assert.equal(run('getMyPersonalRoutine().entries[0].startTime'),'13:30');
+ run("localStorage.setItem(STORAGE_KEYS.MY_ROUTINE,JSON.stringify({...DEFAULT_BLANK_ROUTINE,timeSlots:['01:30 - 02:00'],entries:[]}))");assert.deepEqual(Array.from(run('getMyPersonalRoutine().timeSlots')),['01:30 - 02:00']);
 }finally{await tick();dom.window.close();}});
 test('a connected owner backend supplies public content, with static fallback if it fails',async()=>{const {dom,w,run,errors}=await setup({owner:true});try{
  assert.equal(run('Hub.publicDataUrl'),'https://backend.fixture/api/portal');const original=w.fetch;let requested=0;
