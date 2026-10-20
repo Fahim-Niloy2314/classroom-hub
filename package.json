@@ -1,10 +1,12 @@
 {
   "name": "classroom-hub",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "private": true,
   "scripts": {
     "test": "node --test tests/core.test.cjs tests/ui.test.cjs",
     "check": "node --check app.js && node --check hub-core.js && node --check hub-fixes.js && node --check sw.js && node --check hub-features.js"
   },
-  "devDependencies": { "jsdom": "26.1.0" }
+  "devDependencies": {
+    "jsdom": "26.1.0"
+  }
 }

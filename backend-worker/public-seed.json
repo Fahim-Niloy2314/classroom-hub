@@ -1,0 +1,2267 @@
+{
+  "version": "4.2.1",
+  "lastUpdated": "2026-10-20T18:59:27.259655Z",
+  "publishedBy": "Mohammad Fahim Ahmed (Fahim Niloy)",
+  "portalSettings": {
+    "heroTitle": "Mechanical Engineering",
+    "heroSubtitle": "Academic Vault & Student Hub",
+    "deptDesc": "Chittagong University of Engineering and Technology (CUET)",
+    "heroDesc": "A comprehensive digitized academic repository preserving 3,896+ course materials from Level 1 Term 1 to Level 4 Term 2.",
+    "creatorName": "Mohammad Fahim Ahmed",
+    "creatorBadge": "Fahim Niloy",
+    "creatorDept": "Department of Mechanical Engineering",
+    "creatorBatch": "'20",
+    "creatorId": "2003063",
+    "primaryEmail": "fahimniloy2314@gmail.com",
+    "phone": "+880 1850-162261",
+    "portfolioUrl": "https://mohammad-fahim-ahmed.netlify.app/",
+    "githubUrl": "https://github.com/Fahim-Niloy2314/classroom-hub",
+    "card1Title": "Course Explorer",
+    "card1Desc": "Browse course materials organized by semester and folder.",
+    "card2Title": "Student Hub & Tools",
+    "card2Desc": "Personal Class Routine Studio, Editable Word (.docx) Timetable, and CUET GPA/CGPA Calculator.",
+    "card3Title": "Syllabus & Course Registry",
+    "card3Desc": "Official CUET 160-credit Mechanical Engineering degree requirements and course registry.",
+    "card4Title": "AI Study Assistant",
+    "card4Desc": "Use the official Gemini or ChatGPT app, or connect an online API for study questions.",
+    "maintenanceMode": false
+  },
+  "courseRegistry": {
+    "L1-T1": [
+      {
+        "code": "ME-111",
+        "name": "Engineering Mechanics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-112",
+        "name": "Engineering Mechanics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-152",
+        "name": "Mechanical Engineering Drawing",
+        "credits": 1.5,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-154",
+        "name": "Workshop Practice",
+        "credits": 1.5,
+        "type": "sessional"
+      },
+      {
+        "code": "Chem-131",
+        "name": "Chemistry",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Chem-132",
+        "name": "Chemistry Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Math-131",
+        "name": "Mathematics-I (Differential & Integral Calculus)",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Phy-131",
+        "name": "Physics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Phy-132",
+        "name": "Physics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Hum-131",
+        "name": "English",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L1-T2": [
+      {
+        "code": "ME-181",
+        "name": "Computer Programming & Applications",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-182",
+        "name": "Computer Programming Sessional",
+        "credits": 1.5,
+        "type": "sessional"
+      },
+      {
+        "code": "EE-131",
+        "name": "Electrical Technology",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "EE-132",
+        "name": "Electrical Technology Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Math-133",
+        "name": "Mathematics-II (Coordinate Geometry & Ordinary Diff Eq)",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Chem-133",
+        "name": "Chemistry-II",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Phy-133",
+        "name": "Physics-II",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Phy-134",
+        "name": "Physics Sessional II",
+        "credits": 0.75,
+        "type": "sessional"
+      }
+    ],
+    "L2-T1": [
+      {
+        "code": "ME-211",
+        "name": "Thermodynamics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-212",
+        "name": "Thermodynamics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-231",
+        "name": "Engineering Mechanics-I (Dynamics)",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-251",
+        "name": "Production Processes",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-252",
+        "name": "Production Processes Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Math-231",
+        "name": "Mathematics-III (Vector Analysis & Matrices)",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Hum-231",
+        "name": "Sociology & Government",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L2-T2": [
+      {
+        "code": "ME-233",
+        "name": "Engineering Mechanics-II",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-235",
+        "name": "Mechanics of Solids",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-236",
+        "name": "Mechanics of Solids Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "EE-231",
+        "name": "Electronics & Electrical Machines",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "EE-232",
+        "name": "Electronics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Math-233",
+        "name": "Mathematics-IV (Fourier Analysis & Complex Variables)",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "Hum-233",
+        "name": "Economics & Accountancy",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L3-T1": [
+      {
+        "code": "ME-311",
+        "name": "Heat Transfer",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-312",
+        "name": "Heat Transfer Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-321",
+        "name": "Fluid Mechanics-I",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-322",
+        "name": "Fluid Mechanics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-331",
+        "name": "Mechanics of Machinery & Vibration",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-361",
+        "name": "Measurement & Quality Control",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-381",
+        "name": "Numerical Analysis & Statistics",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L3-T2": [
+      {
+        "code": "ME-313",
+        "name": "Convection & Mass Transfer",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-323",
+        "name": "Fluid Mechanics-II",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-333",
+        "name": "Machine Design-I",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-334",
+        "name": "Machine Design Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-351",
+        "name": "Metallurgy & Materials Science",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-352",
+        "name": "Metallurgy Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "Hum-331",
+        "name": "Industrial Law & Principles of Management",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L4-T1": [
+      {
+        "code": "ME-413",
+        "name": "Power Plant Engineering",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-414",
+        "name": "Power Plant Engineering Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-417",
+        "name": "Refrigeration & Air Conditioning",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-418",
+        "name": "RAC Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-431",
+        "name": "Machine Design-II",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-451",
+        "name": "Machine Tools & Tool Engineering",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-461",
+        "name": "Production & Operations Management",
+        "credits": 3.0,
+        "type": "theory"
+      }
+    ],
+    "L4-T2": [
+      {
+        "code": "ME-411",
+        "name": "Applied Thermodynamics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-412",
+        "name": "Applied Thermodynamics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-421",
+        "name": "Fluid Machinery",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-422",
+        "name": "Fluid Machinery Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-423",
+        "name": "Aerodynamics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-455",
+        "name": "Mechatronics",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-456",
+        "name": "Mechatronics Sessional",
+        "credits": 0.75,
+        "type": "sessional"
+      },
+      {
+        "code": "ME-463",
+        "name": "Industrial Management",
+        "credits": 3.0,
+        "type": "theory"
+      },
+      {
+        "code": "ME-498",
+        "name": "Project & Thesis",
+        "credits": 3.0,
+        "type": "sessional"
+      }
+    ]
+  },
+  "notices": [
+    {
+      "id": "not_1",
+      "title": "Welcome to ClassroomHub — Centralized CUET ME Portal",
+      "message": "Browse course materials, use personal student tools, and find faculty contacts. Verify current academic requirements with your department.",
+      "badge": "UPDATE",
+      "term": "All Semesters",
+      "date": "2026-10-18",
+      "link": ""
+    },
+    {
+      "id": "not_2",
+      "title": "Official Departmental Directory & Contacts Published",
+      "message": "Faculty and staff contacts are available in the Faculty Directory tab. Addresses are shown separately with Gmail compose and copy options.",
+      "badge": "UPDATE",
+      "term": "All Semesters",
+      "date": "2026-10-18",
+      "link": ""
+    }
+  ],
+  "faculty": [
+    {
+      "id": "fac_1",
+      "name": "Dr. Bodius Salam",
+      "designation": "Professor",
+      "category": "PROFESSOR",
+      "room": "ME Building",
+      "email": "bsalam@cuet.ac.bd",
+      "phone": "01713109924",
+      "tnt": "2704",
+      "whatsapp": "8801713109924",
+      "specialization": "Thermal Engineering, Solar Energy, Heat Transfer",
+      "order": 1,
+      "emails": [
+        {
+          "address": "bsalam@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "bodiussalam@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_2",
+      "name": "Dr. Md. Mahbubul Alam",
+      "designation": "Professor",
+      "category": "PROFESSOR",
+      "room": "ME Building",
+      "email": "malam@cuet.ac.bd",
+      "phone": "01812830127",
+      "tnt": "2702",
+      "whatsapp": "8801812830127",
+      "specialization": "Production & Manufacturing Engineering, Materials",
+      "order": 2,
+      "emails": [
+        {
+          "address": "malam@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "mahbub87@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_3",
+      "name": "Dr. Sajal Chandra Banik",
+      "designation": "Professor",
+      "category": "PROFESSOR",
+      "room": "Mechatronics & Robotics Lab",
+      "email": "baniksajal@cuet.ac.bd",
+      "phone": "01821781459",
+      "tnt": "2724",
+      "whatsapp": "8801821781459",
+      "specialization": "Robotics, Mechatronics, Automation & Control",
+      "order": 3,
+      "emails": [
+        {
+          "address": "baniksajal@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
+    },
+    {
+      "id": "fac_4",
+      "name": "Dr. Jamal Uddin Ahamed",
+      "designation": "Professor",
+      "category": "PROFESSOR",
+      "room": "ME Building",
+      "email": "jamal@cuet.ac.bd",
+      "phone": "01720641636",
+      "tnt": "2714",
+      "whatsapp": "8801720641636",
+      "specialization": "Thermal Power, Energy Conservation, Nanofluids",
+      "order": 4,
+      "emails": [
+        {
+          "address": "jamal@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "jamal293@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_5",
+      "name": "Dr. Sheikh Muhammad Humayun Kabir",
+      "designation": "Professor",
+      "category": "PROFESSOR",
+      "room": "ME Building",
+      "email": "humayun@cuet.ac.bd",
+      "phone": "01716469972",
+      "tnt": "2726",
+      "whatsapp": "8801716469972",
+      "specialization": "Applied Mechanics, Solid Mechanics & Stress Analysis",
+      "order": 5,
+      "emails": [
+        {
+          "address": "humayun@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "daliinuoo@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_6",
+      "name": "Dr. Kazi Afzalur Rahman",
+      "designation": "Professor",
+      "category": "PROFESSOR",
+      "room": "ME Building",
+      "email": "afzal@cuet.ac.bd",
+      "phone": "01680453267",
+      "tnt": "2723",
+      "whatsapp": "8801680453267",
+      "specialization": "Fluid Machinery, CFD & Fluid Dynamics",
+      "order": 6,
+      "emails": [
+        {
+          "address": "afzal@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "afzalur99@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_7",
+      "name": "Dr. Mohammad Mizanur Rahman",
+      "designation": "Professor",
+      "category": "PROFESSOR",
+      "room": "Automobile Lab, ME Building",
+      "email": "mmrahman.cuet@gmail.com",
+      "phone": "01864800089",
+      "tnt": "2710",
+      "whatsapp": "8801864800089",
+      "specialization": "Automobile Engineering, IC Engines, Alternate Fuels",
+      "order": 7,
+      "emails": [
+        {
+          "address": "mmrahman.cuet@gmail.com",
+          "label": "Primary email"
+        }
+      ],
+      "administrativeRole": "Dean, Faculty of Mechanical and Manufacturing Engineering",
+      "roleSource": "https://cuet.ac.bd/faculty/mechanical-and-manufacturing-eng",
+      "roleVerifiedAt": "2026-10-20"
+    },
+    {
+      "id": "fac_8",
+      "name": "Dr. Muhammad Mostafa Kamal Bhuiya",
+      "designation": "Head of Department & Professor",
+      "category": "HEAD",
+      "room": "Department Head Office, ME Building",
+      "email": "mkamal@cuet.ac.bd",
+      "phone": "01784353193",
+      "tnt": "2729",
+      "whatsapp": "8801784353193",
+      "specialization": "Thermal Engineering, Heat Transfer Enhancement, Renewable Energy",
+      "order": 8,
+      "emails": [
+        {
+          "address": "mkamal@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "mkamalcuet@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_9",
+      "name": "Dr. Md. Sanaul Rabbi",
+      "designation": "Professor",
+      "category": "PROFESSOR",
+      "room": "ME Building",
+      "email": "rabbi@cuet.ac.bd",
+      "phone": "01717300305",
+      "tnt": "",
+      "whatsapp": "8801717300305",
+      "specialization": "Thermodynamics, Power Plant, Heat Systems",
+      "order": 9,
+      "emails": [
+        {
+          "address": "rabbi@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
+    },
+    {
+      "id": "fac_10",
+      "name": "Dr. Md. Arafat Rahman",
+      "designation": "Professor",
+      "category": "PROFESSOR",
+      "room": "ME Building",
+      "email": "arafat@cuet.ac.bd",
+      "phone": "01719416328",
+      "tnt": "2727",
+      "whatsapp": "8801719416328",
+      "specialization": "Materials Science, Metallurgy, Fracture Mechanics",
+      "order": 10,
+      "emails": [
+        {
+          "address": "arafat@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
+    },
+    {
+      "id": "fac_11",
+      "name": "Dr. Prasanjit Das",
+      "designation": "Associate Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "prasanjit@cuet.ac.bd",
+      "phone": "01642997909",
+      "tnt": "",
+      "whatsapp": "8801642997909",
+      "specialization": "Combustion, Energy Systems, Thermal Modeling",
+      "order": 11,
+      "emails": [
+        {
+          "address": "prasanjit@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "prasanjit12@gmail.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_12",
+      "name": "Dr. Abu Shadat Muhammad Sayem",
+      "designation": "Associate Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "a.sayem@cuet.ac.bd",
+      "phone": "01710503692",
+      "tnt": "",
+      "whatsapp": "8801710503692",
+      "specialization": "Fluid Mechanics, Multiphase Flow & Heat Exchangers",
+      "order": 12,
+      "emails": [
+        {
+          "address": "a.sayem@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "yessayem@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_13",
+      "name": "Dr. Md. Mamunur Roshid",
+      "designation": "Associate Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "mamuncuet2003@cuet.ac.bd",
+      "phone": "01818651850",
+      "tnt": "",
+      "whatsapp": "8801818651850",
+      "specialization": "Applied Mechanics, Vibration Analysis, Dynamics",
+      "order": 13,
+      "emails": [
+        {
+          "address": "mamuncuet2003@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "mamun_cuet2003@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_14",
+      "name": "Dr. Md. Abu Mowazzem Hossain",
+      "designation": "Associate Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "mowazzem@cuet.ac.bd",
+      "phone": "01735530848",
+      "tnt": "2722",
+      "whatsapp": "8801735530848",
+      "specialization": "Manufacturing Engineering, Tool Wear & Metal Cutting",
+      "order": 14,
+      "emails": [
+        {
+          "address": "mowazzem@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
+    },
+    {
+      "id": "fac_15",
+      "name": "Dr. Tilok Kumar Das",
+      "designation": "Associate Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "tilok@cuet.ac.bd",
+      "phone": "01818767625",
+      "tnt": "",
+      "whatsapp": "8801818767625",
+      "specialization": "Renewable Energy, Heat Transfer, Fluid Mechanics",
+      "order": 15,
+      "emails": [
+        {
+          "address": "tilok@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "tilok_cuet@yahoo.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_16",
+      "name": "Mr. Md. Aminul Islam",
+      "designation": "Assistant Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "aislam@cuet.ac.bd",
+      "phone": "01837888835",
+      "tnt": "2720",
+      "whatsapp": "8801837888835",
+      "specialization": "Thermodynamics & Heat Transfer",
+      "order": 16,
+      "emails": [
+        {
+          "address": "aislam@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
+    },
+    {
+      "id": "fac_17",
+      "name": "Mr. Syed Masrur Ahmmad",
+      "designation": "Assistant Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "bdmasrur91@gmail.com",
+      "phone": "01725554528",
+      "tnt": "2712",
+      "whatsapp": "8801725554528",
+      "specialization": "Machine Design & Stress Analysis",
+      "order": 17,
+      "emails": [
+        {
+          "address": "bdmasrur91@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_18",
+      "name": "Dr. Mostafizur Rahman",
+      "designation": "Assistant Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "rmostafiz31@gmail.com",
+      "phone": "01738263617",
+      "tnt": "",
+      "whatsapp": "8801738263617",
+      "specialization": "Nanotechnology & Materials Science",
+      "order": 18,
+      "emails": [
+        {
+          "address": "rmostafiz31@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_19",
+      "name": "Dr. Afnan Hasan",
+      "designation": "Assistant Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "afnanhasan@cuet.ac.bd",
+      "phone": "01303042334",
+      "tnt": "",
+      "whatsapp": "8801303042334",
+      "specialization": "Aerodynamics & CFD",
+      "order": 19,
+      "emails": [
+        {
+          "address": "afnanhasan@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "afnanhasan@gmail.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_20",
+      "name": "Mr. Radheshyam Nath Jisu",
+      "designation": "Assistant Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "radheshyam@cuet.ac.bd",
+      "phone": "01521227537",
+      "tnt": "",
+      "whatsapp": "8801521227537",
+      "specialization": "Robotics, Automation & Mechatronics",
+      "order": 20,
+      "emails": [
+        {
+          "address": "radheshyam@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "radheshyamnathjisu@gmail.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_21",
+      "name": "Mr. Tafsirul Hassan",
+      "designation": "Assistant Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "tafsir2086@gmail.com",
+      "phone": "01812680648",
+      "tnt": "",
+      "whatsapp": "8801812680648",
+      "specialization": "Fluid Mechanics & Heat Transfer",
+      "order": 21,
+      "emails": [
+        {
+          "address": "tafsir2086@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_22",
+      "name": "Mr. Mohammad Nezam Uddin Chy",
+      "designation": "Assistant Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "bdnezam15@gmail.com",
+      "phone": "01882823600",
+      "tnt": "",
+      "whatsapp": "8801882823600",
+      "specialization": "Automobile Engineering & Thermal Power",
+      "order": 22,
+      "emails": [
+        {
+          "address": "bdnezam15@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_23",
+      "name": "Mr. Redoy Masum Meraz",
+      "designation": "Assistant Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "meraz@cuet.ac.bd",
+      "phone": "01712132762",
+      "tnt": "",
+      "whatsapp": "8801712132762",
+      "specialization": "Solid Mechanics & CAD/CAM",
+      "order": 23,
+      "emails": [
+        {
+          "address": "meraz@cuet.ac.bd",
+          "label": "University email"
+        }
+      ]
+    },
+    {
+      "id": "fac_24",
+      "name": "Mr. Minhaz Ahmed",
+      "designation": "Assistant Professor",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "minhaz@cuet.ac.bd",
+      "phone": "01537202191",
+      "tnt": "",
+      "whatsapp": "8801537202191",
+      "specialization": "Renewable Energy & Mechanical Design",
+      "order": 24,
+      "emails": [
+        {
+          "address": "minhaz@cuet.ac.bd",
+          "label": "University email"
+        },
+        {
+          "address": "minhaz.ahmed.1603018@gmail.com",
+          "label": "Alternate email"
+        }
+      ]
+    },
+    {
+      "id": "fac_25",
+      "name": "Mr. Abdullah Al Rifat",
+      "designation": "Lecturer",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "alrifat50@gmail.com",
+      "phone": "01747680478",
+      "tnt": "",
+      "whatsapp": "8801747680478",
+      "specialization": "Thermodynamics & Heat Transfer",
+      "order": 25,
+      "emails": [
+        {
+          "address": "alrifat50@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_26",
+      "name": "Mr. Abdullah-Al-Mamun",
+      "designation": "Lecturer",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "Rakibmamun107@gmail.com",
+      "phone": "01824192709",
+      "tnt": "",
+      "whatsapp": "8801824192709",
+      "specialization": "Fluid Dynamics & Turbomachinery",
+      "order": 26,
+      "emails": [
+        {
+          "address": "Rakibmamun107@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_27",
+      "name": "Mr. Protick Chandra Ghosh",
+      "designation": "Lecturer",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "protickchandraghosh123@gmail.com",
+      "phone": "01992880020",
+      "tnt": "",
+      "whatsapp": "8801992880020",
+      "specialization": "Control Systems & Robotics",
+      "order": 27,
+      "emails": [
+        {
+          "address": "protickchandraghosh123@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_28",
+      "name": "Mr. Tahsin Abid Ahmed",
+      "designation": "Lecturer",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "tahsin.me.113@gmail.com",
+      "phone": "01762388882",
+      "tnt": "",
+      "whatsapp": "8801762388882",
+      "specialization": "Materials Science & Mechanical Testing",
+      "order": 28,
+      "emails": [
+        {
+          "address": "tahsin.me.113@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_29",
+      "name": "Mr. Md. Tanvir Mahmud",
+      "designation": "Lecturer",
+      "category": "ASSOCIATE",
+      "room": "ME Building",
+      "email": "tanvirmahmud775@gmail.com",
+      "phone": "01876593419",
+      "tnt": "",
+      "whatsapp": "8801876593419",
+      "specialization": "Heat Transfer & IC Engines",
+      "order": 29,
+      "emails": [
+        {
+          "address": "tanvirmahmud775@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_30",
+      "name": "Ms. Fahmida Zahan",
+      "designation": "Lab Assistant",
+      "category": "STAFF",
+      "room": "ME Building",
+      "email": "fahmidazahan82@gmail.com",
+      "phone": "01991945168",
+      "tnt": "2186",
+      "whatsapp": "8801991945168",
+      "specialization": "Laboratory & Practical Session Support",
+      "order": 30,
+      "emails": [
+        {
+          "address": "fahmidazahan82@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_31",
+      "name": "Mr. Sujon Kanti Das",
+      "designation": "Senior Technical Officer",
+      "category": "STAFF",
+      "room": "ME Workshop / Laboratories",
+      "email": "sujoncuet@yahoo.com",
+      "phone": "01713109923",
+      "tnt": "",
+      "whatsapp": "8801713109923",
+      "specialization": "Laboratory Instrumentation & Testing Operations",
+      "order": 31,
+      "emails": [
+        {
+          "address": "sujoncuet@yahoo.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_32",
+      "name": "Mr. Md. Mominur Rahman",
+      "designation": "Technical Officer",
+      "category": "STAFF",
+      "room": "ME Laboratory",
+      "email": "dippdipu@gmail.com",
+      "phone": "01714595605",
+      "tnt": "2754",
+      "whatsapp": "8801714595605",
+      "specialization": "Lab Setup & Technical Maintenance",
+      "order": 32,
+      "emails": [
+        {
+          "address": "dippdipu@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_33",
+      "name": "Mr. Iswar Chandra Mondal",
+      "designation": "Technical Officer",
+      "category": "STAFF",
+      "room": "Central Workshop & ME Labs",
+      "email": "iswarme2018@gmail.com",
+      "phone": "01782555584",
+      "tnt": "2759",
+      "whatsapp": "8801782555584",
+      "specialization": "Workshop Machines & Testing Services",
+      "order": 33,
+      "emails": [
+        {
+          "address": "iswarme2018@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_34",
+      "name": "Mr. Sirajul Monir",
+      "designation": "Section Officer",
+      "category": "STAFF",
+      "room": "Department Office, ME Building",
+      "email": "mdmonirctg99@gmail.com",
+      "phone": "01835508202",
+      "tnt": "",
+      "whatsapp": "8801835508202",
+      "specialization": "Academic Administration & Records",
+      "order": 34,
+      "emails": [
+        {
+          "address": "mdmonirctg99@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_35",
+      "name": "Mr. Syed Md. Dastagir",
+      "designation": "Section Officer",
+      "category": "STAFF",
+      "room": "Department Office, ME Building",
+      "email": "dastagir88@yahoo.com",
+      "phone": "01817725904",
+      "tnt": "",
+      "whatsapp": "8801817725904",
+      "specialization": "Administrative Support & Coordination",
+      "order": 35,
+      "emails": [
+        {
+          "address": "dastagir88@yahoo.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_36",
+      "name": "Ms. Anuradha Mallick",
+      "designation": "Administrative Officer",
+      "category": "STAFF",
+      "room": "Department Office, ME Building",
+      "email": "radhacuet@gmail.com",
+      "phone": "01811923524",
+      "tnt": "2755",
+      "whatsapp": "8801811923524",
+      "specialization": "Office Affairs & Student Communication",
+      "order": 36,
+      "emails": [
+        {
+          "address": "radhacuet@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_37",
+      "name": "Mr. Mohammad Abdullah",
+      "designation": "Office Staff",
+      "category": "STAFF",
+      "room": "Department Office, ME Building",
+      "email": "mdabdullahcuet@gmail.com",
+      "phone": "01914594662",
+      "tnt": "2756",
+      "whatsapp": "8801914594662",
+      "specialization": "Departmental Correspondence & Logistics",
+      "order": 37,
+      "emails": [
+        {
+          "address": "mdabdullahcuet@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_38",
+      "name": "Mr. Md. Abu Shahadat",
+      "designation": "Staff / Technician",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "",
+      "phone": "01818557009",
+      "tnt": "",
+      "whatsapp": "8801818557009",
+      "specialization": "Laboratory Operations & Maintenance",
+      "order": 38,
+      "emails": []
+    },
+    {
+      "id": "fac_39",
+      "name": "Mr. Emranul Hoque",
+      "designation": "Staff / Technician",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "emranulhoque@gmail.com",
+      "phone": "01627635838",
+      "tnt": "",
+      "whatsapp": "8801627635838",
+      "specialization": "Lab Maintenance & Support",
+      "order": 39,
+      "emails": [
+        {
+          "address": "emranulhoque@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_42",
+      "name": "Mr. Rupayan Das",
+      "designation": "Staff / Technician",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "rupayandas002@gmail.com",
+      "phone": "01811920365",
+      "tnt": "",
+      "whatsapp": "8801811920365",
+      "specialization": "Machine Operation & Tooling",
+      "order": 42,
+      "emails": [
+        {
+          "address": "rupayandas002@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_43",
+      "name": "Mr. Muhammed Khalilur Rahman",
+      "designation": "Staff / Technician",
+      "category": "STAFF",
+      "room": "Central Workshop & Labs",
+      "email": "khalilcuet26@gmail.com",
+      "phone": "01818889100",
+      "tnt": "",
+      "whatsapp": "8801818889100",
+      "specialization": "Workshop Fabrication & Maintenance",
+      "order": 43,
+      "emails": [
+        {
+          "address": "khalilcuet26@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_44",
+      "name": "Mr. Mohammad Kamrul Hasan",
+      "designation": "Staff / Technician",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "Khrakib85@gmail.com",
+      "phone": "01815185152",
+      "tnt": "",
+      "whatsapp": "8801815185152",
+      "specialization": "Laboratory Technical Support",
+      "order": 44,
+      "emails": [
+        {
+          "address": "Khrakib85@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_45",
+      "name": "Mr. Muhammad Abdul Kader",
+      "designation": "Staff / Technician",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "",
+      "phone": "01825868662",
+      "tnt": "",
+      "whatsapp": "8801825868662",
+      "specialization": "Workshop Equipment Support",
+      "order": 45,
+      "emails": []
+    },
+    {
+      "id": "fac_46",
+      "name": "Ms. Afrina Tasmim",
+      "designation": "Staff / Lab Attendant",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "afrinatasmim.sub@gmail.com",
+      "phone": "01987527264",
+      "tnt": "",
+      "whatsapp": "8801987527264",
+      "specialization": "Lab Record & Equipment Handling",
+      "order": 46,
+      "emails": [
+        {
+          "address": "afrinatasmim.sub@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_47",
+      "name": "Mr. Md. Abu Taher",
+      "designation": "Staff / Lab Attendant",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "",
+      "phone": "01834058770",
+      "tnt": "",
+      "whatsapp": "8801834058770",
+      "specialization": "Laboratory Operations Support",
+      "order": 47,
+      "emails": []
+    },
+    {
+      "id": "fac_48",
+      "name": "Mr. Shafiqul Islam",
+      "designation": "Staff / Lab Attendant",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "",
+      "phone": "01917884470",
+      "tnt": "",
+      "whatsapp": "8801917884470",
+      "specialization": "Lab Facilities & Logistics",
+      "order": 48,
+      "emails": []
+    },
+    {
+      "id": "fac_49",
+      "name": "Mr. Sumon Chakraborty",
+      "designation": "Staff / Lab Attendant",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "",
+      "phone": "01840219603",
+      "tnt": "",
+      "whatsapp": "8801840219603",
+      "specialization": "Equipment Upkeep & Lab Handling",
+      "order": 49,
+      "emails": []
+    },
+    {
+      "id": "fac_50",
+      "name": "Mr. Miton Shil",
+      "designation": "Staff / Lab Attendant",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "mitonshilabeer@gmail.com",
+      "phone": "01830557462",
+      "tnt": "",
+      "whatsapp": "8801830557462",
+      "specialization": "Laboratory Technical Maintenance",
+      "order": 50,
+      "emails": [
+        {
+          "address": "mitonshilabeer@gmail.com",
+          "label": "Primary email"
+        }
+      ]
+    },
+    {
+      "id": "fac_51",
+      "name": "Mr. Nazim Uddin",
+      "designation": "Staff / Lab Attendant",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "",
+      "phone": "01641416841",
+      "tnt": "",
+      "whatsapp": "8801641416841",
+      "specialization": "Departmental Lab Logistics",
+      "order": 51,
+      "emails": []
+    },
+    {
+      "id": "fac_52",
+      "name": "Mr. Jobayed Hossen",
+      "designation": "Staff / Lab Attendant",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "",
+      "phone": "01830108809",
+      "tnt": "",
+      "whatsapp": "8801830108809",
+      "specialization": "Workshop & Laboratory Support",
+      "order": 52,
+      "emails": []
+    },
+    {
+      "id": "fac_53",
+      "name": "Mr. Mohammed Ariful Hoque",
+      "designation": "Staff / Lab Attendant",
+      "category": "STAFF",
+      "room": "ME Laboratories",
+      "email": "",
+      "phone": "01834575980",
+      "tnt": "",
+      "whatsapp": "8801834575980",
+      "specialization": "Departmental Lab Logistics",
+      "order": 53,
+      "emails": []
+    }
+  ],
+  "routines": {
+    "L1-T1": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 1101: Engineering Mechanics I (Statics)",
+          "room": "ME-101",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "MATH 1101: Differential & Integral Calculus",
+          "room": "ME-101",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 1102: Mechanical Engineering Drawing I",
+          "room": "Drawing Hall",
+          "teacher": "Dr. Md. Mahbubul Alam / Lab Staff"
+        },
+        {
+          "time": "01:30 PM - 02:20 PM",
+          "course": "CHEM 1101: Chemistry",
+          "room": "ME-101",
+          "teacher": "Dept. of Chemistry"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "HUM 1101: English & Professional Communication",
+          "room": "ME-101",
+          "teacher": "Dept. of Humanities"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "CHEM 1102: Chemistry Laboratory",
+          "room": "Chemistry Lab",
+          "teacher": "Chem Faculty & Instructors"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "MATH 1101: Differential & Integral Calculus",
+          "room": "ME-101",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 1101: Engineering Mechanics I (Statics)",
+          "room": "ME-101",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "CHEM 1101: Chemistry",
+          "room": "ME-101",
+          "teacher": "Dept. of Chemistry"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 1101: Engineering Mechanics I (Statics)",
+          "room": "ME-101",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 1104: Workshop Practice Sessional",
+          "room": "Central Machine Shop",
+          "teacher": "Workshop Instructors"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "MATH 1101: Differential & Integral Calculus",
+          "room": "ME-101",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "HUM 1101: English & Professional Communication",
+          "room": "ME-101",
+          "teacher": "Dept. of Humanities"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "CHEM 1101: Chemistry",
+          "room": "ME-101",
+          "teacher": "Dept. of Chemistry"
+        }
+      ]
+    },
+    "L1-T2": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 1201: Engineering Mechanics II (Dynamics)",
+          "room": "ME-102",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 1203: Basic Thermodynamics",
+          "room": "ME-102",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "PHY 1202: Physics Laboratory",
+          "room": "Physics Lab",
+          "teacher": "Dept. of Physics"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "PHY 1201: Physics (Waves, Optics & Heat)",
+          "room": "ME-102",
+          "teacher": "Dept. of Physics"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "MATH 1201: Vector Analysis & Matrices",
+          "room": "ME-102",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 1202: Workshop Technology Sessional",
+          "room": "Machine Shop",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 1203: Basic Thermodynamics",
+          "room": "ME-102",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 1201: Engineering Mechanics II (Dynamics)",
+          "room": "ME-102",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "MATH 1201: Vector Analysis & Matrices",
+          "room": "ME-102",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "PHY 1201: Physics (Waves, Optics & Heat)",
+          "room": "ME-102",
+          "teacher": "Dept. of Physics"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 1204: Engineering Drawing II (CAD Sessional)",
+          "room": "CAD Lab",
+          "teacher": "Engr. Tanvir Ahmed"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 1201: Engineering Mechanics II (Dynamics)",
+          "room": "ME-102",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "09:50 AM - 10:40 AM",
+          "course": "ME 1203: Basic Thermodynamics",
+          "room": "ME-102",
+          "teacher": "Dr. Bodius Salam"
+        }
+      ]
+    },
+    "L2-T1": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 2101: Fluid Mechanics I",
+          "room": "ME-201",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 2103: Mechanics of Solids I",
+          "room": "ME-201",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 2102: Fluid Mechanics Sessional I",
+          "room": "Fluid Mechanics Lab",
+          "teacher": "Lab Faculty"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "EEE 2101: Electrical Technology",
+          "room": "ME-201",
+          "teacher": "Dept. of EEE"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "MATH 2101: Differential Equations",
+          "room": "ME-201",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "EEE 2102: Electrical Technology Sessional",
+          "room": "EEE Lab",
+          "teacher": "EEE Faculty"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 2103: Mechanics of Solids I",
+          "room": "ME-201",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 2101: Fluid Mechanics I",
+          "room": "ME-201",
+          "teacher": "Dr. Sajal Chandra Banik"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "MATH 2101: Differential Equations",
+          "room": "ME-201",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "EEE 2101: Electrical Technology",
+          "room": "ME-201",
+          "teacher": "Dept. of EEE"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 2104: Mechanics of Solids Sessional I",
+          "room": "Strength of Materials Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 2101: Fluid Mechanics I",
+          "room": "ME-201",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "09:50 AM - 10:40 AM",
+          "course": "ME 2103: Mechanics of Solids I",
+          "room": "ME-201",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        }
+      ]
+    },
+    "L2-T2": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 2201: Applied Thermodynamics",
+          "room": "ME-202",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 2203: Mechanics of Solids II",
+          "room": "ME-202",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 2202: Applied Thermodynamics Sessional",
+          "room": "Thermal Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 2205: Engineering Metallurgy",
+          "room": "ME-202",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "MATH 2201: Complex Variable & Statistics",
+          "room": "ME-202",
+          "teacher": "Dept. of Math"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 2206: Metallurgy & Materials Testing Sessional",
+          "room": "Metallurgy Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 2201: Applied Thermodynamics",
+          "room": "ME-202",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 2205: Engineering Metallurgy",
+          "room": "ME-202",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 2203: Mechanics of Solids II",
+          "room": "ME-202",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "MATH 2201: Complex Variable & Statistics",
+          "room": "ME-202",
+          "teacher": "Dept. of Math"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 2205: Engineering Metallurgy",
+          "room": "ME-202",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 2201: Applied Thermodynamics",
+          "room": "ME-202",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 2203: Mechanics of Solids II",
+          "room": "ME-202",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        }
+      ]
+    },
+    "L3-T1": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 3101: Fluid Mechanics II (Turbomachinery)",
+          "room": "ME-301",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 3103: Heat and Mass Transfer",
+          "room": "ME-301",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 3104: Heat Transfer Sessional",
+          "room": "Heat Transfer Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 3105: Manufacturing Processes",
+          "room": "ME-301",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 3107: Mechanics of Machinery",
+          "room": "ME-301",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 3106: Manufacturing Processes Sessional",
+          "room": "Machine Shop",
+          "teacher": "Lab Instructors"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 3103: Heat and Mass Transfer",
+          "room": "ME-301",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 3101: Fluid Mechanics II",
+          "room": "ME-301",
+          "teacher": "Dr. Sajal Chandra Banik"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 3107: Mechanics of Machinery",
+          "room": "ME-301",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 3105: Manufacturing Processes",
+          "room": "ME-301",
+          "teacher": "Dr. Md. Mahbubul Alam"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 3101: Fluid Mechanics II",
+          "room": "ME-301",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 3103: Heat and Mass Transfer",
+          "room": "ME-301",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 3102: Turbomachinery Sessional",
+          "room": "Hydraulics Lab",
+          "teacher": "Lab Faculty"
+        }
+      ]
+    },
+    "L3-T2": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 3201: Machine Design",
+          "room": "ME-302",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 3203: Instrumentation & Measurement",
+          "room": "ME-302",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 3202: Machine Design Sessional",
+          "room": "CAD/CAM Lab",
+          "teacher": "Engr. Tanvir Ahmed"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 3205: Mechanical Vibrations",
+          "room": "ME-302",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "IPE 3201: Industrial Management",
+          "room": "ME-302",
+          "teacher": "Prof. Dr. Md. Mahbubul Alam"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 3204: Instrumentation & Measurement Sessional",
+          "room": "Instrumentation Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 3201: Machine Design",
+          "room": "ME-302",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 3205: Mechanical Vibrations",
+          "room": "ME-302",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 3203: Instrumentation & Measurement",
+          "room": "ME-302",
+          "teacher": "Dr. Sajal Chandra Banik"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "IPE 3201: Industrial Management",
+          "room": "ME-302",
+          "teacher": "Prof. Dr. Md. Mahbubul Alam"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 3205: Mechanical Vibrations",
+          "room": "ME-302",
+          "teacher": "Dr. Sanjoy Kumar Nandi"
+        },
+        {
+          "time": "10:00 AM - 10:50 AM",
+          "course": "ME 3201: Machine Design",
+          "room": "ME-302",
+          "teacher": "Dr. Md. Mizanur Rahman"
+        }
+      ]
+    },
+    "L4-T1": {
+      "Sunday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 4101: Internal Combustion Engines",
+          "room": "ME-401",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "08:50 AM - 09:40 AM",
+          "course": "ME 4103: Refrigeration & Air Conditioning",
+          "room": "ME-401",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 4102: Heat Engines Sessional",
+          "room": "IC Engine Lab",
+          "teacher": "Lab Faculty"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 4105: Finite Element Analysis & Simulation",
+          "room": "ME-401",
+          "teacher": "Engr. Tanvir Ahmed"
+        },
+        {
+          "time": "10:00 AM - 01:00 PM",
+          "course": "ME 4000: Project & Thesis Progress",
+          "room": "Dept. Seminar Room",
+          "teacher": "Assigned Supervisors"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "08:00 AM - 08:50 AM",
+          "course": "ME 4103: Refrigeration & Air Conditioning",
+          "room": "ME-401",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "09:00 AM - 11:30 AM",
+          "course": "ME 4104: RAC Sessional",
+          "room": "RAC Lab",
+          "teacher": "Lab Team"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 4101: Internal Combustion Engines",
+          "room": "ME-401",
+          "teacher": "Dr. Bodius Salam"
+        },
+        {
+          "time": "10:00 AM - 11:40 AM",
+          "course": "ME 4105: Finite Element Analysis & Simulation",
+          "room": "ME-401",
+          "teacher": "Engr. Tanvir Ahmed"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "08:00 AM - 09:40 AM",
+          "course": "ME 4103: Refrigeration & Air Conditioning",
+          "room": "ME-401",
+          "teacher": "Prof. Dr. M. M. Kamal Bhuiya"
+        },
+        {
+          "time": "10:00 AM - 12:30 PM",
+          "course": "ME 4106: FEA & Simulation Sessional",
+          "room": "CAD/CAE Lab",
+          "teacher": "Lab Team"
+        }
+      ]
+    },
+    "L4-T2": {
+      "Sunday": [
+        {
+          "time": "08:30 AM - 09:20 AM",
+          "course": "CT / Self-Study",
+          "room": "2317",
+          "teacher": "Batch '20"
+        },
+        {
+          "time": "09:20 AM - 10:10 AM",
+          "course": "ME-463: Industrial Management",
+          "room": "2317",
+          "teacher": "Prof. Dr. X"
+        },
+        {
+          "time": "10:10 AM - 11:00 AM",
+          "course": "ME-411: Applied Thermodynamics",
+          "room": "2317",
+          "teacher": "Dr. Y"
+        },
+        {
+          "time": "11:15 AM - 12:05 PM",
+          "course": "ME-423: Aerodynamics",
+          "room": "2317",
+          "teacher": "Faculty"
+        }
+      ],
+      "Monday": [
+        {
+          "time": "09:20 AM - 10:10 AM",
+          "course": "ME-411: Applied Thermodynamics",
+          "room": "2317",
+          "teacher": "Dr. Y"
+        },
+        {
+          "time": "10:10 AM - 11:00 AM",
+          "course": "ME-455: Mechatronics",
+          "room": "2317",
+          "teacher": "Faculty"
+        },
+        {
+          "time": "11:15 AM - 12:05 PM",
+          "course": "ME-463: Industrial Management",
+          "room": "2317",
+          "teacher": "Prof. Dr. X"
+        },
+        {
+          "time": "12:05 PM - 12:55 PM",
+          "course": "ME-423: Aerodynamics",
+          "room": "2317",
+          "teacher": "Faculty"
+        },
+        {
+          "time": "02:35 PM - 05:00 PM",
+          "course": "ME-412: Applied Thermodynamics Sessional",
+          "room": "Thermal Lab",
+          "teacher": "Lab Faculty"
+        }
+      ],
+      "Tuesday": [
+        {
+          "time": "09:20 AM - 10:10 AM",
+          "course": "ME-421: Fluid Machinery",
+          "room": "2317",
+          "teacher": "Faculty"
+        },
+        {
+          "time": "10:10 AM - 11:00 AM",
+          "course": "ME-463: Industrial Management",
+          "room": "2317",
+          "teacher": "Prof. Dr. X"
+        },
+        {
+          "time": "11:15 AM - 12:05 PM",
+          "course": "ME-411: Applied Thermodynamics",
+          "room": "2317",
+          "teacher": "Dr. Y"
+        },
+        {
+          "time": "12:05 PM - 12:55 PM",
+          "course": "ME-423: Aerodynamics",
+          "room": "2317",
+          "teacher": "Faculty"
+        },
+        {
+          "time": "02:35 PM - 05:00 PM",
+          "course": "ME-422: Fluid Machinery Sessional",
+          "room": "Fluid Lab",
+          "teacher": "Lab Faculty"
+        }
+      ],
+      "Wednesday": [
+        {
+          "time": "09:20 AM - 10:10 AM",
+          "course": "ME-455: Mechatronics",
+          "room": "2317",
+          "teacher": "Faculty"
+        },
+        {
+          "time": "11:15 AM - 12:05 PM",
+          "course": "ME-421: Fluid Machinery",
+          "room": "2317",
+          "teacher": "Faculty"
+        },
+        {
+          "time": "02:35 PM - 05:00 PM",
+          "course": "ME-498: Project & Thesis",
+          "room": "CAD / ME Lab",
+          "teacher": "Supervisors"
+        }
+      ],
+      "Thursday": [
+        {
+          "time": "09:20 AM - 10:10 AM",
+          "course": "ME-463: Industrial Management",
+          "room": "2317",
+          "teacher": "Prof. Dr. X"
+        },
+        {
+          "time": "10:10 AM - 11:00 AM",
+          "course": "ME-421: Fluid Machinery",
+          "room": "2317",
+          "teacher": "Faculty"
+        },
+        {
+          "time": "11:15 AM - 12:05 PM",
+          "course": "ME-455: Mechatronics",
+          "room": "2317",
+          "teacher": "Faculty"
+        },
+        {
+          "time": "02:35 PM - 05:00 PM",
+          "course": "ME-456: Mechatronics Sessional",
+          "room": "Mechatronics Lab",
+          "teacher": "Lab Faculty"
+        }
+      ]
+    }
+  },
+  "customResources": [],
+  "videos": [
+    {
+      "id": "vid_l4t2_thermo",
+      "title": "Applied Thermodynamics (Advanced Rankine, Brayton, Refrigeration)",
+      "subject": "ME-411 Applied Thermodynamics",
+      "channel": "NPTEL / MIT OpenCourseWare",
+      "lang": "en",
+      "term": "L4-T2",
+      "type": "Lecture Series",
+      "url": "https://www.youtube.com/playlist?list=PLbMVogVj5nJS9nO_n8W5b9P_x-m8v4Yv3"
+    },
+    {
+      "id": "vid_l4t2_aero",
+      "title": "Aerodynamics & Lift Generation (Airfoil Theory & Compressible Flow)",
+      "subject": "ME-423 Aerodynamics",
+      "channel": "Stanford / Brian Douglas",
+      "lang": "en",
+      "term": "L4-T2",
+      "type": "Video Playlist",
+      "url": "https://www.youtube.com/playlist?list=PLbRMhDVUMngfdXZGkWc083n5p2GkY2iA1"
+    }
+  ],
+  "timeline": [],
+  "faqs": [
+    {
+      "question": "How do I download an editable class routine in Microsoft Word format?",
+      "answer": "Go to Student Tools → My Routine. Download the blank Word template or export your own routine as an editable .docx table. Published sample schedules are examples; verify actual class arrangements with your department."
+    },
+    {
+      "question": "Where are my personal timetable changes saved?",
+      "answer": "Your personal routine is saved in this browser on this device. It is not a cloud backup. Export a JSON backup to transfer it or protect against browser storage being cleared."
+    },
+    {
+      "question": "Does installing the app download all Google Drive materials?",
+      "answer": "No. Installation caches the public application shell. Google Drive documents remain online; opening or downloading a file requires access to that file. AI also needs an online provider connection."
+    }
+  ],
+  "cvTemplates": [
+    {
+      "id": "template_job",
+      "name": "Simple Job / Internship Resume",
+      "description": "Clean, single-column layout optimized for ATS scanners and corporate applications. No photo by default.",
+      "defaultSections": [
+        "contact",
+        "summary",
+        "experience",
+        "skills",
+        "education",
+        "projects",
+        "certifications",
+        "references"
+      ]
+    },
+    {
+      "id": "template_eng",
+      "name": "Engineering Graduate Resume",
+      "description": "Technical layout emphasizing capstone design, CAD/FEA simulation tools, industrial training, and practical projects.",
+      "defaultSections": [
+        "contact",
+        "summary",
+        "education",
+        "projects",
+        "skills",
+        "experience",
+        "certifications"
+      ]
+    },
+    {
+      "id": "template_academic",
+      "name": "Academic & Research CV",
+      "description": "Formal multi-page curriculum vitae covering research experience, journal publications, conference presentations, honors, and references.",
+      "defaultSections": [
+        "contact",
+        "summary",
+        "education",
+        "research",
+        "projects",
+        "skills",
+        "awards",
+        "references"
+      ]
+    }
+  ]
+}

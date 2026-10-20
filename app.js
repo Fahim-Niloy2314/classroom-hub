@@ -779,7 +779,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadPortalSyncData() {
   try {
-    const res = await fetch('portal_sync.json?v=' + Date.now(), { cache: 'no-cache' });
+    let res;
+    if (Hub.publicDataUrl) {
+      try { res = await fetch(Hub.publicDataUrl, { cache: 'no-store' }); } catch {}
+    }
+    if (!res || !res.ok) res = await fetch('portal_sync.json?v=' + Date.now(), { cache: 'no-cache' });
     if (res.ok) {
       let syncData = await res.json();
       localStorage.setItem('classroom_public_baseline', JSON.stringify(syncData));
@@ -10230,7 +10234,9 @@ function renderFacultyDirectory() {
 
   let filtered = allMembers;
   if (facultyCategoryFilter !== 'ALL') {
-    filtered = filtered.filter(f => f.category === facultyCategoryFilter);
+    filtered = filtered.filter(f => facultyCategoryFilter === 'HEAD'
+      ? ['HEAD', 'DEAN'].includes(f.category) || /\b(?:dean|head)\b/i.test(String(f.administrativeRole || ''))
+      : f.category === facultyCategoryFilter);
   }
   if (facultySearchKeyword) {
     filtered = filtered.filter(f => {

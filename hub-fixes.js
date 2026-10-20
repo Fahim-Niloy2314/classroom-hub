@@ -27,7 +27,7 @@ const Hub = (() => {
     // Retire insecure credentials from earlier releases, preserving all student work.
     for (const key of ['classroom_admin_token','classroom_admin_github_token','classroom_admin_pwd_hash','classroom_user']) localStorage.removeItem(key);
     try {
-      const response = await fetch('backend-config.json?v=4.2.0', {cache:'no-store'});
+      const response = await fetch('backend-config.json?v=4.2.1', {cache:'no-store'});
       const config = await response.json();
       const url = config.apiBase ? new URL(config.apiBase) : new URL(location.origin);
       if (url.protocol !== 'https:' && !(['localhost','127.0.0.1','[::1]'].includes(url.hostname) && url.protocol === 'http:')) throw new Error('The backend requires HTTPS.');
@@ -51,7 +51,7 @@ const Hub = (() => {
   function portalPayload() {
     const baseline = read('classroom_public_baseline',{});
     return HubCore.publicValue({
-      version:'4.2.0', lastUpdated:new Date().toISOString(), publishedBy:currentUser?.name || 'Owner',
+      version:'4.2.1', lastUpdated:new Date().toISOString(), publishedBy:currentUser?.name || 'Owner',
       portalSettings, courseRegistry:window.CUET_COURSE_REGISTRY || read('classroom_course_registry',baseline.courseRegistry || {}),
       notices:Array.isArray(adminNotices) ? adminNotices : [], faculty:getFacultyMembers(), routines:getStoredRoutine(),
       customResources:communityResources, videos:adminVideos, timeline:adminTimeline, faqs:adminFaqs,
@@ -267,7 +267,7 @@ const Hub = (() => {
   window.addEventListener('hashchange',()=>{syncTermDates();renderOutbox();});
   document.addEventListener('DOMContentLoaded',()=>{syncTermDates();renderOutbox();});
   setInterval(()=>{if(verified&&sessionExpiry&&Date.now()/1000>=sessionExpiry){invalidateSession();showToast('Owner session expired. Sign in again.');}},30000);
-  return {showRoutineWarnings,orderCvSections,orderCvWord,initialize,updateConnectionText,download,request,portalPayload,applySupplementalData,publish,submitFeedback,submitResource,queueResource,retryOutbox,inbox,submissionStatus,saveTermDates,exportCalendar,importCv,exportBackup,importBackup,get connected(){return ready;},get aiAvailable(){return onlineAiAvailable;},get authenticated(){return verified&&(!sessionExpiry||Date.now()/1000<sessionExpiry);},setSession(data){verified=true;sessionExpiry=data.expiresAt;sessionStorage.setItem(SESSION,data.token);sessionStorage.setItem('classroom_session_expiry',String(data.expiresAt));},invalidateSession};
+  return {showRoutineWarnings,orderCvSections,orderCvWord,initialize,updateConnectionText,download,request,portalPayload,applySupplementalData,publish,submitFeedback,submitResource,queueResource,retryOutbox,inbox,submissionStatus,saveTermDates,exportCalendar,importCv,exportBackup,importBackup,get connected(){return ready;},get publicDataUrl(){return ready ? apiBase+'/api/portal' : null;},get aiAvailable(){return onlineAiAvailable;},get authenticated(){return verified&&(!sessionExpiry||Date.now()/1000<sessionExpiry);},setSession(data){verified=true;sessionExpiry=data.expiresAt;sessionStorage.setItem(SESSION,data.token);sessionStorage.setItem('classroom_session_expiry',String(data.expiresAt));},invalidateSession};
 })();
 
 function isAdmin(user) { return !!user && user.role==='admin' && Hub.authenticated; }
