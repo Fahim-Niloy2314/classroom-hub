@@ -41,7 +41,7 @@ The Python runtime supports an always-running notification worker. The separate 
 
 ## Access and hosting independence
 
-Both approved personal Gmail addresses are on the private portal's external access list. These permissions allow access to the portal and are distinct from the Classroom Hub owner login. Native hosting grants external visitors the viewer role: this is not a transfer of hosting ownership, and successful sign-in from the owner's personal browser has not been verified. The shared account still controls the existing hosting project.
+Both approved personal Gmail addresses are on the private portal's external access list. These permissions allow access to the portal and are distinct from the Classroom Hub owner login. A secure browser sign-in using the first approved personal Gmail successfully reached the portal. The subsequent, separate Classroom Hub owner login rejected the credentials supplied in that browser attempt; that owner-dashboard browser session is not verified. Native hosting grants external visitors the viewer role, not hosting ownership. The shared account still controls the existing hosting project.
 
 The repository now contains a portable Cloudflare Worker and database migrations in `backend-worker`, without provider credentials, owner password/hash, private inbox records or a dependency on the shared ChatGPT account. It is prepared source, not a deployed service under a personal account; its database identifier is intentionally a placeholder. A personally controlled hosting account must be used before claiming independence from the shared account. Public owner-setup guides remain removed.
 
