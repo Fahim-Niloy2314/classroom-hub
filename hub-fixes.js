@@ -2,7 +2,7 @@
 'use strict';
 const Hub = (() => {
   const H = HubCore.html;
-  let apiBase = '', ready = false, verified = false, sessionExpiry = 0, retrying = false, onlineAiAvailable = false;
+  let apiBase = '', ready = false, verified = false, sessionExpiry = 0, retrying = false, onlineAiAvailable = false, ownerConfigured = false, ownerPortalUrl = '';
   const SESSION = 'classroom_admin_token', QUEUE = 'classroom_feedback_outbox_v1';
   const read = (key, fallback) => { try { const value = JSON.parse(localStorage.getItem(key)); return value === null ? fallback : value; } catch { return fallback; } };
   function download(name, data, type = 'application/json') {
@@ -27,8 +27,9 @@ const Hub = (() => {
     // Retire insecure credentials from earlier releases, preserving all student work.
     for (const key of ['classroom_admin_token','classroom_admin_github_token','classroom_admin_pwd_hash','classroom_user']) localStorage.removeItem(key);
     try {
-      const response = await fetch('backend-config.json?v=4.3.1', {cache:'no-store'});
+      const response = await fetch('backend-config.json?v=4.4.0', {cache:'no-store'});
       const config = await response.json();
+      if(config.ownerPortalUrl){const portal=new URL(config.ownerPortalUrl);if(portal.protocol==='https:'&&!portal.username&&!portal.password&&!portal.search&&!portal.hash)ownerPortalUrl=portal.href;}
       const url = config.apiBase ? new URL(config.apiBase) : new URL(location.origin);
       if (url.protocol !== 'https:' && !(['localhost','127.0.0.1','[::1]'].includes(url.hostname) && url.protocol === 'http:')) throw new Error('The backend requires HTTPS.');
       if (url.username || url.password || url.search || url.hash) throw new Error('Invalid backend URL.');
@@ -36,7 +37,7 @@ const Hub = (() => {
       if (!config.apiBase && location.hostname.endsWith('github.io')) { updateConnectionText(); return; }
       apiBase = url.href.replace(/\/$/,''); ready = true;
       const status = await request('status');
-      ready = status.status === 'online'; onlineAiAvailable = status.aiAvailable === true;
+      ready = status.status === 'online'; ownerConfigured=status.configured!==false; onlineAiAvailable = status.aiAvailable === true;
       if (status.authenticated) { verified = true; currentUser = {name:'Fahim Niloy',role:'admin'}; sessionExpiry = Number(sessionStorage.getItem('classroom_session_expiry')) || 0; }
       else sessionStorage.removeItem(SESSION);
     } catch { ready = false; invalidateSession(); }
@@ -48,15 +49,16 @@ const Hub = (() => {
     const text = ready ? 'Backend connected: ' + apiBase : 'Online admin and inbox are not connected yet. Public tools work normally.';
     const publishStatus = document.getElementById('backendPublishStatus'); if (publishStatus) publishStatus.textContent = text;
     const authStatus = document.getElementById('authBackendStatus');
-    if (authStatus) authStatus.textContent = ready ? (bangla ? 'Owner service সংযুক্ত আছে। Classroom Hub-এর owner email ও password দিয়ে প্রবেশ করুন।' : 'Owner service connected. Sign in with your Classroom Hub owner email and password.') : publicPages ? (bangla ? 'এটি পাবলিক GitHub Pages সাইট। এখানে owner sign-in সংযুক্ত নেই। নিচের বাটন দিয়ে owner portal খুলুন। সেখানে নিজের অনুমোদিত Gmail-এর ChatGPT account দিয়ে প্রবেশ করে Classroom Hub-এর owner sign-in করুন।' : 'You are on the public GitHub Pages site. Owner sign-in is not connected here. Continue to the owner portal below. Use your approved personal ChatGPT account to open it, then sign in with your Classroom Hub owner credentials.') : (bangla ? 'Owner service-এর সাথে সংযোগ করা যাচ্ছে না। পেজটি আবার লোড করুন।' : 'The owner service is unavailable. Reload this page to try again.');
-    const fields = document.getElementById('ownerLoginFields'); if (fields) { fields.hidden = !ready; fields.disabled = !ready; }
-    const button = document.getElementById('ownerLoginSubmit'); if (button) button.disabled = !ready;
-    const portalLink=document.getElementById('privateOwnerPortalLink');if(portalLink){portalLink.hidden=ready||!publicPages;portalLink.textContent=bangla?'Owner portal খুলুন':'Continue to owner portal';}
+    if (authStatus) authStatus.textContent = ready ? !ownerConfigured ? (bangla ? 'Owner sign-in-এর ব্যক্তিগত কনফিগারেশন এখনো সম্পন্ন হয়নি।' : 'Owner sign-in is awaiting private configuration.') : (bangla ? 'Classroom Hub-এর owner email ও password দিয়ে একবারেই প্রবেশ করুন।' : 'Sign in once with your Classroom Hub owner email and password.') : publicPages ? (ownerPortalUrl ? (bangla ? 'সম্পাদনার জন্য live Classroom Hub খুলুন।' : 'Open the live Classroom Hub to edit your site.') : (bangla ? 'এই সংস্করণে owner sign-in সংযুক্ত নেই। শিক্ষার্থীদের টুলগুলো ব্যবহার করা যাবে।' : 'Owner sign-in is not connected on this copy. Student tools remain available.')) : (bangla ? 'Owner service-এর সাথে সংযোগ করা যাচ্ছে না। পেজটি আবার লোড করুন।' : 'The owner service is unavailable. Reload this page to try again.');
+    const canLogin=ready&&ownerConfigured;
+    const fields = document.getElementById('ownerLoginFields'); if (fields) { fields.hidden = !canLogin; fields.disabled = !canLogin; }
+    const button = document.getElementById('ownerLoginSubmit'); if (button) button.disabled = !canLogin;
+    const portalLink=document.getElementById('privateOwnerPortalLink');if(portalLink){portalLink.hidden=ready||!publicPages||!ownerPortalUrl;if(ownerPortalUrl)portalLink.href=ownerPortalUrl;else portalLink.removeAttribute('href');portalLink.textContent=bangla?'Live Classroom Hub খুলুন':'Open live Classroom Hub';}
   }
   function portalPayload() {
     const baseline = read('classroom_public_baseline',{});
     return HubCore.publicValue({
-      version:'4.3.1', lastUpdated:new Date().toISOString(), publishedBy:currentUser?.name || 'Owner',
+      version:'4.4.0', lastUpdated:new Date().toISOString(), publishedBy:currentUser?.name || 'Owner',
       portalSettings, courseRegistry:window.CUET_COURSE_REGISTRY || read('classroom_course_registry',baseline.courseRegistry || {}),
       notices:Array.isArray(adminNotices) ? adminNotices : [], faculty:getFacultyMembers(), routines:getStoredRoutine(),
       customResources:communityResources, videos:adminVideos, timeline:adminTimeline, faqs:adminFaqs,

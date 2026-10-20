@@ -1,12 +1,21 @@
 {
   "name": "classroom-hub",
-  "version": "4.3.1",
+  "version": "4.4.0",
   "private": true,
   "scripts": {
     "test": "node --test tests/core.test.cjs tests/ui.test.cjs",
-    "check": "node --check app.js && node --check hub-core.js && node --check hub-fixes.js && node --check sw.js && node --check hub-features.js"
+    "check": "node --check app.js && node --check hub-core.js && node --check hub-fixes.js && node --check sw.js && node --check hub-features.js",
+    "build": "node scripts/build-netlify.cjs",
+    "test:netlify": "node --test tests/netlify.test.cjs",
+    "check:netlify": "tsc --noEmit --module esnext --moduleResolution bundler --target es2022 --allowImportingTsExtensions --resolveJsonModule --esModuleInterop --skipLibCheck netlify/functions/api.mts"
   },
   "devDependencies": {
-    "jsdom": "26.1.0"
+    "@netlify/database-dev": "1.0.1",
+    "jsdom": "26.1.0",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@netlify/database": "2.0.1",
+    "@netlify/functions": "6.0.3"
   }
 }

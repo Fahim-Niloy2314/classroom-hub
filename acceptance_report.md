@@ -1,6 +1,25 @@
-# Classroom Hub 4.3.0 — verification record
+# Classroom Hub 4.4.0 — verification record
 
-## Owner control corrections in this release
+
+## Netlify migration preparation (21 October 2026)
+
+The existing GitHub repository now contains a Netlify deployment configuration, an allowlisted public build, same-origin owner API functions and Postgres migrations. This prepares the existing application for the owner-selected personal Netlify account; it does not itself prove that a Netlify deployment is live.
+
+- The old ChatGPT-hosted portal link has been removed from the sign-in interface. A connected application uses its own owner email/password login. A disconnected GitHub Pages copy keeps credentials disabled and can link to a separately configured live application.
+- Owner access remains fixed to the two previously approved Gmail addresses. The hosting account is separate from application owner identities. No public owner-registration or password-setup endpoint is provided.
+- Initial authentication is configured privately in the hosting environment. The API persists a randomly salted PBKDF2-SHA256 password hash, with 600,000 iterations for newly initialized or rotated passwords. Secrets are never included in public content or backups.
+- The Netlify API uses the platform-provided client IP for throttling, authenticated expiring sessions and same-origin request checks. It does not trust a visitor-supplied Cloudflare IP header.
+- Publishing writes durable public content read by other visitors through the same origin. Inbox inserts are idempotent, restores use transactions, and visitor counts are numeric measured browser activity.
+- `npm run test:netlify`: **9 passed**, using Netlify's local Postgres engine, actual SQL migrations and the production Postgres storage adapter. This includes login/session enforcement, private initialization and password rotation, concurrent duplicate feedback, publication, backup rejection/rollback, analytics, throttling, private AI configuration and public-file packaging.
+- `npm test`: **31 passed**; Python integration/service/deployment tests: **30 passed**. Current local total: **70 passed**. JavaScript syntax, Netlify TypeScript checks and the public build also passed.
+- Netlify production deployment and browser owner login are still pending the user's GitHub authorization and private credential configuration. Provider AI and WhatsApp integration remain opt-in and are not claimed tested against real paid provider accounts.
+- No projects or deployments in the older portfolio Netlify account were modified. The new target account was independently verified in the browser before starting repository import.
+
+The previous release record below is historical context, including the retired two-step portal flow; its old runtime description is not the migration target.
+
+## Prior 4.3.0 release record
+
+### Owner control corrections
 
 - Existing vault-resource edits replace the matching record rather than duplicating it. Search and course folders use the same merged catalog. Newly added course folders appear in the explorer.
 - Hide and trash now actually remove resource entries from student browsing; restoration returns one edited record. These are discovery controls, not a privacy boundary for files already shared publicly on Google Drive.

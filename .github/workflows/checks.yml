@@ -19,5 +19,7 @@ jobs:
           python-version: '3.12'
       - run: npm ci --ignore-scripts
       - run: npm run check
+      - run: npm run check:netlify
       - run: npm test
+      - run: npm run test:netlify
       - run: python -m unittest discover -s tests -p 'test_*.py' -v
