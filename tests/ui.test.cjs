@@ -26,9 +26,9 @@ test('application starts, all four destinations and secondary tools route withou
 test('Sign In opens a real dialog; forged local identity never grants admin',async()=>{const {dom,w,run,errors}=await setup();try{
  w.localStorage.setItem('classroom_user',JSON.stringify({email:'fahimcuet63@gmail.com',role:'admin'}));assert.equal(run('isAdmin({role:"admin"})'),false);
  w.document.querySelector('#authHeaderContainer button').click();assert.equal(w.document.getElementById('authDialog').open,true);assert.equal(w.document.getElementById('ownerLoginSubmit').disabled,true);
- assert.match(w.document.getElementById('authBackendStatus').textContent,/not connected/);
+ assert.match(w.document.getElementById('authBackendStatus').textContent,/live Classroom Hub/);
  assert.equal(w.document.getElementById('ownerLoginFields').hidden,true);assert.equal(w.document.getElementById('ownerLoginFields').disabled,true);
- const portal=w.document.getElementById('privateOwnerPortalLink');assert.equal(portal.hidden,true);assert.equal(portal.hasAttribute('href'),false);assert.equal(portal.target,'');
+ const portal=w.document.getElementById('privateOwnerPortalLink');assert.equal(portal.hidden,false);assert.equal(portal.href,'https://classroom-hub-niloy2314.netlify.app/');assert.equal(portal.target,'');
  await run('handleStandardAuthSubmit({preventDefault(){}})');assert.equal(w.document.getElementById('ownerLoginSubmit').disabled,true);assert.equal(w.document.getElementById('authError').textContent,'');
  assert.deepEqual(errors,[]);
 }finally{await tick();dom.window.close();}});
